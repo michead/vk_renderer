@@ -1,5 +1,4 @@
 #include "RenderLoop.h"
-#include "VkUtils.h"
 #include "Constants.h"
 #include <vector>
 
@@ -22,6 +21,13 @@ void RenderLoop::initWindow()
 
 void RenderLoop::createInstance()
 {
+	if (ENABLE_VALIDATION_LAYERS && !checkValidationLayerSupport())
+	{
+		throw std::runtime_error("Requested validation layers are not available!");
+	}
+
+	auto extensions = getRequiredExtensions();
+
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = APPLICATION_NAME;
@@ -30,15 +36,12 @@ void RenderLoop::createInstance()
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
-	unsigned int glfwExtensionCount = 0;
-	const char** glfwExtensions;
-	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
 	VkInstanceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = glfwExtensionCount;
-	createInfo.ppEnabledExtensionNames = glfwExtensions;
+	createInfo.enabledExtensionCount = extensions.size();
+	createInfo.ppEnabledExtensionNames = extensions.data();
+	
 	if (ENABLE_VALIDATION_LAYERS)
 	{
 		createInfo.enabledLayerCount = validationLayers.size();
@@ -50,24 +53,27 @@ void RenderLoop::createInstance()
 	}
 
 	VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
+}
 
-	uint32_t extensionCount = 0;
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-	
-	std::vector<VkExtensionProperties> extensions(extensionCount);
-	vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-	
-	printVulkanExtensions(extensions);
+void RenderLoop::setupDebugCallback()
+{
+	if (!ENABLE_VALIDATION_LAYERS)
+		return;
 
-	if (ENABLE_VALIDATION_LAYERS && !checkValidationLayerSupport())
-	{
-		throw std::runtime_error("Requested validation layers are not available!");
-	}
+	VkDebugReportCallbackCreateInfoEXT createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	createInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT) debugCallback;
+
+	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
 }
 
 void RenderLoop::initVulkan()
 {
 	createInstance();
+	setupDebugCallback();
+	selectPhysicalDevice();
+	createLogicalDevice();
 }
 
 void RenderLoop::mainLoop()
@@ -76,4 +82,68 @@ void RenderLoop::mainLoop()
 	{
 		glfwPollEvents();
 	}
+}
+
+void RenderLoop::selectPhysicalDevice()
+{
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+	}
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	for (const VkPhysicalDevice& device : devices)
+	{
+		if (isDeviceSuitable(device))
+		{
+			physicalDevice = device;
+			break;
+		}
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Failed to find a suitable GPU!");
+	}
+}
+
+void RenderLoop::createLogicalDevice()
+{
+	int queueFamilyIndex = findQueueFamilyIndex(physicalDevice, VK_QUEUE_GRAPHICS_BIT);
+	static float queuePriority = 1.f;
+
+	VkDeviceQueueCreateInfo queueCreateInfo = {};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+	queueCreateInfo.queueCount = 1;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.geometryShader = VK_TRUE;
+
+	VkDeviceCreateInfo createInfo = {};
+	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	createInfo.pQueueCreateInfos = &queueCreateInfo;
+	createInfo.queueCreateInfoCount = 1;
+	createInfo.pEnabledFeatures = &deviceFeatures;
+	createInfo.enabledExtensionCount = 0;
+
+	if (ENABLE_VALIDATION_LAYERS)
+	{
+		createInfo.enabledLayerCount = validationLayers.size();
+		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+	else
+	{
+		createInfo.enabledLayerCount = 0;
+	}
+
+	VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
+
+	vkGetDeviceQueue(device, queueFamilyIndex, 0, &graphicsQueue);
 }

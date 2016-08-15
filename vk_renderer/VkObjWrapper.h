@@ -16,12 +16,12 @@ public:
 
 	VkObjWrapper(const VkObjWrapper<VkInstance>& instance, std::function<void(VkInstance, T, VkAllocationCallbacks*)> deleteFunc_)
 	{
-		this->deleter = [&instance, deleteFunc_](T obj) { deletef(instance, obj, nullptr); };
+		this->deleteFunc = [&instance, deleteFunc_](T obj) { deleteFunc_(instance, obj, nullptr); };
 	}
 
 	VkObjWrapper(const VkObjWrapper<VkDevice>& device, std::function<void(VkDevice, T, VkAllocationCallbacks*)> deleteFunc_)
 	{
-		this->deleter = [&device, deleteFunc_](T obj) { deleteFunc_(device, obj, nullptr); };
+		this->deleteFunc = [&device, deleteFunc_](T obj) { deleteFunc_(device, obj, nullptr); };
 	}
 
 	~VkObjWrapper()
