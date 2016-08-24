@@ -1,15 +1,15 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glfw/glfw3.h>
 #include <iostream>
-#include "RenderLoop.h"
+#include "VulkanApp.h"
 
 int main()
 {
-	RenderLoop loop;
+	VulkanApp app;
 
 	try
 	{
-		loop.run();
+		app.run();
 	}
 	catch (const std::runtime_error& e)
 	{
