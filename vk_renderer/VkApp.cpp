@@ -13,7 +13,16 @@ void VkApp::run()
 {
 	initWindow();
 	initVulkan();
+	initCamera();
 	mainLoop();
+}
+
+void VkApp::initCamera()
+{
+	camera.position = CAMERA_POSITION;
+	camera.rotation = glm::quat(Camera::getRotationToTarget(CAMERA_TARGET));
+	camera.aspectRatio = swapChainExtent.width / (float) swapChainExtent.height;
+	camera.fovy = CAMERA_FOVY;
 }
 
 void VkApp::initWindow()
@@ -161,7 +170,7 @@ void VkApp::mainLoop()
 	{
 		glfwPollEvents();
 
-		updateUniformBuffer();
+		updateCamera();
 		drawFrame();
 	}
 
@@ -733,19 +742,15 @@ void VkApp::createUniformBuffer()
 	createBuffer(physicalDevice, device, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, uniformBuffer, uniformBufferMemory);
 }
 
-void VkApp::updateUniformBuffer()
+void VkApp::updateCamera()
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count() / 1000.f;
-
 	UniformBufferObject ubo = {};
-	ubo.model = glm::rotate(glm::mat4(), time * glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+	ubo.model = glm::mat4(); // Useless
 
-	ubo.view = glm::lookAt(glm::vec3(2.f, 2.f, 2.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f));
-	ubo.proj = glm::perspective(glm::radians(45.f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.f);
-	ubo.proj[1][1] *= -1;
+	camera.updateMatrices();
+
+	ubo.view = camera.getViewMatrix();
+	ubo.proj = camera.getProjMatrix();
 
 	void* data;
 	vkMapMemory(device, uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);

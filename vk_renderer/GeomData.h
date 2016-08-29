@@ -3,7 +3,9 @@
 #include "vulkan\vulkan.h"
 #include "glm\glm.hpp"
 #include "glm\gtx\hash.hpp"
+#include "Camera.h"
 #include <array>
+#include <vector>
 
 struct Vertex {
 	glm::vec3 position;
@@ -58,6 +60,26 @@ namespace std {
 		}
 	};
 }
+
+struct Light {
+
+};
+
+struct Material {
+
+};
+
+struct Mesh {
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+	Material material;
+};
+
+struct Scene {
+	std::vector<Mesh> meshes;
+	std::vector<Light> lights;
+	Camera camera;
+};
 
 struct UniformBufferObject {
 	glm::mat4 model;

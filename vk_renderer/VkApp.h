@@ -10,7 +10,6 @@
 #include <glm\gtc\matrix_transform.hpp>
 
 #include <vector>
-#include <chrono>
 
 #define APPLICATION_NAME "VkApp"
 
@@ -63,6 +62,7 @@ private:
 	VkObjWrapper<VkDeviceMemory> uniformBufferMemory{ device, vkFreeMemory };
 	VkObjWrapper<VkDescriptorPool> descriptorPool { device, vkDestroyDescriptorPool };
 	VkDescriptorSet descriptorSet;
+	Camera camera;
 
 	void initWindow();
 	void initVulkan();
@@ -94,7 +94,8 @@ private:
 	void drawFrame();
 	void recreateSwapChain();
 	
-	void updateUniformBuffer();
+	void initCamera();
+	void updateCamera();
 
 	static void onWindowResized(GLFWwindow* window, int width, int height);
 };
