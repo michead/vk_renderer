@@ -1,11 +1,11 @@
 #define GLFW_INCLUDE_VULKAN
 #include <glfw/glfw3.h>
 #include <iostream>
-#include "VulkanApp.h"
+#include "VkApp.h"
 
 int main()
 {
-	VulkanApp app;
+	VkApp app;
 
 	try
 	{

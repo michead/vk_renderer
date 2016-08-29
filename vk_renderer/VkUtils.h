@@ -28,7 +28,7 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 #define LUNARG_SWAPCHAIN_VALIDATION "VK_LAYER_LUNARG_swapchain"
 #define LUNARG_UNIQUE_VALIDATION	"VK_LAYER_GOOGLE_unique_objects"
 
-#define VK_CHECK(a) if ((a) != VK_SUCCESS) { \
+#define VK_CHECK(a) if ((a) != VK_SUCCESS && (a) != VK_SUBOPTIMAL_KHR) { \
 						std::string errCode; \
 						switch(a) { \
 						case VkResult::VK_ERROR_OUT_OF_HOST_MEMORY: \
@@ -350,4 +350,307 @@ inline void createShaderModule(VkDevice device, const std::vector<char>& code, V
 	createInfo.pCode = (uint32_t*) code.data();
 
 	VK_CHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule));
+}
+
+inline uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+	VkPhysicalDeviceMemoryProperties memProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+	{
+		if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+		{
+			return i;
+		}
+	}
+
+	throw std::runtime_error("Failed to find suitable memory type!");
+}
+
+inline void createBuffer(
+	VkPhysicalDevice physicalDevice, 
+	VkDevice device, VkDeviceSize size, 
+	VkBufferUsageFlags usage, 
+	VkMemoryPropertyFlags properties, 
+	VkObjWrapper<VkBuffer>& buffer, 
+	VkObjWrapper<VkDeviceMemory>& bufferMemory)
+{
+	VkBufferCreateInfo bufferInfo = {};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.size = size;
+	bufferInfo.usage = usage;
+	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VK_CHECK(vkCreateBuffer(device, &bufferInfo, nullptr, &buffer));
+
+	VkMemoryRequirements memRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+
+	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory));
+
+	vkBindBufferMemory(device, buffer, bufferMemory, 0);
+}
+
+inline VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool)
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = commandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+inline void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, VkCommandBuffer commandBuffer, VkQueue queue)
+{
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(queue);
+
+	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
+inline void copyBuffer(
+	VkDevice device, 
+	VkCommandPool commandPool, 
+	VkQueue queue, 
+	VkBuffer srcBuffer, 
+	VkBuffer dstBuffer, 
+	VkDeviceSize size)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+	VkBufferCopy copyRegion = {};
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	endSingleTimeCommands(device, commandPool, commandBuffer, queue);
+}
+
+inline void createImage(
+	VkPhysicalDevice physicalDevice, 
+	VkDevice device, 
+	uint32_t width, 
+	uint32_t height, 
+	VkFormat format, 
+	VkImageTiling tiling, 
+	VkImageUsageFlags usage, 
+	VkMemoryPropertyFlags properties, 
+	VkObjWrapper<VkImage>& image, 
+	VkObjWrapper<VkDeviceMemory>& imageMemory)
+{
+	VkImageCreateInfo imageInfo = {};
+	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageInfo.extent.width = width;
+	imageInfo.extent.height = height;
+	imageInfo.extent.depth = 1;
+	imageInfo.mipLevels = 1;
+	imageInfo.arrayLayers = 1;
+	imageInfo.format = format;
+	imageInfo.tiling = tiling;
+	imageInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+	imageInfo.usage = usage;
+	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VK_CHECK(vkCreateImage(device, &imageInfo, nullptr, &image));
+
+	VkMemoryRequirements memRequirements;
+	vkGetImageMemoryRequirements(device, image, &memRequirements);
+
+	VkMemoryAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize = memRequirements.size;
+	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
+
+	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory));
+
+	vkBindImageMemory(device, image, imageMemory, 0);
+}
+
+inline void transitionImageLayout(
+	VkDevice device, 
+	VkCommandPool commandPool, 
+	VkQueue queue, 
+	VkImage image, 
+	VkImageLayout oldLayout, 
+	VkImageLayout newLayout)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+	VkImageMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = image;
+	
+	if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+	{
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	}
+	else
+	{
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	
+	if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+	{
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	}
+	else
+	{
+		throw std::invalid_argument("unsupported layout transition!");
+	}
+
+
+	vkCmdPipelineBarrier(
+		commandBuffer, 
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 
+		0, 
+		0, 
+		nullptr, 
+		0, 
+		nullptr, 
+		1, 
+		&barrier);
+
+	endSingleTimeCommands(device, commandPool, commandBuffer, queue);
+}
+
+inline void copyImage(
+	VkDevice device, 
+	VkCommandPool commandPool, 
+	VkQueue queue, 
+	VkImage srcImage, 
+	VkImage dstImage, 
+	uint32_t width, 
+	uint32_t height)
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands(device, commandPool);
+
+	VkImageSubresourceLayers subResource = {};
+	subResource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	subResource.baseArrayLayer = 0;
+	subResource.mipLevel = 0;
+	subResource.layerCount = 1;
+
+	VkImageCopy region = {};
+	region.srcSubresource = subResource;
+	region.dstSubresource = subResource;
+	region.srcOffset = { 0, 0, 0 };
+	region.dstOffset = { 0, 0, 0 };
+	region.extent.width = width;
+	region.extent.height = height;
+	region.extent.depth = 1;
+
+	vkCmdCopyImage(
+		commandBuffer, 
+		srcImage, 
+		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, 
+		dstImage, 
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+		1, 
+		&region);
+
+	endSingleTimeCommands(device, commandPool, commandBuffer, queue);
+}
+
+inline void createImageView(
+	VkDevice device, 
+	VkImage image, 
+	VkFormat format, 
+	VkImageAspectFlags aspectFlags, VkObjWrapper<VkImageView>& imageView)
+{
+	VkImageViewCreateInfo viewInfo = {};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = aspectFlags;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VK_CHECK(vkCreateImageView(device, &viewInfo, nullptr, &imageView));
+}
+
+inline VkFormat findSupportedFormat(
+	VkPhysicalDevice physicalDevice, 
+	const std::vector<VkFormat>& candidates, 
+	VkImageTiling tiling, 
+	VkFormatFeatureFlags features)
+{
+	for (VkFormat format : candidates)
+	{
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+	
+		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+		{
+			return format;
+		}
+		else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+		{
+			return format;
+		}
+	}
+
+	throw std::runtime_error("Failed to find supported format!");
+}
+
+inline VkFormat findDepthFormat(VkPhysicalDevice physicalDevice)
+{
+	return findSupportedFormat(
+		physicalDevice, 
+		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, 
+		VK_IMAGE_TILING_OPTIMAL, 
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }

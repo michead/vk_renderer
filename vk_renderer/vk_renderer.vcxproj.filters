@@ -21,7 +21,7 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanApp.cpp">
+    <ClCompile Include="VkApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,7 +32,10 @@
     <ClInclude Include="VkUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanApp.h">
+    <ClInclude Include="GeomData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VkApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
