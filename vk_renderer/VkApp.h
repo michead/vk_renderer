@@ -97,10 +97,9 @@ private:
 	void createDescriptorSet();
 	void createCommandBuffers();
 	void createSemaphores();
-	void drawFrame();
-	void recreateSwapChain();
 	
-	static std::unordered_map<std::string, std::string> getCmdLineArgs(int argc, char** argv);
+	void draw();
+	void recreateSwapChain();
 
 	void initCamera();
 	void updateCamera();

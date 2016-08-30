@@ -1,7 +1,4 @@
 #include "VkApp.h"
-#include <vector>
-#include <set>
-#include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb\stb_image.h>
@@ -15,19 +12,7 @@ int VkApp::oldY = -1;
 
 void VkApp::init(int argc, char** argv)
 {
-	std::unordered_map<std::string, std::string> argMap = getCmdLineArgs(argc, argv);
-	std::unordered_map<std::string, std::string>::iterator it;
-	
-	it = argMap.find(RENDER_TARGET_RESOLUTION);
-	if (it != argMap.end())
-	{
-		config.resolution = VkAppConfig::parseResolution(it->second);
-	}
-}
-
-std::unordered_map<std::string, std::string> VkApp::getCmdLineArgs(int argc, char** argv)
-{
-	return std::unordered_map<std::string, std::string>();
+	config.parseCmdLineArgs(argc, argv);
 }
 
 void VkApp::run()
@@ -56,7 +41,7 @@ void VkApp::initWindow()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, APPLICATION_NAME, nullptr, nullptr);
+	window = glfwCreateWindow(config.resolution.x, config.resolution.y, APPLICATION_NAME, nullptr, nullptr);
 
 	glfwSetWindowUserPointer(window, this);
 	glfwSetWindowSizeCallback(window, onWindowResized);
@@ -259,7 +244,7 @@ void VkApp::mainLoop()
 		glfwPollEvents();
 
 		updateCamera();
-		drawFrame();
+		draw();
 	}
 
 	vkDeviceWaitIdle(device);
@@ -718,7 +703,7 @@ void VkApp::createCommandBuffers()
 	}
 }
 
-void VkApp::drawFrame()
+void VkApp::draw()
 {
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(device, swapChain, std::numeric_limits<uint64_t>::max(), 

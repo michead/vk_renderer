@@ -55,18 +55,45 @@ namespace std {
 		size_t operator()(Vertex const& vertex) const
 		{
 			return ((hash<glm::vec3>()(vertex.position) ^
-				(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
-				(hash<glm::vec2>()(vertex.texCoord) << 1);
+					(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^
+					(hash<glm::vec2>()(vertex.texCoord) << 1);
 		}
 	};
 }
 
+enum LightType {
+	POINT
+};
+
 struct Light {
+	LightType type = POINT;
+	glm::vec3 pos;
+	glm::vec3 color = glm::vec3(1);
+};
+
+struct Texture {
 
 };
 
 struct Material {
+	std::string id = "";
 
+	glm::vec3  ke = glm::vec3();
+	glm::vec3  kd = glm::vec3();
+	glm::vec3  ks = glm::vec3();
+	glm::vec3  kr = glm::vec3();
+	float      rs = 0.15f;
+
+	Texture*    keTxt = nullptr;
+	Texture*    kdTxt = nullptr;
+	Texture*    ksTxt = nullptr;
+	Texture*    rsTxt = nullptr;
+	Texture*    krTxt = nullptr;
+	Texture*    normTxt = nullptr;
+
+	float       opacity = 1;
+	float		translucency = 0;
+	float		subsurfWidth = 0;
 };
 
 struct Mesh {
