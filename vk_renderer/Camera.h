@@ -3,31 +3,46 @@
 #include "glm\glm.hpp"
 #include "glm\gtc\quaternion.hpp"
 #include <glm\gtx\vector_angle.hpp>
+#include "3DMathUtils.h"
 
-#define CAMERA_POSITION { 0, 1, 3 }
-#define CAMERA_TARGET	{ 0, 0, 0 }
-#define CAMERA_FORWARD	{ 0, 0, -1 }
-#define CAMERA_UP		{ 0, 1, 0 }
-#define CAMERA_FOVY		45.f
-#define CAMERA_NEAR		0.1f
-#define CAMERA_FAR		10.f
+#define CAMERA_POSITION		{ 0, 1, 3 }
+#define CAMERA_TARGET		{ 0, 0, 0 }
+#define CAMERA_FORWARD		{ 0, 0, 1 }
+#define CAMERA_UP			{ 0, 1, 0 }
+#define CAMERA_FOVY			45.f
+#define CAMERA_NEAR			0.1f
+#define CAMERA_FAR			10.f
+#define CAMERA_ROT_SCALE	0.001f
+#define CAMERA_DOLLY_SCALE	0.001f
+#define CAMERA_PAN_SCALE	0.001f
+#define MIN_THETA			0.01f
+#define MIN_FOCUS			0.00001f
+
+enum CameraMovement {
+	STILL,
+	ROTATE,
+	ROTATE_AROUND_TARGET,
+	PAN,
+	ZOOM
+};
 
 class Camera {
 public:
-	glm::vec3 position;
-	glm::quat rotation;
+	Frame frame;
+	glm::vec3 target;
 	float aspectRatio;
 	float fovy;
+	CameraMovement movement;
 
 	glm::mat4& getViewMatrix() { return viewMatrix; }
 	glm::mat4& getProjMatrix() { return projMatrix; }
 
-	static glm::quat getRotationToTarget(glm::vec3 target);
+	float getFocus() { return MAX(MIN_FOCUS, glm::distance(frame.origin, target)); }
 
-	void rotateCamera(glm::vec3 rot);
-	void rotatateCameraAroundTarget(glm::vec3 target, glm::vec3 rot);
-	void panCamera(glm::vec2 pan);
-	void zoomCamera(float zoom);
+	void rotate(glm::vec2 rot);
+	void rotateAroundTarget(glm::vec2 rot);
+	void pan(glm::vec2 pan);
+	void zoom(float zoom);
 
 	void updateMatrices();
 

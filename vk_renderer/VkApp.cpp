@@ -9,20 +9,44 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tinyobjloader\tiny_obj_loader.h"
 
+Camera VkApp::camera;
+int VkApp::oldX = -1;
+int VkApp::oldY = -1;
+
+void VkApp::init(int argc, char** argv)
+{
+	std::unordered_map<std::string, std::string> argMap = getCmdLineArgs(argc, argv);
+	std::unordered_map<std::string, std::string>::iterator it;
+	
+	it = argMap.find(RENDER_TARGET_RESOLUTION);
+	if (it != argMap.end())
+	{
+		config.resolution = VkAppConfig::parseResolution(it->second);
+	}
+}
+
+std::unordered_map<std::string, std::string> VkApp::getCmdLineArgs(int argc, char** argv)
+{
+	return std::unordered_map<std::string, std::string>();
+}
+
 void VkApp::run()
 {
 	initWindow();
 	initVulkan();
 	initCamera();
+	setupInputCallbacks();
 	mainLoop();
 }
 
 void VkApp::initCamera()
 {
-	camera.position = CAMERA_POSITION;
-	camera.rotation = glm::quat(Camera::getRotationToTarget(CAMERA_TARGET));
+	camera.frame.origin = CAMERA_POSITION;
+	camera.frame = Frame::lookAtFrame(CAMERA_POSITION, CAMERA_TARGET, CAMERA_UP);
 	camera.aspectRatio = swapChainExtent.width / (float) swapChainExtent.height;
+	camera.target = CAMERA_TARGET;
 	camera.fovy = CAMERA_FOVY;
+	camera.movement = STILL;
 }
 
 void VkApp::initWindow()
@@ -37,6 +61,70 @@ void VkApp::initWindow()
 	glfwSetWindowUserPointer(window, this);
 	glfwSetWindowSizeCallback(window, onWindowResized);
 }
+
+void VkApp::setupInputCallbacks()
+{
+	glfwSetKeyCallback(window, keyboardFunc);
+	glfwSetMouseButtonCallback(window, mouseKeyFunc);
+	glfwSetCursorPosCallback(window, cursorPosFunc);
+}
+
+void VkApp::keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+
+}
+
+void VkApp::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods)
+{
+	if (action == GLFW_RELEASE)
+	{
+		camera.movement = STILL;
+	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+	{
+		if (mods & GLFW_MOD_ALT)
+		{
+			camera.movement = ROTATE;
+		}
+		else
+		{
+			camera.movement = ROTATE_AROUND_TARGET;
+		}
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		camera.movement = PAN;
+	}
+}
+
+void VkApp::cursorPosFunc(GLFWwindow* window, double xpos, double ypos)
+{
+	glm::vec2 deltaPos = { xpos - oldX, ypos - oldY };
+
+	oldX = xpos;
+	oldY = ypos;
+
+	switch (camera.movement)
+	{
+	case ROTATE:
+		camera.rotate(CAMERA_ROT_SCALE * deltaPos);
+		break;
+	case ROTATE_AROUND_TARGET:
+		camera.rotateAroundTarget(CAMERA_ROT_SCALE * deltaPos);
+		break;
+	case PAN:
+		camera.pan(CAMERA_PAN_SCALE * deltaPos);
+		break;
+	case ZOOM:
+		camera.zoom(CAMERA_DOLLY_SCALE * deltaPos.y);
+		break;
+	case STILL:
+	default:
+		break;
+	}
+}
+
+
 
 void VkApp::onWindowResized(GLFWwindow* window, int width, int height)
 {

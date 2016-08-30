@@ -1,15 +1,16 @@
 #define GLFW_INCLUDE_VULKAN
 #include "glfw\glfw3.h"
-#include "GeomData.h"
-#include "VkUtils.h"
-#include "VkObjWrapper.h"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 
-#include <vector>
+#include "Common.h"
+#include "Config.h"
+#include "GeomData.h"
+#include "VkUtils.h"
+#include "VkObjWrapper.h"
 
 #define APPLICATION_NAME "VkApp"
 
@@ -19,8 +20,10 @@
 class VkApp
 {
 public:
+	void init(int argc, char** argv);
 	void run();
 private:
+	VkAppConfig config;
 	GLFWwindow* window;
 	VkObjWrapper<VkInstance> instance { vkDestroyInstance };
 	VkObjWrapper<VkDevice> device { vkDestroyDevice };
@@ -62,7 +65,10 @@ private:
 	VkObjWrapper<VkDeviceMemory> uniformBufferMemory{ device, vkFreeMemory };
 	VkObjWrapper<VkDescriptorPool> descriptorPool { device, vkDestroyDescriptorPool };
 	VkDescriptorSet descriptorSet;
-	Camera camera;
+	
+	static Camera camera;
+	static int oldX;
+	static int oldY;
 
 	void initWindow();
 	void initVulkan();
@@ -94,8 +100,15 @@ private:
 	void drawFrame();
 	void recreateSwapChain();
 	
+	static std::unordered_map<std::string, std::string> getCmdLineArgs(int argc, char** argv);
+
 	void initCamera();
 	void updateCamera();
+	void setupInputCallbacks();
+
+	static void keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void mouseKeyFunc(GLFWwindow* window, int button, int action, int mods);
+	static void cursorPosFunc(GLFWwindow* window, double xpos, double ypos);
 
 	static void onWindowResized(GLFWwindow* window, int width, int height);
 };

@@ -3,12 +3,13 @@
 #include <iostream>
 #include "VkApp.h"
 
-int main()
+int main(int argc, char** argv)
 {
 	VkApp app;
 
 	try
 	{
+		app.init(argc, argv);
 		app.run();
 	}
 	catch (const std::runtime_error& e)

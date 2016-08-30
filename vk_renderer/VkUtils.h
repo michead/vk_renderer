@@ -2,12 +2,7 @@
 
 #include "vulkan\vulkan.h"
 #include "VkObjWrapper.h"
-#include <iostream>
-#include <vector>
-#include <set>
-#include <algorithm>
-#include <fstream>
-#include <string>
+#include "Common.h"
 
 #ifdef NDEBUG
 const bool ENABLE_VALIDATION_LAYERS = false;

@@ -1,33 +1,49 @@
 #pragma once
 
+#include "Common.h"
 #include "Camera.h"
 
-glm::quat Camera::getRotationToTarget(glm::vec3 targetPosition)
-{
-	glm::vec3 targetDirection = glm::normalize(targetPosition - position);
 
-	return glm::quat(glm::vec3(CAMERA_FORWARD), targetDirection);
-}
-
-void Camera::rotateCamera(glm::vec3 rot)
+void Camera::rotate(glm::vec2 rot)
 {
-	rotation *= glm::quat(rot);
+	float phi = atan2(frame.zAxis.z, frame.zAxis.x) + rot.x;
+	float theta = CLAMP(acos(frame.zAxis.y) + rot.y, MIN_THETA, glm::pi<float>() - MIN_THETA);
+	
+	float dist = getFocus();
+
+	glm::vec3 newZ = glm::vec3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi));
+	glm::vec3 newTarget = frame.origin + newZ * dist;
+	
+	frame = Frame::lookAtFrame(frame.origin, newTarget, CAMERA_UP);
+	target = newTarget;
 
 	isDirty = true;
 }
 
-void Camera::rotatateCameraAroundTarget(glm::vec3 target, glm::vec3 rot)
+void Camera::rotateAroundTarget(glm::vec2 rot)
 {
+	float phi = atan2(frame.zAxis.z, frame.zAxis.x) + rot.x;
+	float theta = CLAMP(acos(frame.zAxis.y) + rot.y, MIN_THETA, glm::pi<float>() - MIN_THETA);
+
+	glm::vec3 newZ = glm::vec3(sin(theta) * cos(phi), cos(theta), sin(theta) * sin(phi));
+	glm::vec3 newOrigin = target - newZ * getFocus();
+
+	frame = Frame::lookAtFrame(newOrigin, target, CAMERA_UP);
+
 	isDirty = true;
 }
 
-void Camera::panCamera(glm::vec2 pan)
+void Camera::pan(glm::vec2 pan)
 {
+	frame.origin += frame.xAxis * pan.x + frame.yAxis * pan.y;
+
 	isDirty = true;
 }
 
-void Camera::zoomCamera(float zoom)
+void Camera::zoom(float zoom)
 {
+	frame.origin += frame.zAxis * zoom * CAMERA_DOLLY_SCALE;
+
 	isDirty = true;
 }
 
@@ -36,7 +52,9 @@ void Camera::updateMatrices()
 	if (!isDirty)
 		return;
 
-	viewMatrix = glm::lookAt(position, glm::vec3(CAMERA_FORWARD) * rotation, glm::vec3(CAMERA_UP));
+	glm::vec3 target = frame.origin + getFocus() * frame.zAxis;
+
+	viewMatrix = glm::lookAt(frame.origin, target, CAMERA_UP);
 	projMatrix = glm::perspective(fovy, aspectRatio, CAMERA_NEAR, CAMERA_FAR);
 	projMatrix[1][1] *= -1;
 }
