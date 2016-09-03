@@ -4,12 +4,14 @@
 #include "Camera.h"
 #include "SceneElem.h"
 #include "GeomStructs.h"
+#include "Texture.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tinyobjloader\tiny_obj_loader.h"
 
-class Scene {
+struct Scene {
 public:
+	Scene() { }
 	Scene(std::string path) : path(path) { load(); }
 	~Scene() { cleanup(); }
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common.h"
-#include "VkApp.h"
+#include "VkEngine.h"
 #include "VkObjWrapper.h"
 #include "glm\glm.hpp"
 
@@ -23,11 +23,11 @@ private:
 	std::string name;
 	std::string path;
 
-	VK_WRAP(VkImage) image { VkApp::getDevice(), vkDestroyImage };
-	VK_WRAP(VkImageView) imageView { VkApp::getDevice(), vkDestroyImageView };
-	VK_WRAP(VkDeviceMemory) imageMemory { VkApp::getDevice(), vkFreeMemory };
-	VK_WRAP(VkSampler) sampler { VkApp::getDevice(), vkDestroySampler };
-	VK_WRAP(VkDescriptorSetLayout) descriptorSetLayout { VkApp::getDevice(), vkDestroyDescriptorSetLayout };
+	VK_WRAP(VkImage) image { VkEngine::getInstance()->getDevice(), vkDestroyImage };
+	VK_WRAP(VkImageView) imageView { VkEngine::getInstance()->getDevice(), vkDestroyImageView };
+	VK_WRAP(VkDeviceMemory) imageMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VK_WRAP(VkSampler) sampler { VkEngine::getInstance()->getDevice(), vkDestroySampler };
+	VK_WRAP(VkDescriptorSetLayout) descriptorSetLayout { VkEngine::getInstance()->getDevice(), vkDestroyDescriptorSetLayout };
 
 	void initImage();
 	void initImageView();

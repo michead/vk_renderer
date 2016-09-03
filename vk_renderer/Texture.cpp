@@ -14,11 +14,11 @@ void Texture::initImage()
 		throw std::runtime_error("Failed to load texture image!");
 	}
 
-	VkObjWrapper<VkImage> stagingImage{ VkApp::getDevice(), vkDestroyImage };
-	VkObjWrapper<VkDeviceMemory> stagingImageMemory { VkApp::getDevice(), vkFreeMemory };
+	VK_WRAP(VkImage) stagingImage { VkEngine::getInstance()->getDevice(), vkDestroyImage };
+	VK_WRAP(VkDeviceMemory) stagingImageMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
 	createImage(
-		VkApp::getPhysicalDevice(), 
-		VkApp::getDevice(), texWidth, 
+		VkEngine::getInstance()->getPhysicalDevice(),
+		VkEngine::getInstance()->getDevice(), texWidth,
 		texHeight, 
 		VK_FORMAT_R8G8B8A8_UNORM, 
 		VK_IMAGE_TILING_LINEAR, 
@@ -28,15 +28,15 @@ void Texture::initImage()
 		stagingImageMemory);
 
 	void* data;
-	vkMapMemory(VkApp::getDevice(), stagingImageMemory, 0, imageSize, 0, &data);
+	vkMapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory, 0, imageSize, 0, &data);
 	memcpy(data, pixels, (size_t) imageSize);
-	vkUnmapMemory(VkApp::getDevice(), stagingImageMemory);
+	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory);
 
 	stbi_image_free(pixels);
 
 	createImage(
-		VkApp::getPhysicalDevice(), 
-		VkApp::getDevice(), 
+		VkEngine::getInstance()->getPhysicalDevice(), 
+		VkEngine::getInstance()->getDevice(), 
 		texWidth, 
 		texHeight, 
 		VK_FORMAT_R8G8B8A8_UNORM, 
@@ -47,34 +47,34 @@ void Texture::initImage()
 		imageMemory);
 
 	transitionImageLayout(
-		VkApp::getDevice(), 
-		VkApp::getCommandPool(), 
-		VkApp::getGraphicsQueue(), 
+		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance()->getCommandPool(), 
+		VkEngine::getInstance()->getGraphicsQueue(), 
 		stagingImage, 
 		VK_IMAGE_LAYOUT_PREINITIALIZED, 
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 	
 	transitionImageLayout(
-		VkApp::getDevice(), 
-		VkApp::getCommandPool(), 
-		VkApp::getGraphicsQueue(), 
+		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance()->getCommandPool(), 
+		VkEngine::getInstance()->getGraphicsQueue(), 
 		image, 
 		VK_IMAGE_LAYOUT_PREINITIALIZED, 
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	
 	copyImage(
-		VkApp::getDevice(), 
-		VkApp::getCommandPool(),
-		VkApp::getGraphicsQueue(),
+		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance()->getCommandPool(),
+		VkEngine::getInstance()->getGraphicsQueue(),
 		stagingImage, 
 		image, 
 		texWidth, 
 		texHeight);
 
 	transitionImageLayout(
-		VkApp::getDevice(), 
-		VkApp::getCommandPool(), 
-		VkApp::getGraphicsQueue(), 
+		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance()->getCommandPool(), 
+		VkEngine::getInstance()->getGraphicsQueue(), 
 		image, 
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -82,7 +82,7 @@ void Texture::initImage()
 
 void Texture::initImageView()
 {
-	createImageView(VkApp::getDevice(), image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
+	createImageView(VkEngine::getInstance()->getDevice(), image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
 }
 
 void Texture::initSampler()
@@ -105,7 +105,7 @@ void Texture::initSampler()
 	samplerInfo.minLod = 0.f;
 	samplerInfo.maxLod = 0.f;
 
-	VK_CHECK(vkCreateSampler(VkApp::getDevice(), &samplerInfo, nullptr, &sampler));
+	VK_CHECK(vkCreateSampler(VkEngine::getInstance()->getDevice(), &samplerInfo, nullptr, &sampler));
 }
 
 void Texture::initDescriptorSetLayout()
@@ -130,5 +130,5 @@ void Texture::initDescriptorSetLayout()
 	layoutInfo.bindingCount = bindings.size();
 	layoutInfo.pBindings = bindings.data();
 
-	VK_CHECK(vkCreateDescriptorSetLayout(VkApp::getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
+	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getInstance()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
 }

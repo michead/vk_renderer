@@ -3,7 +3,7 @@
 #include "glm\glm.hpp"
 #include "glm\gtc\quaternion.hpp"
 #include <glm\gtx\vector_angle.hpp>
-#include "3DMathUtils.h"
+#include "MathUtils.h"
 
 #define CAMERA_POSITION		{ 0, 1, 3 }
 #define CAMERA_TARGET		{ 0, 0, 0 }

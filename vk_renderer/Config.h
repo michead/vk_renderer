@@ -5,7 +5,7 @@
 #define DEFAULT_WINDOW_WIDTH	1280
 #define DEFAULT_WINDOW_HEIGHT	720
 
-struct VkAppConfig {
+struct VkEngineConfig {
 public:
 	glm::vec2	resolution;
 	bool		fullscreen;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VkApp.h"
+#include "VkEngine.h"
 #include "VkObjWrapper.h"
 #include "GeomStructs.h"
 
@@ -23,10 +23,10 @@ private:
 	Mesh mesh;
 	Material material;
 
-	VK_WRAP(VkBuffer) vertexBuffer { VkApp::getDevice(), vkDestroyBuffer };
-	VK_WRAP(VkDeviceMemory) vertexBufferMemory { VkApp::getDevice(), vkFreeMemory };
-	VK_WRAP(VkBuffer) indexBuffer{ VkApp::getDevice(), vkDestroyBuffer };
-	VK_WRAP(VkDeviceMemory) indexBufferMemory{ VkApp::getDevice(), vkFreeMemory };
+	VK_WRAP(VkBuffer) vertexBuffer { VkEngine::getInstance()->getDevice(), vkDestroyBuffer };
+	VK_WRAP(VkDeviceMemory) vertexBufferMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VK_WRAP(VkBuffer) indexBuffer { VkEngine::getInstance()->getDevice(), vkDestroyBuffer };
+	VK_WRAP(VkDeviceMemory) indexBufferMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
 
 	virtual void initVertexBuffer();
 	virtual void initIndexBuffer();

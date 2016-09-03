@@ -22,7 +22,7 @@
     <ProjectGuid>{8032FFA5-0A05-44B4-AA55-AB5029D82060}</ProjectGuid>
     <RootNamespace>vk_renderer</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-    <ProjectName>VkApp</ProjectName>
+    <ProjectName>VkEngine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -147,12 +147,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="RenderPass.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneElem.cpp" />
     <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="VkApp.cpp" />
+    <ClCompile Include="VkEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MathUtils.h" />
@@ -167,7 +168,7 @@
     <ClInclude Include="SceneElem.h" />
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="Texture.h" />
-    <ClInclude Include="VkApp.h" />
+    <ClInclude Include="VkEngine.h" />
     <ClInclude Include="VkObjWrapper.h" />
     <ClInclude Include="VkUtils.h" />
   </ItemGroup>
