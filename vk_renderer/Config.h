@@ -2,6 +2,9 @@
 
 #include "glm\glm.hpp"
 
+#define DEFAULT_WINDOW_WIDTH	1280
+#define DEFAULT_WINDOW_HEIGHT	720
+
 struct VkAppConfig {
 public:
 	glm::vec2	resolution;

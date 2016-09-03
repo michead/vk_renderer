@@ -8,67 +8,76 @@
 
 #include "Common.h"
 #include "Config.h"
-#include "GeomData.h"
+#include "MathUtils.h"
+#include "GeomStructs.h"
 #include "VkUtils.h"
 #include "VkObjWrapper.h"
+#include "RenderPass.h"
+#include "Scene.h"
 
 #define APPLICATION_NAME "VkApp"
-
-#define WINDOW_WIDTH	1280
-#define WINDOW_HEIGHT	720
 
 class VkApp
 {
 public:
 	void init(int argc, char** argv);
 	void run();
+
+	static VK_WRAP(VkDevice) getDevice() { return device; }
+	static VK_WRAP(VkPhysicalDevice) getPhysicalDevice() { return physicalDevice; }
+	
+	static VK_WRAP(VkCommandPool) getCommandPool() { return commandPool; }
+
+	static VkQueue getGraphicsQueue() { return graphicsQueue; }
+	static VkQueue getPresentationQueue() { return presentationQueue; }
+
+	static VkFormat getSwapchainImageFormat() { return swapchainImageFormat; }
+	static VkExtent2D getSwapchainExtent() { return swapchainExtent; }
+
+
+	static VK_VEC_WRAP(VkImageView)& getSwapchainImageViews() { return swapchainImageViews; }
+	static size_t getNumSwapchains() { return swapchainImageViews.size(); }
+
+	static Scene& getScene() { return scene; }
+
+	static VK_WRAP(VkSwapchainKHR)& getSwapchain() { return swapchain; }
+	static VK_WRAP(VkSemaphore)& getImageAvailableSemaphore() { return imageAvailableSemaphore; }
+	static VK_WRAP(VkSemaphore)& getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
+
+	static VK_WRAP(VkDescriptorPool)& getDescriptorPool() { return descriptorPool; }
+
 private:
 	VkAppConfig config;
 	GLFWwindow* window;
-	VkObjWrapper<VkInstance> instance { vkDestroyInstance };
-	VkObjWrapper<VkDevice> device { vkDestroyDevice };
-	VkObjWrapper<VkDebugReportCallbackEXT> callback { instance, DestroyDebugReportCallbackEXT };
-	VkObjWrapper<VkSurfaceKHR> surface { instance, vkDestroySurfaceKHR };
-	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkQueue graphicsQueue;
-	VkQueue presentationQueue;
-	VkObjWrapper<VkSwapchainKHR> swapChain { device, vkDestroySwapchainKHR };
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
-	std::vector<VkObjWrapper<VkImageView>> swapChainImageViews;
-	VkObjWrapper<VkRenderPass> renderPass { device, vkDestroyRenderPass };
-	VkObjWrapper<VkDescriptorSetLayout> descriptorSetLayout { device, vkDestroyDescriptorSetLayout };
-	VkObjWrapper<VkPipelineLayout> pipelineLayout { device, vkDestroyPipelineLayout };
-	VkObjWrapper<VkPipeline> graphicsPipeline { device, vkDestroyPipeline };
-	std::vector<VkObjWrapper<VkFramebuffer>> swapChainFramebuffers;
-	VkObjWrapper<VkCommandPool> commandPool { device, vkDestroyCommandPool };
-	VkObjWrapper<VkImage> textureImage { device, vkDestroyImage };
-	VkObjWrapper<VkImageView> textureImageView { device, vkDestroyImageView };
-	VkObjWrapper<VkSampler> textureSampler { device, vkDestroySampler };
-	VkObjWrapper<VkDeviceMemory> textureImageMemory { device, vkFreeMemory };
-	VkObjWrapper<VkImage> depthImage { device, vkDestroyImage };
-	VkObjWrapper<VkDeviceMemory> depthImageMemory { device, vkFreeMemory };
-	VkObjWrapper<VkImageView> depthImageView { device, vkDestroyImageView };
-	std::vector<VkCommandBuffer> commandBuffers;
-	VkObjWrapper<VkSemaphore> imageAvailableSemaphore { device, vkDestroySemaphore };
-	VkObjWrapper<VkSemaphore> renderFinishedSemaphore { device, vkDestroySemaphore };
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-	VkObjWrapper<VkBuffer> vertexBuffer { device, vkDestroyBuffer };
-	VkObjWrapper<VkDeviceMemory> vertexBufferMemory { device, vkFreeMemory };
-	VkObjWrapper<VkBuffer> indexBuffer { device, vkDestroyBuffer };
-	VkObjWrapper<VkDeviceMemory> indexBufferMemory { device, vkFreeMemory };
-	VkObjWrapper<VkBuffer> uniformStagingBuffer{ device, vkDestroyBuffer };
-	VkObjWrapper<VkDeviceMemory> uniformStagingBufferMemory{ device, vkFreeMemory };
-	VkObjWrapper<VkBuffer> uniformBuffer{ device, vkDestroyBuffer };
-	VkObjWrapper<VkDeviceMemory> uniformBufferMemory{ device, vkFreeMemory };
-	VkObjWrapper<VkDescriptorPool> descriptorPool { device, vkDestroyDescriptorPool };
-	VkDescriptorSet descriptorSet;
+
+	static VK_WRAP(VkInstance) instance;
+	static VK_WRAP(VkDevice) device;
+	static VK_WRAP(VkDebugReportCallbackEXT) callback;
+	static VK_WRAP(VkSurfaceKHR) surface;
+	static VkPhysicalDevice physicalDevice;
+	static VK_WRAP(VkCommandPool) commandPool;
+
+	static VkQueue graphicsQueue;
+	static VkQueue presentationQueue;
+
+	static VkFormat swapchainImageFormat;
+	static VkExtent2D swapchainExtent;
+
+	static VK_WRAP(VkSwapchainKHR) swapchain;
+	static std::vector<VkImage> swapchainImages;
+	static VK_VEC_WRAP(VkImageView) swapchainImageViews;
 	
-	static Camera camera;
+	static VK_WRAP(VkDescriptorPool) descriptorPool;
+
+	static VK_WRAP(VkSemaphore) imageAvailableSemaphore;
+	static VK_WRAP(VkSemaphore) renderFinishedSemaphore;
+
+	std::vector<RenderPass> renderPasses;
+	
 	static int oldX;
 	static int oldY;
+
+	static Scene scene;
 
 	void initWindow();
 	void initVulkan();
@@ -80,29 +89,19 @@ private:
 	void createLogicalDevice();
 	void createSwapChain();
 	void createImageViews();
-	void createRenderPass();
-	void createDescriptorSetLayout();
-	void createGraphicsPipeline();
-	void createFramebuffers();
+
 	void createCommandPool();
-	void createTextureImage();
-	void createTextureImageView();
-	void createTextureSampler();
-	void createDepthResources();
-	void loadModels();
-	void createVertexBuffer();
-	void createIndexBuffer();
-	void createUniformBuffer();
 	void createDescriptorPool();
-	void createDescriptorSet();
-	void createCommandBuffers();
+
 	void createSemaphores();
 	
+	void initRenderPasses();
+
 	void draw();
-	void recreateSwapChain();
+	void recreateSwapchain();
 
 	void initCamera();
-	void updateCamera();
+	void updateRenderPassData();
 	void setupInputCallbacks();
 
 	static void keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods);
