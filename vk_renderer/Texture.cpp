@@ -2,6 +2,18 @@
 
 #include "Texture.h"
 
+#include <array>
+#include <string>
+
+#include "VkUtils.h"
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include "glm\glm.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb\stb_image.h>
+
 
 void Texture::initImage()
 {
@@ -14,8 +26,8 @@ void Texture::initImage()
 		throw std::runtime_error("Failed to load texture image!");
 	}
 
-	VK_WRAP(VkImage) stagingImage { VkEngine::getInstance()->getDevice(), vkDestroyImage };
-	VK_WRAP(VkDeviceMemory) stagingImageMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VkImage stagingImage;
+	VkDeviceMemory stagingImageMemory;
 	createImage(
 		VkEngine::getInstance()->getPhysicalDevice(),
 		VkEngine::getInstance()->getDevice(), texWidth,
@@ -105,7 +117,7 @@ void Texture::initSampler()
 	samplerInfo.minLod = 0.f;
 	samplerInfo.maxLod = 0.f;
 
-	VK_CHECK(vkCreateSampler(VkEngine::getInstance()->getDevice(), &samplerInfo, nullptr, &sampler));
+	vkCreateSampler(VkEngine::getInstance()->getDevice(), &samplerInfo, nullptr, &sampler);
 }
 
 void Texture::initDescriptorSetLayout()
@@ -130,5 +142,5 @@ void Texture::initDescriptorSetLayout()
 	layoutInfo.bindingCount = bindings.size();
 	layoutInfo.pBindings = bindings.data();
 
-	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getInstance()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
+	vkCreateDescriptorSetLayout(VkEngine::getInstance()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout);
 }

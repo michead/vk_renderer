@@ -1,11 +1,14 @@
 #include "SceneElem.h"
 
+#include "VkUtils.h"
+
+
 void SceneElem::initVertexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(mesh.vertices[0]) * mesh.vertices.size();
 
-	VkObjWrapper<VkBuffer> stagingBuffer { VkEngine::getInstance()->getDevice(), vkDestroyBuffer };
-	VkObjWrapper<VkDeviceMemory> stagingBufferMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
 	createBuffer(
 		VkEngine::getInstance()->getPhysicalDevice(), 
 		VkEngine::getInstance()->getDevice(), 
@@ -41,8 +44,8 @@ void SceneElem::initIndexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 
-	VkObjWrapper<VkBuffer> stagingBuffer{ VkEngine::getInstance()->getDevice(), vkDestroyBuffer };
-	VkObjWrapper<VkDeviceMemory> stagingBufferMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
 	createBuffer(
 		VkEngine::getInstance()->getPhysicalDevice(), 
 		VkEngine::getInstance()->getDevice(), 

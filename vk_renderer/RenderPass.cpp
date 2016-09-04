@@ -1,5 +1,13 @@
 #include "RenderPass.h"
 
+#include <unordered_map>
+
+#include "GeomStructs.h"
+#include "Scene.h"
+#include "SceneElem.h"
+#include "Texture.h"
+#include "VkUtils.h"
+
 
 void RenderPass::init()
 {
@@ -55,7 +63,7 @@ void RenderPass::init()
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	VK_CHECK(vkCreateRenderPass(VkEngine::getInstance()->getDevice(), &renderPassInfo, nullptr, &renderPass));
+	vkCreateRenderPass(VkEngine::getInstance()->getDevice(), &renderPassInfo, nullptr, &renderPass);
 }
 
 void RenderPass::initGraphicsPipeline()
@@ -63,8 +71,8 @@ void RenderPass::initGraphicsPipeline()
 	std::vector<char> vsCode = readFile(vsPath);
 	std::vector<char> fsCode = readFile(fsPath);
 
-	VkObjWrapper<VkShaderModule> vsModule{ VkEngine::getInstance()->getDevice(), vkDestroyShaderModule };
-	VkObjWrapper<VkShaderModule> fsModule{ VkEngine::getInstance()->getDevice(), vkDestroyShaderModule };
+	VkShaderModule vsModule;
+	VkShaderModule fsModule;
 
 	createShaderModule(VkEngine::getInstance()->getDevice(), vsCode, vsModule);
 	createShaderModule(VkEngine::getInstance()->getDevice(), fsCode, fsModule);
@@ -86,8 +94,7 @@ void RenderPass::initGraphicsPipeline()
 	if (!gsPath.empty())
 	{
 		std::vector<char> gsCode = readFile(gsPath);
-
-		VK_WRAP(VkShaderModule) gsModule { VkEngine::getInstance()->getDevice(), vkDestroyShaderModule };
+		VkShaderModule gsModule;
 
 		createShaderModule(VkEngine::getInstance()->getDevice(), gsCode, gsModule);
 
@@ -209,7 +216,7 @@ void RenderPass::initGraphicsPipeline()
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pPushConstantRanges = 0;
 
-	VK_CHECK(vkCreatePipelineLayout(VkEngine::getInstance()->getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout));
+	vkCreatePipelineLayout(VkEngine::getInstance()->getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -230,7 +237,7 @@ void RenderPass::initGraphicsPipeline()
 	pipelineInfo.basePipelineIndex = -1;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 
-	VK_CHECK(vkCreateGraphicsPipelines(VkEngine::getInstance()->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
+	vkCreateGraphicsPipelines(VkEngine::getInstance()->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
 }
 
 void RenderPass::initDepthResources()
@@ -262,14 +269,14 @@ void RenderPass::initDepthResources()
 
 void RenderPass::initFramebuffers()
 {
-	swapchainFramebuffers.resize(VkEngine::getInstance()->getNumSwapchains(), VkObjWrapper<VkFramebuffer> { VkEngine::getInstance()->getDevice(), vkDestroyFramebuffer });
+	auto imageViews = VkEngine::getInstance()->getSwapchainImageViews();
+	size_t numImageViews = imageViews.size();
 
-	for (size_t i = 0; i < VkEngine::getInstance()->getNumSwapchains(); i++)
+	swapchainFramebuffers.resize(numImageViews);
+
+	for (size_t i = 0; i < numImageViews; i++)
 	{
-		std::array<VkImageView, 2> attachments = {
-			VkEngine::getInstance()->getSwapchainImageViews()[i],
-			depthImageView
-		};
+		std::array<VkImageView, 2> attachments = { imageViews[i], depthImageView };
 
 		VkFramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -280,7 +287,7 @@ void RenderPass::initFramebuffers()
 		framebufferInfo.height = VkEngine::getInstance()->getSwapchainExtent().height;
 		framebufferInfo.layers = 1;
 
-		VK_CHECK(vkCreateFramebuffer(VkEngine::getInstance()->getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]));
+		vkCreateFramebuffer(VkEngine::getInstance()->getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]);
 	}
 }
 
@@ -299,7 +306,7 @@ void RenderPass::createCommandBuffers()
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
-	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getInstance()->getDevice(), &allocInfo, commandBuffers.data()));
+	vkAllocateCommandBuffers(VkEngine::getInstance()->getDevice(), &allocInfo, commandBuffers.data());
 
 	for (size_t i = 0; i < commandBuffers.size(); i++)
 	{
@@ -308,7 +315,7 @@ void RenderPass::createCommandBuffers()
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 		beginInfo.pInheritanceInfo = nullptr;
 
-		VK_CHECK(vkBeginCommandBuffer(commandBuffers[i], &beginInfo));
+		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -327,7 +334,7 @@ void RenderPass::createCommandBuffers()
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		for (SceneElem elem : VkEngine::getInstance()->getScene().getElems())
+		for (SceneElem elem : VkEngine::getInstance()->getScene()->getElems())
 		{
 			VkBuffer vertexBuffers[] = { elem.getVertexBuffer() };
 			VkDeviceSize offsets[] = { 0 };
@@ -340,7 +347,7 @@ void RenderPass::createCommandBuffers()
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
-		VK_CHECK(vkEndCommandBuffer(commandBuffers[i]));
+		vkEndCommandBuffer(commandBuffers[i]);
 	}
 }
 
@@ -363,7 +370,7 @@ VkResult RenderPass::run()
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		VK_CHECK(vkQueueSubmit(VkEngine::getInstance()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+		vkQueueSubmit(VkEngine::getInstance()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
 
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -385,8 +392,8 @@ void RenderPass::updateData()
 {
 	UniformBufferObject ubo = {};
 	ubo.model = glm::mat4(); // Useless
-	ubo.view = VkEngine::getInstance()->getScene().getCamera().getViewMatrix();
-	ubo.proj = VkEngine::getInstance()->getScene().getCamera().getProjMatrix();
+	ubo.view = VkEngine::getInstance()->getScene()->getCamera()->getViewMatrix();
+	ubo.proj = VkEngine::getInstance()->getScene()->getCamera()->getProjMatrix();
 
 	void* data;
 	vkMapMemory(VkEngine::getInstance()->getDevice(), uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);
@@ -405,7 +412,7 @@ void RenderPass::updateData()
 void RenderPass::createDescriptorSet()
 {
 	std::unordered_map<std::string, Texture*>::iterator it;
-	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getInstance()->getScene().getTextureMap();
+	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getInstance()->getScene()->getTextureMap();
 	std::vector<Texture*> textures(textureMap.size());
 
 	uint16_t i = 0;
@@ -421,12 +428,11 @@ void RenderPass::createDescriptorSet()
 	allocInfo.descriptorSetCount = layouts.size();
 	allocInfo.pSetLayouts = layouts.data();
 
-	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getInstance()->getDevice(), &allocInfo, &descriptorSet));
+	vkAllocateDescriptorSets(VkEngine::getInstance()->getDevice(), &allocInfo, &descriptorSet);
 
-	uint16_t i = 0;
+	i = 0;
 	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * layouts.size());
-	std::unordered_map<std::string, Texture*>::iterator it;
-	for (it = VkEngine::getInstance()->getScene().getTextureMap().begin(); it != VkEngine::getInstance()->getScene().getTextureMap().end(); it++)
+	for (it = VkEngine::getInstance()->getScene()->getTextureMap().begin(); it != VkEngine::getInstance()->getScene()->getTextureMap().end(); it++)
 	{
 		VkDescriptorBufferInfo bufferInfo = {};
 		bufferInfo.buffer = uniformBuffer;

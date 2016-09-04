@@ -1,9 +1,18 @@
 #include "VkEngine.h"
 
+#include <set>
+
+#include "Config.h"
+#include "RenderPass.h"
+#include "Scene.h"
+#include "VkUtils.h"
+
+
+VkEngine* VkEngine::engine = nullptr;
 
 void VkEngine::init(int argc, char** argv)
 {
-	config.parseCmdLineArgs(argc, argv);
+	config->parseCmdLineArgs(argc, argv);
 }
 
 void VkEngine::run()
@@ -17,12 +26,14 @@ void VkEngine::run()
 
 void VkEngine::initCamera()
 {
-	scene.getCamera().frame.origin = CAMERA_POSITION;
-	scene.getCamera().frame = Frame::lookAtFrame(CAMERA_POSITION, CAMERA_TARGET, CAMERA_UP);
-	scene.getCamera().aspectRatio = swapchainExtent.width / (float) swapchainExtent.height;
-	scene.getCamera().target = CAMERA_TARGET;
-	scene.getCamera().fovy = CAMERA_FOVY;
-	scene.getCamera().movement = STILL;
+	Camera* camera = scene->getCamera();
+
+	camera->frame.origin = CAMERA_POSITION;
+	camera->frame = Frame::lookAtFrame(CAMERA_POSITION, CAMERA_TARGET, CAMERA_UP);
+	camera->aspectRatio = swapchainExtent.width / (float) swapchainExtent.height;
+	camera->target = CAMERA_TARGET;
+	camera->fovy = CAMERA_FOVY;
+	camera->movement = STILL;
 }
 
 void VkEngine::initWindow()
@@ -32,7 +43,7 @@ void VkEngine::initWindow()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	window = glfwCreateWindow(config.resolution.x, config.resolution.y, APPLICATION_NAME, nullptr, nullptr);
+	window = glfwCreateWindow(config->resolution.x, config->resolution.y, APPLICATION_NAME, nullptr, nullptr);
 
 	glfwSetWindowUserPointer(window, this);
 	glfwSetWindowSizeCallback(window, onWindowResized);
@@ -52,25 +63,26 @@ void VkEngine::keyboardFunc(GLFWwindow* window, int key, int scancode, int actio
 
 void VkEngine::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods)
 {
-	Camera camera = VkEngine::getInstance()->getScene().getCamera();
+	Camera* camera = VkEngine::getInstance()->getScene()->getCamera();
+	
 	if (action == GLFW_RELEASE)
 	{
-		camera.movement = STILL;
+		camera->movement = STILL;
 	}
 	else if (button == GLFW_MOUSE_BUTTON_RIGHT)
 	{
 		if (mods & GLFW_MOD_ALT)
 		{
-			camera.movement = ROTATE;
+			camera->movement = ROTATE;
 		}
 		else
 		{
-			camera.movement = ROTATE_AROUND_TARGET;
+			camera->movement = ROTATE_AROUND_TARGET;
 		}
 	}
 	else if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
-		camera.movement = PAN;
+		camera->movement = PAN;
 	}
 }
 
@@ -80,20 +92,21 @@ void VkEngine::cursorPosFunc(GLFWwindow* window, double xpos, double ypos)
 	glm::vec2 deltaPos = { xpos - oldMousePos.x, ypos - oldMousePos.y };
 	VkEngine::getInstance()->setOldMousePos({ xpos, ypos });
 
-	Scene scene = VkEngine::getInstance()->getScene();
-	switch (scene.getCamera().movement)
+	Camera* camera = VkEngine::getInstance()->getScene()->getCamera();
+
+	switch (camera->movement)
 	{
 	case ROTATE:
-		scene.getCamera().rotate(CAMERA_ROT_SCALE * deltaPos);
+		camera->rotate(CAMERA_ROT_SCALE * deltaPos);
 		break;
 	case ROTATE_AROUND_TARGET:
-		scene.getCamera().rotateAroundTarget(CAMERA_ROT_SCALE * deltaPos);
+		camera->rotateAroundTarget(CAMERA_ROT_SCALE * deltaPos);
 		break;
 	case PAN:
-		scene.getCamera().pan(CAMERA_PAN_SCALE * deltaPos);
+		camera->pan(CAMERA_PAN_SCALE * deltaPos);
 		break;
 	case ZOOM:
-		scene.getCamera().zoom(CAMERA_DOLLY_SCALE * deltaPos.y);
+		camera->zoom(CAMERA_DOLLY_SCALE * deltaPos.y);
 		break;
 	case STILL:
 	default:
@@ -144,7 +157,7 @@ void VkEngine::createInstance()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
+	vkCreateInstance(&createInfo, nullptr, &instance);
 }
 
 void VkEngine::setupDebugCallback()
@@ -157,12 +170,12 @@ void VkEngine::setupDebugCallback()
 	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	createInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT) debugCallback;
 
-	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
+	CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback);
 }
 
 void VkEngine::createSurface()
 {
-	VK_CHECK(glfwCreateWindowSurface(instance, window, nullptr, &surface));
+	glfwCreateWindowSurface(instance, window, nullptr, &surface);
 }
 
 void VkEngine::initVulkan()
@@ -177,15 +190,7 @@ void VkEngine::initVulkan()
 	createCommandPool();
 	createDescriptorPool();
 	createSemaphores();
-
 	initRenderPasses();
-
-	/*
-	createRenderPass();
-	createDescriptorSetLayout();
-	createGraphicsPipeline();
-	createCommandBuffers();
-	*/
 }
 
 void VkEngine::mainLoop()
@@ -270,7 +275,7 @@ void VkEngine::createLogicalDevice()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
+	vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
 
 	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, indices.presentationFamily, 0, &presentationQueue);
@@ -282,7 +287,7 @@ void VkEngine::createSwapChain()
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 	VkPresentModeKHR presentMode = chooseSwapPresentationMode(swapChainSupport.presentationModes);
-	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, config.resolution.x, config.resolution.y);
+	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, config->resolution.x, config->resolution.y);
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
@@ -324,13 +329,13 @@ void VkEngine::createSwapChain()
 	createInfo.oldSwapchain = oldSwapchain;
 
 	VkSwapchainKHR newSwapChain;
-	VK_CHECK(vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain));
+	vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain);
 
 	*&swapchain = newSwapChain;
 
 	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
 	swapchainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, (VkImage*)swapchainImages.data());
+	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
 
 	swapchainImageFormat = surfaceFormat.format;
 	swapchainExtent = extent;
@@ -338,7 +343,7 @@ void VkEngine::createSwapChain()
 
 void VkEngine::createImageViews()
 {
-	swapchainImageViews.resize(swapchainImages.size(), VkObjWrapper<VkImageView> {device, vkDestroyImageView});
+	swapchainImageViews.resize(swapchainImages.size());
 
 	for (uint32_t i = 0; i < swapchainImages.size(); i++)
 	{
@@ -354,7 +359,7 @@ void VkEngine::createCommandPool()
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 
-	VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
+	vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool);
 }
 
 void VkEngine::draw()
@@ -375,12 +380,12 @@ void VkEngine::draw()
 	}
 	else
 	{
-		VK_CHECK(result);
+		// result;
 	}
 	
-	for (RenderPass renderPass : renderPasses)
+	for (RenderPass* renderPass : renderPasses)
 	{
-		VkResult result = renderPass.run();
+		VkResult result = renderPass->run();
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 		{
@@ -388,7 +393,7 @@ void VkEngine::draw()
 		}
 		else
 		{
-			VK_CHECK(result);
+			// result;
 		}
 	}
 }
@@ -398,8 +403,8 @@ void VkEngine::createSemaphores()
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-	VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore));
-	VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore));
+	vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore);
+	vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore);
 }
 
 void VkEngine::recreateSwapchain()
@@ -408,24 +413,16 @@ void VkEngine::recreateSwapchain()
 
 	createSwapChain();
 	createImageViews();
-
 	initRenderPasses();
-	
-	/*
-	createGraphicsPipeline();
-	createDepthResources();
-	createFramebuffers();
-	createCommandBuffers();
-	*/
 }
 
 void VkEngine::updateBufferData()
 {
-	scene.getCamera().updateMatrices();
+	scene->getCamera()->updateMatrices();
 
-	for (RenderPass renderPass : renderPasses)
+	for (RenderPass* renderPass : renderPasses)
 	{
-		renderPass.updateData();
+		renderPass->updateData();
 	}
 }
 
@@ -443,25 +440,10 @@ void VkEngine::createDescriptorPool()
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = 1;
 
-	VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool));
+	vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool);
 }
 
 void VkEngine::initRenderPasses()
 {
 
 }
-
-VK_WRAP(VkDevice) VkEngine::getDevice() { return device; }
-VK_WRAP(VkPhysicalDevice) VkEngine::getPhysicalDevice() { return physicalDevice; }
-VK_WRAP(VkCommandPool) VkEngine::getCommandPool() { return commandPool; }
-VkQueue VkEngine::getGraphicsQueue() { return graphicsQueue; }
-VkQueue VkEngine::getPresentationQueue() { return presentationQueue; }
-VkFormat VkEngine::getSwapchainImageFormat() { return swapchainImageFormat; }
-VkExtent2D VkEngine::getSwapchainExtent() { return swapchainExtent; }
-VK_VEC_WRAP(VkImageView)& VkEngine::getSwapchainImageViews() { return swapchainImageViews; }
-size_t VkEngine::getNumSwapchains() { return swapchainImageViews.size(); }
-Scene& VkEngine::getScene() { return scene; }
-VK_WRAP(VkSwapchainKHR)& VkEngine::getSwapchain() { return swapchain; }
-VK_WRAP(VkSemaphore)& VkEngine::getImageAvailableSemaphore() { return imageAvailableSemaphore; }
-VK_WRAP(VkSemaphore)& VkEngine::getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
-VK_WRAP(VkDescriptorPool)& VkEngine::getDescriptorPool() { return descriptorPool; }

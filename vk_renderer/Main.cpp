@@ -1,7 +1,7 @@
-#define GLFW_INCLUDE_VULKAN
-#include <glfw/glfw3.h>
 #include <iostream>
+
 #include "VkEngine.h"
+
 
 int main(int argc, char** argv)
 {

@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Common.h"
-#include "Camera.h"
+#include <unordered_map>
+
 #include "SceneElem.h"
 #include "GeomStructs.h"
 #include "Texture.h"
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tinyobjloader\tiny_obj_loader.h"
+
+struct Camera;
+
 
 struct Scene {
 public:
@@ -18,7 +19,7 @@ public:
 	std::vector<SceneElem>& getElems() { return elems; }
 	std::vector<Material>& getMaterials() { return materials; }
 	std::vector<Light>& getLights() { return lights; }
-	Camera& getCamera() { return camera; }
+	Camera* getCamera() { return camera; }
 	std::unordered_map<std::string, Texture*>& getTextureMap() { return textureMap; }
 
 private:
@@ -27,7 +28,7 @@ private:
 	std::vector<Material> materials;
 	std::unordered_map<std::string, Texture*> textureMap;
 	std::vector<Light> lights;
-	Camera camera;
+	Camera* camera;
 	
 	void load();
 	void cleanup();

@@ -1,11 +1,11 @@
 #pragma once
 
 #include "VkEngine.h"
-#include "VkObjWrapper.h"
-#include "Common.h"
-#include "Texture.h"
 
 #define SHADER_MAIN "main"
+
+
+struct Texture;
 
 
 class RenderPass {
@@ -22,31 +22,27 @@ protected:
 	std::string gsPath;
 	std::string fsPath;
 
-	VkEngine engine;
-
-	VK_VEC_WRAP(VkFramebuffer) swapchainFramebuffers;
+	std::vector<VkFramebuffer> swapchainFramebuffers;
 	
-	VK_WRAP(VkImage) depthImage { VkEngine::getInstance()->getDevice(), vkDestroyImage };
-	VK_WRAP(VkImageView) depthImageView { VkEngine::getInstance()->getDevice(), vkDestroyImageView };
-	VK_WRAP(VkDeviceMemory) depthImageMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VkImage depthImage;
+	VkImageView depthImageView;
+	VkDeviceMemory depthImageMemory;
 
-	VK_WRAP(VkRenderPass) renderPass { VkEngine::getInstance()->getDevice(), vkDestroyRenderPass };
-	VK_WRAP(VkPipelineLayout) pipelineLayout { VkEngine::getInstance()->getDevice(), vkDestroyPipelineLayout };
-	VK_WRAP(VkPipeline) graphicsPipeline { VkEngine::getInstance()->getDevice(), vkDestroyPipeline };
+	VkRenderPass renderPass;
+	VkPipelineLayout pipelineLayout;
+	VkPipeline graphicsPipeline;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
-	VK_WRAP(VkBuffer) uniformStagingBuffer { VkEngine::getInstance()->getDevice(), vkDestroyBuffer };
-	VK_WRAP(VkDeviceMemory) uniformStagingBufferMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
-	VK_WRAP(VkBuffer) uniformBuffer { VkEngine::getInstance()->getDevice(), vkDestroyBuffer };
-	VK_WRAP(VkDeviceMemory) uniformBufferMemory { VkEngine::getInstance()->getDevice(), vkFreeMemory };
+	VkBuffer uniformStagingBuffer;
+	VkDeviceMemory uniformStagingBufferMemory;
+	VkBuffer uniformBuffer;
+	VkDeviceMemory uniformBufferMemory;
 
 	std::vector<VkDescriptorSetLayout> layouts;
 	VkDescriptorSet descriptorSet;
 
 	static std::vector<VkDescriptorSetLayout>& getDescriptorSetLayouts(std::vector<Texture*> textures);
-
-	virtual void initGraphicsPipeline();
 
 	virtual void createUniformBuffer();
 	virtual void createDescriptorSet();
@@ -54,6 +50,5 @@ protected:
 
 	virtual void initFramebuffers();
 	virtual void initDepthResources();
-
 	virtual void initGraphicsPipeline();
 };

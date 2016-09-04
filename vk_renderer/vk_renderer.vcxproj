@@ -158,7 +158,6 @@
   <ItemGroup>
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="Common.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GeomStructs.h" />
@@ -169,7 +168,6 @@
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VkEngine.h" />
-    <ClInclude Include="VkObjWrapper.h" />
     <ClInclude Include="VkUtils.h" />
   </ItemGroup>
   <ItemGroup>

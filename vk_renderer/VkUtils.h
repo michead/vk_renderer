@@ -1,8 +1,14 @@
 #pragma once
 
-#include "vulkan\vulkan.h"
-#include "VkObjWrapper.h"
-#include "Common.h"
+#include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <set>
+#include <string>
+#include <vector>
+
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #ifdef NDEBUG
 const bool ENABLE_VALIDATION_LAYERS = false;
@@ -337,14 +343,14 @@ inline std::vector<char> readFile(const std::string& filename)
 	return buffer;
 }
 
-inline void createShaderModule(VkDevice device, const std::vector<char>& code, VkObjWrapper<VkShaderModule>& shaderModule)
+inline void createShaderModule(VkDevice device, const std::vector<char>& code, VkShaderModule& shaderModule)
 {
 	VkShaderModuleCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	createInfo.codeSize = code.size();
 	createInfo.pCode = (uint32_t*) code.data();
 
-	VK_CHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule));
+	vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
 }
 
 inline uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -368,8 +374,8 @@ inline void createBuffer(
 	VkDevice device, VkDeviceSize size, 
 	VkBufferUsageFlags usage, 
 	VkMemoryPropertyFlags properties, 
-	VkObjWrapper<VkBuffer>& buffer, 
-	VkObjWrapper<VkDeviceMemory>& bufferMemory)
+	VkBuffer& buffer, 
+	VkDeviceMemory& bufferMemory)
 {
 	VkBufferCreateInfo bufferInfo = {};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -377,7 +383,7 @@ inline void createBuffer(
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	VK_CHECK(vkCreateBuffer(device, &bufferInfo, nullptr, &buffer));
+	vkCreateBuffer(device, &bufferInfo, nullptr, &buffer);
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -387,7 +393,7 @@ inline void createBuffer(
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
-	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory));
+	vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory);
 
 	vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
@@ -453,8 +459,8 @@ inline void createImage(
 	VkImageTiling tiling, 
 	VkImageUsageFlags usage, 
 	VkMemoryPropertyFlags properties, 
-	VkObjWrapper<VkImage>& image, 
-	VkObjWrapper<VkDeviceMemory>& imageMemory)
+	VkImage& image, 
+	VkDeviceMemory& imageMemory)
 {
 	VkImageCreateInfo imageInfo = {};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -471,7 +477,7 @@ inline void createImage(
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	VK_CHECK(vkCreateImage(device, &imageInfo, nullptr, &image));
+	vkCreateImage(device, &imageInfo, nullptr, &image);
 
 	VkMemoryRequirements memRequirements;
 	vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -481,7 +487,7 @@ inline void createImage(
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
-	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory));
+	vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory);
 
 	vkBindImageMemory(device, image, imageMemory, 0);
 }
@@ -601,7 +607,7 @@ inline void createImageView(
 	VkDevice device, 
 	VkImage image, 
 	VkFormat format, 
-	VkImageAspectFlags aspectFlags, VkObjWrapper<VkImageView>& imageView)
+	VkImageAspectFlags aspectFlags, VkImageView& imageView)
 {
 	VkImageViewCreateInfo viewInfo = {};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -614,7 +620,7 @@ inline void createImageView(
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	VK_CHECK(vkCreateImageView(device, &viewInfo, nullptr, &imageView));
+	vkCreateImageView(device, &viewInfo, nullptr, &imageView);
 }
 
 inline VkFormat findSupportedFormat(

@@ -26,7 +26,7 @@ enum CameraMovement {
 	ZOOM
 };
 
-class Camera {
+struct Camera {
 public:
 	Frame frame;
 	glm::vec3 target;

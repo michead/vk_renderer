@@ -1,5 +1,11 @@
 #include "Scene.h"
 
+#include "Camera.h"
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tinyobjloader\tiny_obj_loader.h"
+
+
 void Scene::load()
 {
 	tinyobj::attrib_t attrib_;
