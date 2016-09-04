@@ -87,6 +87,7 @@
     <Link>
       <AdditionalLibraryDirectories>lib\x86\</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
@@ -121,6 +122,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>lib\x86\</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
@@ -169,6 +171,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VkEngine.h" />
     <ClInclude Include="VkUtils.h" />
+    <ClInclude Include="VkWrap.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.frag" />

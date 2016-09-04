@@ -63,7 +63,7 @@ void RenderPass::init()
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	vkCreateRenderPass(VkEngine::getInstance()->getDevice(), &renderPassInfo, nullptr, &renderPass);
+	VK_CHECK(vkCreateRenderPass(VkEngine::getInstance()->getDevice(), &renderPassInfo, nullptr, &renderPass));
 }
 
 void RenderPass::initGraphicsPipeline()
@@ -237,7 +237,7 @@ void RenderPass::initGraphicsPipeline()
 	pipelineInfo.basePipelineIndex = -1;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 
-	vkCreateGraphicsPipelines(VkEngine::getInstance()->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+	VK_CHECK(vkCreateGraphicsPipelines(VkEngine::getInstance()->getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
 }
 
 void RenderPass::initDepthResources()
@@ -287,7 +287,7 @@ void RenderPass::initFramebuffers()
 		framebufferInfo.height = VkEngine::getInstance()->getSwapchainExtent().height;
 		framebufferInfo.layers = 1;
 
-		vkCreateFramebuffer(VkEngine::getInstance()->getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]);
+		VK_CHECK(vkCreateFramebuffer(VkEngine::getInstance()->getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]));
 	}
 }
 
@@ -295,7 +295,11 @@ void RenderPass::createCommandBuffers()
 {
 	if (commandBuffers.size() > 0)
 	{
-		vkFreeCommandBuffers(VkEngine::getInstance()->getDevice(), VkEngine::getInstance()->getCommandPool(), commandBuffers.size(), commandBuffers.data());
+		vkFreeCommandBuffers(
+			VkEngine::getInstance()->getDevice(), 
+			VkEngine::getInstance()->getCommandPool(), 
+			commandBuffers.size(), 
+			commandBuffers.data());
 	}
 
 	commandBuffers.resize(swapchainFramebuffers.size());
@@ -306,7 +310,7 @@ void RenderPass::createCommandBuffers()
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
-	vkAllocateCommandBuffers(VkEngine::getInstance()->getDevice(), &allocInfo, commandBuffers.data());
+	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getInstance()->getDevice(), &allocInfo, commandBuffers.data()));
 
 	for (size_t i = 0; i < commandBuffers.size(); i++)
 	{
@@ -347,12 +351,14 @@ void RenderPass::createCommandBuffers()
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
-		vkEndCommandBuffer(commandBuffers[i]);
+		VK_CHECK(vkEndCommandBuffer(commandBuffers[i]));
 	}
 }
 
 VkResult RenderPass::run()
 {
+	VkResult result;
+
 	for (uint32_t i = 0; i < swapchainFramebuffers.size(); i++)
 	{
 		VkSubmitInfo submitInfo = {};
@@ -370,7 +376,7 @@ VkResult RenderPass::run()
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		vkQueueSubmit(VkEngine::getInstance()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
+		VK_CHECK(vkQueueSubmit(VkEngine::getInstance()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -384,8 +390,10 @@ VkResult RenderPass::run()
 
 		presentInfo.pResults = nullptr;
 
-		return vkQueuePresentKHR(VkEngine::getInstance()->getPresentationQueue(), &presentInfo);
+		result = vkQueuePresentKHR(VkEngine::getInstance()->getPresentationQueue(), &presentInfo);
 	}
+
+	return result;
 }
 
 void RenderPass::updateData()
@@ -396,7 +404,7 @@ void RenderPass::updateData()
 	ubo.proj = VkEngine::getInstance()->getScene()->getCamera()->getProjMatrix();
 
 	void* data;
-	vkMapMemory(VkEngine::getInstance()->getDevice(), uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data);
+	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data));
 	memcpy(data, &ubo, sizeof(ubo));
 	vkUnmapMemory(VkEngine::getInstance()->getDevice(), uniformStagingBufferMemory);
 
@@ -421,18 +429,20 @@ void RenderPass::createDescriptorSet()
 		textures[i++] = it->second;
 	}
 
-	layouts = getDescriptorSetLayouts(textures);
+	std::vector<VkDescriptorSetLayout> layouts;
+	getDescriptorSetLayouts(textures, layouts);
+
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getInstance()->getDescriptorPool();
 	allocInfo.descriptorSetCount = layouts.size();
 	allocInfo.pSetLayouts = layouts.data();
 
-	vkAllocateDescriptorSets(VkEngine::getInstance()->getDevice(), &allocInfo, &descriptorSet);
+	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getInstance()->getDevice(), &allocInfo, &descriptorSet));
 
 	i = 0;
 	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * layouts.size());
-	for (it = VkEngine::getInstance()->getScene()->getTextureMap().begin(); it != VkEngine::getInstance()->getScene()->getTextureMap().end(); it++)
+	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
 		VkDescriptorBufferInfo bufferInfo = {};
 		bufferInfo.buffer = uniformBuffer;
@@ -464,17 +474,15 @@ void RenderPass::createDescriptorSet()
 	vkUpdateDescriptorSets(VkEngine::getInstance()->getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
-std::vector<VkDescriptorSetLayout>& RenderPass::getDescriptorSetLayouts(std::vector<Texture*> textures)
+void RenderPass::getDescriptorSetLayouts(std::vector<Texture*>& textures, std::vector<VkDescriptorSetLayout>& layouts)
 {
-	std::vector<VkDescriptorSetLayout> layouts(textures.size());
+	layouts.resize(textures.size());
 	
 	uint16_t i = 0;
 	for (Texture* texture : textures)
 	{
 		layouts[i++] = texture->getDescriptorSetLayout();
 	}
-
-	return layouts;
 }
 
 void RenderPass::createUniformBuffer()
@@ -498,4 +506,9 @@ void RenderPass::createUniformBuffer()
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
 		uniformBuffer, 
 		uniformBufferMemory);
+}
+
+void RenderPass::cleanup()
+{
+
 }

@@ -10,6 +10,7 @@
 #include <glm\gtc\matrix_transform.hpp>
 
 #define APPLICATION_NAME "VkEngine"
+#define ENGINE_NAME APPLICATION_NAME
 
 
 struct VkEngineConfig;
@@ -26,7 +27,7 @@ class VkEngine
 {
 public:
 	VkEngine() { }
-	~VkEngine() { if (engine) delete engine; }
+	~VkEngine() { cleanup(); if (engine) delete engine; }
 
 	static VkEngine* getInstance() { if (engine == nullptr) engine = new VkEngine(); return engine; }
 
@@ -116,4 +117,6 @@ private:
 	static void cursorPosFunc(GLFWwindow* window, double xpos, double ypos);
 
 	static void onWindowResized(GLFWwindow* window, int width, int height);
+
+	void cleanup();
 };

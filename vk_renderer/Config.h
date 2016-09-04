@@ -7,7 +7,7 @@
 
 struct VkEngineConfig {
 public:
-	glm::vec2	resolution;
+	glm::ivec2	resolution;
 	bool		fullscreen;
 
 	void parseCmdLineArgs(int argc, char** argv)

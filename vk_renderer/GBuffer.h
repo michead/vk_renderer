@@ -14,6 +14,9 @@ enum GBufferAttachmentType {
 
 class GBuffer {
 public:
+	GBuffer() { }
+	~GBuffer() { cleanup(); }
+
 	void init();
 	void bind();
 
@@ -25,4 +28,6 @@ private:
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
+
+	void cleanup();
 };

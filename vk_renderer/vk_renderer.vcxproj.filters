@@ -83,6 +83,9 @@
     <ClInclude Include="VkEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="VkWrap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\shader.vert">

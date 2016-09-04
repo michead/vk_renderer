@@ -7,8 +7,7 @@
 #include <string>
 #include <vector>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "VkWrap.h"
 
 #ifdef NDEBUG
 const bool ENABLE_VALIDATION_LAYERS = false;
@@ -200,7 +199,7 @@ inline QueueFamilyIndices findQueueFamilyIndices(VkPhysicalDevice device, VkSurf
 		}
 
 		VkBool32 isSupportPresent = VK_FALSE;
-		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &isSupportPresent);
+		VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &isSupportPresent));
 
 		if (queueFamilyCount > 0 && isSupportPresent)
 		{
@@ -219,7 +218,7 @@ inline bool checkDeviceExtensionSupport(VkPhysicalDevice device)
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data()));
 
 	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
@@ -263,7 +262,7 @@ inline VkPresentModeKHR chooseSwapPresentationMode(const std::vector<VkPresentMo
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-inline VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, int preferredWidth, int preferredHeight)
+inline VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t preferredWidth, uint32_t preferredHeight)
 {
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 	{
@@ -284,24 +283,24 @@ inline SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, Vk
 {
 	SwapChainSupportDetails details;
 
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities));
 
 	uint32_t formatCount;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr));
 
 	if (formatCount != 0)
 	{
 		details.formats.resize(formatCount);
-		vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+		VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data()));
 	}
 
 	uint32_t presentModeCount;
-	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr));
 
 	if (presentModeCount != 0)
 	{
 		details.presentationModes.resize(presentModeCount);
-		vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentationModes.data());
+		VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentationModes.data()));
 	}
 
 	return details;
@@ -350,7 +349,7 @@ inline void createShaderModule(VkDevice device, const std::vector<char>& code, V
 	createInfo.codeSize = code.size();
 	createInfo.pCode = (uint32_t*) code.data();
 
-	vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule);
+	VK_CHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule));
 }
 
 inline uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -383,7 +382,7 @@ inline void createBuffer(
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	vkCreateBuffer(device, &bufferInfo, nullptr, &buffer);
+	VK_CHECK(vkCreateBuffer(device, &bufferInfo, nullptr, &buffer));
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
@@ -393,9 +392,9 @@ inline void createBuffer(
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
-	vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory);
+	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory));
 
-	vkBindBufferMemory(device, buffer, bufferMemory, 0);
+	VK_CHECK(vkBindBufferMemory(device, buffer, bufferMemory, 0));
 }
 
 inline VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool)
@@ -407,28 +406,28 @@ inline VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool co
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
-	vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+	VK_CHECK(vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer));
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	VK_CHECK(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
 	return commandBuffer;
 }
 
 inline void endSingleTimeCommands(VkDevice device, VkCommandPool commandPool, VkCommandBuffer commandBuffer, VkQueue queue)
 {
-	vkEndCommandBuffer(commandBuffer);
+	VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 
-	vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(queue);
+	VK_CHECK(vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueWaitIdle(queue));
 
 	vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
 }
@@ -477,7 +476,7 @@ inline void createImage(
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	vkCreateImage(device, &imageInfo, nullptr, &image);
+	VK_CHECK(vkCreateImage(device, &imageInfo, nullptr, &image));
 
 	VkMemoryRequirements memRequirements;
 	vkGetImageMemoryRequirements(device, image, &memRequirements);
@@ -487,9 +486,9 @@ inline void createImage(
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
-	vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory);
+	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory));
 
-	vkBindImageMemory(device, image, imageMemory, 0);
+	VK_CHECK(vkBindImageMemory(device, image, imageMemory, 0));
 }
 
 inline void transitionImageLayout(
@@ -620,7 +619,7 @@ inline void createImageView(
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
-	vkCreateImageView(device, &viewInfo, nullptr, &imageView);
+	VK_CHECK(vkCreateImageView(device, &viewInfo, nullptr, &imageView));
 }
 
 inline VkFormat findSupportedFormat(

@@ -9,3 +9,8 @@ void GBuffer::bind()
 {
 
 }
+
+void GBuffer::cleanup()
+{
+
+}

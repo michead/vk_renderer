@@ -10,6 +10,7 @@
 
 VkEngine* VkEngine::engine = nullptr;
 
+
 void VkEngine::init(int argc, char** argv)
 {
 	config->parseCmdLineArgs(argc, argv);
@@ -114,8 +115,6 @@ void VkEngine::cursorPosFunc(GLFWwindow* window, double xpos, double ypos)
 	}
 }
 
-
-
 void VkEngine::onWindowResized(GLFWwindow* window, int width, int height)
 {
 	if (width == 0 || height == 0) return;
@@ -137,7 +136,7 @@ void VkEngine::createInstance()
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = APPLICATION_NAME;
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.pEngineName = "No Engine";
+	appInfo.pEngineName = ENGINE_NAME;
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -157,7 +156,7 @@ void VkEngine::createInstance()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	vkCreateInstance(&createInfo, nullptr, &instance);
+	VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
 }
 
 void VkEngine::setupDebugCallback()
@@ -170,7 +169,7 @@ void VkEngine::setupDebugCallback()
 	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	createInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT) debugCallback;
 
-	CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback);
+	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
 }
 
 void VkEngine::createSurface()
@@ -203,13 +202,13 @@ void VkEngine::mainLoop()
 		draw();
 	}
 
-	vkDeviceWaitIdle(device);
+	VK_CHECK(vkDeviceWaitIdle(device));
 }
 
 void VkEngine::selectPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
-	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
 
 	if (deviceCount == 0)
 	{
@@ -217,7 +216,7 @@ void VkEngine::selectPhysicalDevice()
 	}
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
-	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
 
 	for (const VkPhysicalDevice& device : devices)
 	{
@@ -241,7 +240,7 @@ void VkEngine::createLogicalDevice()
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentationFamily };
 
-	float queuePriority = 1.0f;
+	float queuePriority = 1.f;
 	for (int queueFamily : uniqueQueueFamilies)
 	{
 		VkDeviceQueueCreateInfo queueCreateInfo = {};
@@ -275,7 +274,7 @@ void VkEngine::createLogicalDevice()
 		createInfo.enabledLayerCount = 0;
 	}
 
-	vkCreateDevice(physicalDevice, &createInfo, nullptr, &device);
+	VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
 
 	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, indices.presentationFamily, 0, &presentationQueue);
@@ -333,9 +332,9 @@ void VkEngine::createSwapChain()
 
 	*&swapchain = newSwapChain;
 
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
 	swapchainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
 
 	swapchainImageFormat = surfaceFormat.format;
 	swapchainExtent = extent;
@@ -359,7 +358,7 @@ void VkEngine::createCommandPool()
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 
-	vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool);
+	VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
 }
 
 void VkEngine::draw()
@@ -380,7 +379,7 @@ void VkEngine::draw()
 	}
 	else
 	{
-		// result;
+		VK_CHECK(result);
 	}
 	
 	for (RenderPass* renderPass : renderPasses)
@@ -393,7 +392,7 @@ void VkEngine::draw()
 		}
 		else
 		{
-			// result;
+			VK_CHECK(result);
 		}
 	}
 }
@@ -403,13 +402,13 @@ void VkEngine::createSemaphores()
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-	vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore);
-	vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore);
+	VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore));
+	VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore));
 }
 
 void VkEngine::recreateSwapchain()
 {
-	vkDeviceWaitIdle(device);
+	VK_CHECK(vkDeviceWaitIdle(device));
 
 	createSwapChain();
 	createImageViews();
@@ -440,10 +439,15 @@ void VkEngine::createDescriptorPool()
 	poolInfo.pPoolSizes = poolSizes.data();
 	poolInfo.maxSets = 1;
 
-	vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool);
+	VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool));
 }
 
 void VkEngine::initRenderPasses()
+{
+
+}
+
+void VkEngine::cleanup()
 {
 
 }

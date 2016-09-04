@@ -40,7 +40,7 @@ void Texture::initImage()
 		stagingImageMemory);
 
 	void* data;
-	vkMapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory, 0, imageSize, 0, &data);
+	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory, 0, imageSize, 0, &data));
 	memcpy(data, pixels, (size_t) imageSize);
 	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory);
 
@@ -117,7 +117,7 @@ void Texture::initSampler()
 	samplerInfo.minLod = 0.f;
 	samplerInfo.maxLod = 0.f;
 
-	vkCreateSampler(VkEngine::getInstance()->getDevice(), &samplerInfo, nullptr, &sampler);
+	VK_CHECK(vkCreateSampler(VkEngine::getInstance()->getDevice(), &samplerInfo, nullptr, &sampler));
 }
 
 void Texture::initDescriptorSetLayout()
@@ -142,5 +142,10 @@ void Texture::initDescriptorSetLayout()
 	layoutInfo.bindingCount = bindings.size();
 	layoutInfo.pBindings = bindings.data();
 
-	vkCreateDescriptorSetLayout(VkEngine::getInstance()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout);
+	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getInstance()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
+}
+
+void Texture::cleanup()
+{
+
 }

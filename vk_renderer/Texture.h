@@ -6,7 +6,7 @@
 struct Texture {
 public:
 	Texture(std::string path) : path(path) { initImage(); }
-	~Texture() { }
+	~Texture() { cleanup(); }
 	
 	std::string getName() const { return name; }
 	VkImageView& getImageView() { return imageView; }
@@ -27,4 +27,6 @@ private:
 	void initImageView();
 	void initSampler();
 	void initDescriptorSetLayout();
+
+	void cleanup();
 };

@@ -18,7 +18,7 @@ void SceneElem::initVertexBuffer()
 		stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
 	memcpy(data, mesh.vertices.data(), (size_t) bufferSize);
 	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory);
 
@@ -56,7 +56,7 @@ void SceneElem::initIndexBuffer()
 		stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data);
+	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
 	memcpy(data, mesh.indices.data(), (size_t) bufferSize);
 	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory);
 
@@ -76,4 +76,9 @@ void SceneElem::initIndexBuffer()
 		stagingBuffer, 
 		indexBuffer, 
 		bufferSize);
+}
+
+void SceneElem::cleanup()
+{
+
 }

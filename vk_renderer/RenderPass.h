@@ -11,7 +11,7 @@ struct Texture;
 class RenderPass {
 public:
 	RenderPass(std::string vsPath, std::string gsPath, std::string fsPath) : vsPath(vsPath), gsPath(gsPath), fsPath(fsPath) { }
-	~RenderPass() { }
+	~RenderPass() { cleanup(); }
 
 	virtual void init();
 	virtual VkResult run();
@@ -42,7 +42,7 @@ protected:
 	std::vector<VkDescriptorSetLayout> layouts;
 	VkDescriptorSet descriptorSet;
 
-	static std::vector<VkDescriptorSetLayout>& getDescriptorSetLayouts(std::vector<Texture*> textures);
+	static void getDescriptorSetLayouts(std::vector<Texture*>& textures, std::vector<VkDescriptorSetLayout>&);
 
 	virtual void createUniformBuffer();
 	virtual void createDescriptorSet();
@@ -51,4 +51,6 @@ protected:
 	virtual void initFramebuffers();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();
+
+	virtual void cleanup();
 };
