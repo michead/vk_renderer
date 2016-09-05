@@ -29,24 +29,24 @@ public:
 	VkEngine() { }
 	~VkEngine() { cleanup(); if (engine) delete engine; }
 
-	static VkEngine* getInstance() { if (engine == nullptr) engine = new VkEngine(); return engine; }
+	static VkEngine& getInstance() { if (engine == nullptr) engine = new VkEngine(); return *engine; }
 
 	void init(int argc, char** argv);
 	void run();
 
-	VkDevice& getDevice() { return device; }
+	VkDevice& getDevice() { return device.get(); }
 	VkPhysicalDevice& getPhysicalDevice() { return physicalDevice; }
-	VkCommandPool& getCommandPool() { return commandPool; }
+	VkCommandPool& getCommandPool() { return commandPool.get(); }
 	VkQueue& getGraphicsQueue() { return graphicsQueue; }
 	VkQueue& getPresentationQueue() { return presentationQueue; }
 	VkFormat& getSwapchainImageFormat() { return swapchainImageFormat; }
 	VkExtent2D& getSwapchainExtent() { return swapchainExtent; }
 	std::vector<VkImage>& getSwapchainImages() { return swapchainImages; }
 	std::vector<VkImageView>& getSwapchainImageViews() { return swapchainImageViews; }
-	VkSwapchainKHR& getSwapchain() { return swapchain; }
-	VkSemaphore& getImageAvailableSemaphore() { return imageAvailableSemaphore; }
-	VkSemaphore& getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
-	VkDescriptorPool& getDescriptorPool() { return descriptorPool; }
+	VkSwapchainKHR& getSwapchain() { return swapchain.get(); }
+	VkSemaphore& getImageAvailableSemaphore() { return imageAvailableSemaphore.get(); }
+	VkSemaphore& getRenderFinishedSemaphore() { return renderFinishedSemaphore.get(); }
+	VkDescriptorPool& getDescriptorPool() { return descriptorPool.get(); }
 
 	Scene* getScene() { return scene; }
 
@@ -59,23 +59,23 @@ private:
 	VkEngineConfig* config;
 	GLFWwindow* window;
 
-	VkInstance instance;
-	VkDevice device;
-	VkDebugReportCallbackEXT callback;
-	VkSurfaceKHR surface;
+	VkWrap<VkInstance> instance { vkDestroyInstance };
+	VkWrap<VkDevice> device { vkDestroyDevice };
+	VkWrap<VkDebugReportCallbackEXT> callback { instance, DestroyDebugReportCallbackEXT };
+	VkWrap<VkSurfaceKHR> surface { instance, vkDestroySurfaceKHR };
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	
-	VkCommandPool commandPool;
-	VkDescriptorPool descriptorPool;
+	VkWrap<VkCommandPool> commandPool { device, vkDestroyCommandPool };
+	VkWrap<VkDescriptorPool> descriptorPool { device, vkDestroyDescriptorPool };
 	
-	VkSwapchainKHR swapchain;
+	VkWrap<VkSwapchainKHR> swapchain { device, vkDestroySwapchainKHR };
 	VkExtent2D swapchainExtent;
 	std::vector<VkImageView> swapchainImageViews;
 	std::vector<VkImage> swapchainImages;
 	VkFormat swapchainImageFormat;
 	
-	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
+	VkWrap<VkSemaphore> imageAvailableSemaphore { device, vkDestroySemaphore };
+	VkWrap<VkSemaphore> renderFinishedSemaphore { device, vkDestroySemaphore };
 
 	VkQueue graphicsQueue;
 	VkQueue presentationQueue;

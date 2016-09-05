@@ -10,21 +10,21 @@ void SceneElem::initVertexBuffer()
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
 	createBuffer(
-		VkEngine::getInstance()->getPhysicalDevice(), 
-		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance().getPhysicalDevice(), 
+		VkEngine::getInstance().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
 		stagingBuffer, 
 		stagingBufferMemory);
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getInstance().getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
 	memcpy(data, mesh.vertices.data(), (size_t) bufferSize);
-	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory);
+	vkUnmapMemory(VkEngine::getInstance().getDevice(), stagingBufferMemory);
 
 	createBuffer(
-		VkEngine::getInstance()->getPhysicalDevice(), 
-		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance().getPhysicalDevice(), 
+		VkEngine::getInstance().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
@@ -32,9 +32,9 @@ void SceneElem::initVertexBuffer()
 		vertexBufferMemory);
 
 	copyBuffer(
-		VkEngine::getInstance()->getDevice(), 
-		VkEngine::getInstance()->getCommandPool(), 
-		VkEngine::getInstance()->getGraphicsQueue(), 
+		VkEngine::getInstance().getDevice(), 
+		VkEngine::getInstance().getCommandPool(), 
+		VkEngine::getInstance().getGraphicsQueue(), 
 		stagingBuffer, 
 		vertexBuffer, 
 		bufferSize);
@@ -47,8 +47,8 @@ void SceneElem::initIndexBuffer()
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
 	createBuffer(
-		VkEngine::getInstance()->getPhysicalDevice(), 
-		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance().getPhysicalDevice(), 
+		VkEngine::getInstance().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
@@ -56,13 +56,13 @@ void SceneElem::initIndexBuffer()
 		stagingBufferMemory);
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getInstance().getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
 	memcpy(data, mesh.indices.data(), (size_t) bufferSize);
-	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingBufferMemory);
+	vkUnmapMemory(VkEngine::getInstance().getDevice(), stagingBufferMemory);
 
 	createBuffer(
-		VkEngine::getInstance()->getPhysicalDevice(), 
-		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance().getPhysicalDevice(), 
+		VkEngine::getInstance().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
@@ -70,9 +70,9 @@ void SceneElem::initIndexBuffer()
 		indexBufferMemory);
 
 	copyBuffer(
-		VkEngine::getInstance()->getDevice(), 
-		VkEngine::getInstance()->getCommandPool(), 
-		VkEngine::getInstance()->getGraphicsQueue(), 
+		VkEngine::getInstance().getDevice(), 
+		VkEngine::getInstance().getCommandPool(), 
+		VkEngine::getInstance().getGraphicsQueue(), 
 		stagingBuffer, 
 		indexBuffer, 
 		bufferSize);

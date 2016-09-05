@@ -64,7 +64,7 @@ void VkEngine::keyboardFunc(GLFWwindow* window, int key, int scancode, int actio
 
 void VkEngine::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods)
 {
-	Camera* camera = VkEngine::getInstance()->getScene()->getCamera();
+	Camera* camera = VkEngine::getInstance().getScene()->getCamera();
 	
 	if (action == GLFW_RELEASE)
 	{
@@ -89,11 +89,11 @@ void VkEngine::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods
 
 void VkEngine::cursorPosFunc(GLFWwindow* window, double xpos, double ypos)
 {
-	glm::ivec2 oldMousePos = VkEngine::getInstance()->getOldMousePos();
+	glm::ivec2 oldMousePos = VkEngine::getInstance().getOldMousePos();
 	glm::vec2 deltaPos = { xpos - oldMousePos.x, ypos - oldMousePos.y };
-	VkEngine::getInstance()->setOldMousePos({ xpos, ypos });
+	VkEngine::getInstance().setOldMousePos({ xpos, ypos });
 
-	Camera* camera = VkEngine::getInstance()->getScene()->getCamera();
+	Camera* camera = VkEngine::getInstance().getScene()->getCamera();
 
 	switch (camera->movement)
 	{

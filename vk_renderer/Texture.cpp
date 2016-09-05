@@ -26,67 +26,67 @@ void Texture::initImage()
 		throw std::runtime_error("Failed to load texture image!");
 	}
 
-	VkImage stagingImage;
-	VkDeviceMemory stagingImageMemory;
+	VkWrap<VkImage> stagingImage { VkEngine::getInstance().getDevice(), vkDestroyImage };
+	VkWrap<VkDeviceMemory> stagingImageMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
 	createImage(
-		VkEngine::getInstance()->getPhysicalDevice(),
-		VkEngine::getInstance()->getDevice(), texWidth,
+		VkEngine::getInstance().getPhysicalDevice(),
+		VkEngine::getInstance().getDevice(), texWidth,
 		texHeight, 
 		VK_FORMAT_R8G8B8A8_UNORM, 
 		VK_IMAGE_TILING_LINEAR, 
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-		stagingImage, 
-		stagingImageMemory);
+		stagingImage.get(), 
+		stagingImageMemory.get());
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory, 0, imageSize, 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getInstance().getDevice(), stagingImageMemory, 0, imageSize, 0, &data));
 	memcpy(data, pixels, (size_t) imageSize);
-	vkUnmapMemory(VkEngine::getInstance()->getDevice(), stagingImageMemory);
+	vkUnmapMemory(VkEngine::getInstance().getDevice(), stagingImageMemory);
 
 	stbi_image_free(pixels);
 
 	createImage(
-		VkEngine::getInstance()->getPhysicalDevice(), 
-		VkEngine::getInstance()->getDevice(), 
+		VkEngine::getInstance().getPhysicalDevice(), 
+		VkEngine::getInstance().getDevice(), 
 		texWidth, 
 		texHeight, 
 		VK_FORMAT_R8G8B8A8_UNORM, 
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		image, 
-		imageMemory);
+		image.get(), 
+		imageMemory.get());
 
 	transitionImageLayout(
-		VkEngine::getInstance()->getDevice(), 
-		VkEngine::getInstance()->getCommandPool(), 
-		VkEngine::getInstance()->getGraphicsQueue(), 
+		VkEngine::getInstance().getDevice(), 
+		VkEngine::getInstance().getCommandPool(), 
+		VkEngine::getInstance().getGraphicsQueue(), 
 		stagingImage, 
 		VK_IMAGE_LAYOUT_PREINITIALIZED, 
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 	
 	transitionImageLayout(
-		VkEngine::getInstance()->getDevice(), 
-		VkEngine::getInstance()->getCommandPool(), 
-		VkEngine::getInstance()->getGraphicsQueue(), 
+		VkEngine::getInstance().getDevice(), 
+		VkEngine::getInstance().getCommandPool(), 
+		VkEngine::getInstance().getGraphicsQueue(), 
 		image, 
 		VK_IMAGE_LAYOUT_PREINITIALIZED, 
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	
 	copyImage(
-		VkEngine::getInstance()->getDevice(), 
-		VkEngine::getInstance()->getCommandPool(),
-		VkEngine::getInstance()->getGraphicsQueue(),
+		VkEngine::getInstance().getDevice(), 
+		VkEngine::getInstance().getCommandPool(),
+		VkEngine::getInstance().getGraphicsQueue(),
 		stagingImage, 
 		image, 
 		texWidth, 
 		texHeight);
 
 	transitionImageLayout(
-		VkEngine::getInstance()->getDevice(), 
-		VkEngine::getInstance()->getCommandPool(), 
-		VkEngine::getInstance()->getGraphicsQueue(), 
+		VkEngine::getInstance().getDevice(), 
+		VkEngine::getInstance().getCommandPool(), 
+		VkEngine::getInstance().getGraphicsQueue(), 
 		image, 
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -94,7 +94,7 @@ void Texture::initImage()
 
 void Texture::initImageView()
 {
-	createImageView(VkEngine::getInstance()->getDevice(), image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, imageView);
+	createImageView(VkEngine::getInstance().getDevice(), image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, imageView.get());
 }
 
 void Texture::initSampler()
@@ -117,7 +117,7 @@ void Texture::initSampler()
 	samplerInfo.minLod = 0.f;
 	samplerInfo.maxLod = 0.f;
 
-	VK_CHECK(vkCreateSampler(VkEngine::getInstance()->getDevice(), &samplerInfo, nullptr, &sampler));
+	VK_CHECK(vkCreateSampler(VkEngine::getInstance().getDevice(), &samplerInfo, nullptr, &sampler));
 }
 
 void Texture::initDescriptorSetLayout()
@@ -142,10 +142,5 @@ void Texture::initDescriptorSetLayout()
 	layoutInfo.bindingCount = bindings.size();
 	layoutInfo.pBindings = bindings.data();
 
-	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getInstance()->getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
-}
-
-void Texture::cleanup()
-{
-
+	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getInstance().getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
 }

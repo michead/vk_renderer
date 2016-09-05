@@ -11,7 +11,7 @@ struct Texture;
 class RenderPass {
 public:
 	RenderPass(std::string vsPath, std::string gsPath, std::string fsPath) : vsPath(vsPath), gsPath(gsPath), fsPath(fsPath) { }
-	~RenderPass() { cleanup(); }
+	~RenderPass() { }
 
 	virtual void init();
 	virtual VkResult run();
@@ -24,20 +24,20 @@ protected:
 
 	std::vector<VkFramebuffer> swapchainFramebuffers;
 	
-	VkImage depthImage;
-	VkImageView depthImageView;
-	VkDeviceMemory depthImageMemory;
+	VkWrap<VkImage> depthImage { VkEngine::getInstance().getDevice(), vkDestroyImage };
+	VkWrap<VkImageView> depthImageView { VkEngine::getInstance().getDevice(), vkDestroyImageView };
+	VkWrap<VkDeviceMemory> depthImageMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
 
 	VkRenderPass renderPass;
-	VkPipelineLayout pipelineLayout;
+	VkWrap<VkPipelineLayout> pipelineLayout { VkEngine::getInstance().getDevice(), vkDestroyPipelineLayout };
 	VkPipeline graphicsPipeline;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
-	VkBuffer uniformStagingBuffer;
-	VkDeviceMemory uniformStagingBufferMemory;
-	VkBuffer uniformBuffer;
-	VkDeviceMemory uniformBufferMemory;
+	VkWrap<VkBuffer> uniformStagingBuffer { VkEngine::getInstance().getDevice(), vkDestroyBuffer };
+	VkWrap<VkDeviceMemory> uniformStagingBufferMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
+	VkWrap<VkBuffer> uniformBuffer { VkEngine::getInstance().getDevice() , vkDestroyBuffer};
+	VkWrap<VkDeviceMemory> uniformBufferMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
 
 	std::vector<VkDescriptorSetLayout> layouts;
 	VkDescriptorSet descriptorSet;
@@ -51,6 +51,4 @@ protected:
 	virtual void initFramebuffers();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();
-
-	virtual void cleanup();
 };
