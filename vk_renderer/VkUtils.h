@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <glm\glm.hpp>
+
 #include "VkWrap.h"
 
 #ifdef NDEBUG
@@ -230,7 +232,7 @@ inline bool checkDeviceExtensionSupport(VkPhysicalDevice device)
 	return requiredExtensions.empty();
 }
 
-inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+inline VkSurfaceFormatKHR pickSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	if (availableFormats.size() == 1 && availableFormats[0].format == VK_FORMAT_UNDEFINED)
 	{
@@ -249,7 +251,7 @@ inline VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFor
 	return availableFormats[0];
 }
 
-inline VkPresentModeKHR chooseSwapPresentationMode(const std::vector<VkPresentModeKHR> availablePresentModes)
+inline VkPresentModeKHR getPresentationMode(const std::vector<VkPresentModeKHR> availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes)
 	{
@@ -262,7 +264,7 @@ inline VkPresentModeKHR chooseSwapPresentationMode(const std::vector<VkPresentMo
 	return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-inline VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t preferredWidth, uint32_t preferredHeight)
+inline VkExtent2D pickExtent(const VkSurfaceCapabilitiesKHR& capabilities, glm::ivec2 preferredResolution)
 {
 	if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
 	{
@@ -270,7 +272,7 @@ inline VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities,
 	}
 	else
 	{
-		VkExtent2D actualExtent = { preferredWidth, preferredHeight };
+		VkExtent2D actualExtent = { (uint32_t) preferredResolution.x, (uint32_t) preferredResolution.y };
 
 		actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 		actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
@@ -279,7 +281,7 @@ inline VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities,
 	}
 }
 
-inline SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
+inline SwapChainSupportDetails querySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
 {
 	SwapChainSupportDetails details;
 
@@ -315,7 +317,7 @@ inline bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface)
 	bool swapChainAdequate = false;
 	if (extensionsSupported)
 	{
-		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
+		SwapChainSupportDetails swapChainSupport = querySwapchainSupport(device, surface);
 		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentationModes.empty();
 	}
 

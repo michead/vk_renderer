@@ -2,6 +2,7 @@
 
 #include <set>
 
+#include "Camera.h"
 #include "Config.h"
 #include "RenderPass.h"
 #include "Scene.h"
@@ -20,9 +21,15 @@ void VkEngine::run()
 {
 	initWindow();
 	initVulkan();
+	loadScene();
 	initCamera();
 	setupInputCallbacks();
 	mainLoop();
+}
+
+void VkEngine::loadScene()
+{
+	scene = new Scene(config->scenePath);
 }
 
 void VkEngine::initCamera()
@@ -123,7 +130,7 @@ void VkEngine::onWindowResized(GLFWwindow* window, int width, int height)
 	app->recreateSwapchain();
 }
 
-void VkEngine::createInstance()
+void VkEngine::initInstance()
 {
 	if (ENABLE_VALIDATION_LAYERS && !checkValidationLayerSupport())
 	{
@@ -172,23 +179,23 @@ void VkEngine::setupDebugCallback()
 	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
 }
 
-void VkEngine::createSurface()
+void VkEngine::initSurface()
 {
 	glfwCreateWindowSurface(instance, window, nullptr, &surface);
 }
 
 void VkEngine::initVulkan()
 {
-	createInstance();
+	initInstance();
 	setupDebugCallback();
-	createSurface();
+	initSurface();
 	selectPhysicalDevice();
-	createLogicalDevice();
-	createSwapChain();
-	createImageViews();
-	createCommandPool();
-	createDescriptorPool();
-	createSemaphores();
+	initLogicalDevice();
+	initSwapchain();
+	initImageViews();
+	initCommandPool();
+	initDescriptorPool();
+	initSemaphores();
 	initRenderPasses();
 }
 
@@ -233,7 +240,7 @@ void VkEngine::selectPhysicalDevice()
 	}
 }
 
-void VkEngine::createLogicalDevice()
+void VkEngine::initLogicalDevice()
 {
 	QueueFamilyIndices indices = findQueueFamilyIndices(physicalDevice, surface);
 
@@ -280,18 +287,17 @@ void VkEngine::createLogicalDevice()
 	vkGetDeviceQueue(device, indices.presentationFamily, 0, &presentationQueue);
 }
 
-void VkEngine::createSwapChain()
+void VkEngine::initSwapchain()
 {
-	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, surface);
+	SwapChainSupportDetails swapchainSupport = querySwapchainSupport(physicalDevice, surface);
+	VkSurfaceFormatKHR surfaceFormat = pickSurfaceFormat(swapchainSupport.formats);
+	VkPresentModeKHR presentMode = getPresentationMode(swapchainSupport.presentationModes);
+	VkExtent2D extent = pickExtent(swapchainSupport.capabilities, config->resolution);
 
-	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-	VkPresentModeKHR presentMode = chooseSwapPresentationMode(swapChainSupport.presentationModes);
-	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities, config->resolution.x, config->resolution.y);
-
-	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount)
+	uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
+	if (swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount)
 	{
-		imageCount = swapChainSupport.capabilities.maxImageCount;
+		imageCount = swapchainSupport.capabilities.maxImageCount;
 	}
 
 	VkSwapchainCreateInfoKHR createInfo = {};
@@ -319,7 +325,7 @@ void VkEngine::createSwapChain()
 		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	}
 
-	createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+	createInfo.preTransform = swapchainSupport.capabilities.currentTransform;
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
@@ -340,7 +346,7 @@ void VkEngine::createSwapChain()
 	swapchainExtent = extent;
 }
 
-void VkEngine::createImageViews()
+void VkEngine::initImageViews()
 {
 	swapchainImageViews.resize(swapchainImages.size());
 
@@ -350,7 +356,7 @@ void VkEngine::createImageViews()
 	}
 }
 
-void VkEngine::createCommandPool()
+void VkEngine::initCommandPool()
 {
 	QueueFamilyIndices queueFamilyIndices = findQueueFamilyIndices(physicalDevice, surface);
 
@@ -397,7 +403,7 @@ void VkEngine::draw()
 	}
 }
 
-void VkEngine::createSemaphores()
+void VkEngine::initSemaphores()
 {
 	VkSemaphoreCreateInfo semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -410,8 +416,8 @@ void VkEngine::recreateSwapchain()
 {
 	VK_CHECK(vkDeviceWaitIdle(device));
 
-	createSwapChain();
-	createImageViews();
+	initSwapchain();
+	initImageViews();
 	initRenderPasses();
 }
 
@@ -425,7 +431,7 @@ void VkEngine::updateBufferData()
 	}
 }
 
-void VkEngine::createDescriptorPool()
+void VkEngine::initDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -444,10 +450,11 @@ void VkEngine::createDescriptorPool()
 
 void VkEngine::initRenderPasses()
 {
-
+	for each(RenderPass* renderPass in renderPasses)
+		renderPass->init();
 }
 
 void VkEngine::cleanup()
 {
-
+	delete scene;
 }

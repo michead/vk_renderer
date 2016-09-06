@@ -12,7 +12,6 @@ struct Camera;
 
 struct Scene {
 public:
-	Scene() { }
 	Scene(std::string path) : path(path) { load(); }
 	~Scene() { cleanup(); }
 

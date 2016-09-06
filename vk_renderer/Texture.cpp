@@ -15,6 +15,14 @@
 #include <stb\stb_image.h>
 
 
+void Texture::init()
+{
+	initImage();
+	initImageView();
+	initSampler();
+	initDescriptorSetLayout();
+}
+
 void Texture::initImage()
 {
 	int texWidth, texHeight, texChannels;

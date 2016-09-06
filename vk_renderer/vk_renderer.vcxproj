@@ -158,11 +158,12 @@
     <ClCompile Include="VkEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GeomStructs.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="GBuffer.h" />
-    <ClInclude Include="GeomStructs.h" />
+    <ClInclude Include="Vertex.h" />
     <ClInclude Include="GeomPass.h" />
     <ClInclude Include="RenderPass.h" />
     <ClInclude Include="Scene.h" />

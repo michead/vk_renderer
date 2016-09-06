@@ -17,11 +17,6 @@ struct VkEngineConfig;
 class RenderPass;
 struct Scene;
 
-void DestroyDebugReportCallbackEXT(
-	VkInstance instance,
-	VkDebugReportCallbackEXT callback,
-	const VkAllocationCallbacks* pAllocator);
-
 
 class VkEngine
 {
@@ -90,19 +85,20 @@ private:
 	void initWindow();
 	void initVulkan();
 	void mainLoop();
-	void createInstance();
+	void initInstance();
 	void setupDebugCallback();
-	void createSurface();
+	void initSurface();
 	void selectPhysicalDevice();
-	void createLogicalDevice();
-	void createSwapChain();
-	void createImageViews();
+	void initLogicalDevice();
+	void initSwapchain();
+	void initImageViews();
 
-	void createCommandPool();
-	void createDescriptorPool();
+	void initCommandPool();
+	void initDescriptorPool();
 
-	void createSemaphores();
+	void initSemaphores();
 	
+	void loadScene();
 	void initRenderPasses();
 
 	void draw();

@@ -8,6 +8,14 @@
 struct Texture;
 
 
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
+
+
 class RenderPass {
 public:
 	RenderPass(std::string vsPath, std::string gsPath, std::string fsPath) : vsPath(vsPath), gsPath(gsPath), fsPath(fsPath) { }
@@ -42,12 +50,13 @@ protected:
 	std::vector<VkDescriptorSetLayout> layouts;
 	VkDescriptorSet descriptorSet;
 
-	static void getDescriptorSetLayouts(std::vector<Texture*>& textures, std::vector<VkDescriptorSetLayout>&);
+	static void getDescriptorSetLayouts();
 
-	virtual void createUniformBuffer();
-	virtual void createDescriptorSet();
-	virtual void createCommandBuffers();
+	virtual void initUniformBuffer();
+	virtual void initDescriptorSet();
+	virtual void initCommandBuffers();
 
+	virtual void initAttachments();
 	virtual void initFramebuffers();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();

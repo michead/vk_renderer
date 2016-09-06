@@ -9,6 +9,7 @@ struct VkEngineConfig {
 public:
 	glm::ivec2	resolution;
 	bool		fullscreen;
+	std::string scenePath;
 
 	void parseCmdLineArgs(int argc, char** argv)
 	{
@@ -16,6 +17,7 @@ public:
 
 		resolution = parseResolution(args);
 		fullscreen = parseFlag(args, "-f");
+		scenePath = parseOption(args, "-s");
 	}
 
 private:

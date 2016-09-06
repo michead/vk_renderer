@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 
+#include "Camera.h"
 #include "GeomStructs.h"
 #include "Scene.h"
 #include "SceneElem.h"
@@ -10,6 +11,16 @@
 
 
 void RenderPass::init()
+{
+	initAttachments();
+	getDescriptorSetLayouts();
+	initGraphicsPipeline();
+	initDepthResources();
+	initFramebuffers();
+	initDescriptorSet();
+}
+
+void RenderPass::initAttachments()
 {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = VkEngine::getInstance().getSwapchainImageFormat();
@@ -209,6 +220,8 @@ void RenderPass::initGraphicsPipeline()
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 
+	getDescriptorSetLayouts();
+
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
@@ -291,7 +304,7 @@ void RenderPass::initFramebuffers()
 	}
 }
 
-void RenderPass::createCommandBuffers()
+void RenderPass::initCommandBuffers()
 {
 	if (commandBuffers.size() > 0)
 	{
@@ -417,20 +430,10 @@ void RenderPass::updateData()
 		sizeof(ubo));
 }
 
-void RenderPass::createDescriptorSet()
+void RenderPass::initDescriptorSet()
 {
 	std::unordered_map<std::string, Texture*>::iterator it;
 	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getInstance().getScene()->getTextureMap();
-	std::vector<Texture*> textures(textureMap.size());
-
-	uint16_t i = 0;
-	for (it = textureMap.begin(); it != textureMap.end(); it++)
-	{
-		textures[i++] = it->second;
-	}
-
-	std::vector<VkDescriptorSetLayout> layouts;
-	getDescriptorSetLayouts(textures, layouts);
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -440,7 +443,7 @@ void RenderPass::createDescriptorSet()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getInstance().getDevice(), &allocInfo, &descriptorSet));
 
-	i = 0;
+	uint16_t i = 0;
 	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * layouts.size());
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
@@ -474,18 +477,31 @@ void RenderPass::createDescriptorSet()
 	vkUpdateDescriptorSets(VkEngine::getInstance().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
-void RenderPass::getDescriptorSetLayouts(std::vector<Texture*>& textures, std::vector<VkDescriptorSetLayout>& layouts)
+void RenderPass::getDescriptorSetLayouts()
 {
-	layouts.resize(textures.size());
+	std::unordered_map<std::string, Texture*>::iterator it;
+	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getInstance().getScene()->getTextureMap();
+	
+	std::vector<Texture*> textures(textureMap.size());
 	
 	uint16_t i = 0;
+	for (it = textureMap.begin(); it != textureMap.end(); it++)
+	{
+		textures[i++] = it->second;
+	}
+
+	std::vector<VkDescriptorSetLayout> layouts;
+
+	layouts.resize(textures.size());
+	
+	i = 0;
 	for (Texture* texture : textures)
 	{
 		layouts[i++] = texture->getDescriptorSetLayout();
 	}
 }
 
-void RenderPass::createUniformBuffer()
+void RenderPass::initUniformBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
