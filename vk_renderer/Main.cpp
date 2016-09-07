@@ -5,20 +5,18 @@
 
 int main(int argc, char** argv)
 {
-	VkEngine* engine = new VkEngine();
+	VkEngine engine = VkEngine::getInstance();
 
 	try
 	{
-		engine->init(argc, argv);
-		engine->run();
+		engine.init(argc, argv);
+		engine.run();
 	}
 	catch (const std::runtime_error& e)
 	{
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
-
-	delete engine;
 
 	return EXIT_SUCCESS;
 }

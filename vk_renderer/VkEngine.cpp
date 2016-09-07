@@ -14,6 +14,7 @@ VkEngine* VkEngine::engine = nullptr;
 
 void VkEngine::init(int argc, char** argv)
 {
+	config = new VkEngineConfig();
 	config->parseCmdLineArgs(argc, argv);
 }
 
@@ -457,4 +458,5 @@ void VkEngine::initRenderPasses()
 void VkEngine::cleanup()
 {
 	delete scene;
+	delete config;
 }

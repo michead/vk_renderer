@@ -4,20 +4,30 @@
 
 #define DEFAULT_WINDOW_WIDTH	1280
 #define DEFAULT_WINDOW_HEIGHT	720
+#define DEFAULT_SCENE_PATH		"data/head/head.OBJ"
 
 struct VkEngineConfig {
 public:
-	glm::ivec2	resolution;
-	bool		fullscreen;
+	glm::ivec2 resolution;
+	bool fullscreen;
 	std::string scenePath;
 
 	void parseCmdLineArgs(int argc, char** argv)
 	{
 		std::vector<std::string> args = std::vector<std::string>(argv + 1, argv + argc);
 
-		resolution = parseResolution(args);
-		fullscreen = parseFlag(args, "-f");
-		scenePath = parseOption(args, "-s");
+		if (!args.empty())
+		{
+			resolution = parseResolution(args);
+			fullscreen = parseFlag(args, "-f");
+			scenePath = parseOption(args, "-s");
+		}
+		else
+		{
+			resolution = { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT };
+			fullscreen = false;
+			scenePath = DEFAULT_SCENE_PATH;
+		}
 	}
 
 private:

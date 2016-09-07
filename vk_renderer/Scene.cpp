@@ -13,7 +13,7 @@ void Scene::load()
 	std::vector<tinyobj::material_t> materials_;
 	std::string err_;
 
-	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, path.c_str()))
+	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, path.c_str(), path.substr(path.rfind('/') + 1).c_str()))
 	{
 		throw std::runtime_error(err_);
 	}
@@ -23,7 +23,7 @@ void Scene::load()
 	{
 		if (!textureMap[material.diffuse_texname])
 		{
-			textureMap[material.diffuse_texname] = new Texture(material.diffuse_texname);
+			textureMap.insert(std::make_pair(material.diffuse_texname, new Texture(material.diffuse_texname)));
 		}
 	}
 

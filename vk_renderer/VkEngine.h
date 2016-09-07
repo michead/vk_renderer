@@ -22,9 +22,9 @@ class VkEngine
 {
 public:
 	VkEngine() { }
-	~VkEngine() { cleanup(); if (engine) delete engine; }
+	~VkEngine() { cleanup(); }
 
-	static VkEngine& getInstance() { if (engine == nullptr) engine = new VkEngine(); return *engine; }
+	static VkEngine& getInstance() { static VkEngine engine; return engine; }
 
 	void init(int argc, char** argv);
 	void run();
