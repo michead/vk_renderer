@@ -6,13 +6,16 @@
 #include "GeomStructs.h"
 #include "Texture.h"
 
+#define PATH_SEPARATOR '/'
+
 
 struct Camera;
 
 
 struct Scene {
 public:
-	Scene(std::string path) : path(path) { load(); }
+	Scene(std::string path) : path(path.substr(0, path.rfind(PATH_SEPARATOR) + 1)), 
+		filename(path.substr(path.rfind(PATH_SEPARATOR) + 1)) { load(); }
 	~Scene() { cleanup(); }
 
 	std::vector<SceneElem>& getElems() { return elems; }
@@ -22,6 +25,7 @@ public:
 	std::unordered_map<std::string, Texture*>& getTextureMap() { return textureMap; }
 
 private:
+	std::string filename;
 	std::string path;
 	std::vector<SceneElem> elems;
 	std::vector<Material> materials;

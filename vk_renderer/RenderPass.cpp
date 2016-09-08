@@ -23,7 +23,7 @@ void RenderPass::init()
 void RenderPass::initAttachments()
 {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = VkEngine::getInstance().getSwapchainImageFormat();
+	colorAttachment.format = VkEngine::getEngine().getSwapchainImageFormat();
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -37,7 +37,7 @@ void RenderPass::initAttachments()
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = findDepthFormat(VkEngine::getInstance().getPhysicalDevice());
+	depthAttachment.format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
 	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -74,7 +74,7 @@ void RenderPass::initAttachments()
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	VK_CHECK(vkCreateRenderPass(VkEngine::getInstance().getDevice(), &renderPassInfo, nullptr, &renderPass));
+	VK_CHECK(vkCreateRenderPass(VkEngine::getEngine().getDevice(), &renderPassInfo, nullptr, &renderPass));
 }
 
 void RenderPass::initGraphicsPipeline()
@@ -82,11 +82,11 @@ void RenderPass::initGraphicsPipeline()
 	std::vector<char> vsCode = readFile(vsPath);
 	std::vector<char> fsCode = readFile(fsPath);
 
-	VkWrap<VkShaderModule> vsModule { VkEngine::getInstance().getDevice(), vkDestroyShaderModule };
-	VkWrap<VkShaderModule> fsModule { VkEngine::getInstance().getDevice(), vkDestroyShaderModule };
+	VkWrap<VkShaderModule> vsModule { VkEngine::getEngine().getDevice(), vkDestroyShaderModule };
+	VkWrap<VkShaderModule> fsModule { VkEngine::getEngine().getDevice(), vkDestroyShaderModule };
 
-	createShaderModule(VkEngine::getInstance().getDevice(), vsCode, vsModule.get());
-	createShaderModule(VkEngine::getInstance().getDevice(), fsCode, fsModule.get());
+	createShaderModule(VkEngine::getEngine().getDevice(), vsCode, vsModule.get());
+	createShaderModule(VkEngine::getEngine().getDevice(), fsCode, fsModule.get());
 
 	VkPipelineShaderStageCreateInfo vsStageInfo = {};
 	vsStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -105,9 +105,9 @@ void RenderPass::initGraphicsPipeline()
 	if (!gsPath.empty())
 	{
 		std::vector<char> gsCode = readFile(gsPath);
-		VkWrap<VkShaderModule> gsModule { VkEngine::getInstance().getDevice(), vkDestroyShaderModule };
+		VkWrap<VkShaderModule> gsModule { VkEngine::getEngine().getDevice(), vkDestroyShaderModule };
 
-		createShaderModule(VkEngine::getInstance().getDevice(), gsCode, gsModule.get());
+		createShaderModule(VkEngine::getEngine().getDevice(), gsCode, gsModule.get());
 
 		VkPipelineShaderStageCreateInfo gsStageInfo = {};
 		gsStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -140,14 +140,14 @@ void RenderPass::initGraphicsPipeline()
 	VkViewport viewport = {};
 	viewport.x = 0.f;
 	viewport.y = 0.f;
-	viewport.width = (float) VkEngine::getInstance().getSwapchainExtent().width;
-	viewport.height = (float) VkEngine::getInstance().getSwapchainExtent().height;
+	viewport.width = (float) VkEngine::getEngine().getSwapchainExtent().width;
+	viewport.height = (float) VkEngine::getEngine().getSwapchainExtent().height;
 	viewport.minDepth = 0.f;
 	viewport.maxDepth = 1.f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent = VkEngine::getInstance().getSwapchainExtent();
+	scissor.extent = VkEngine::getEngine().getSwapchainExtent();
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -229,7 +229,7 @@ void RenderPass::initGraphicsPipeline()
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pPushConstantRanges = 0;
 
-	vkCreatePipelineLayout(VkEngine::getInstance().getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
+	vkCreatePipelineLayout(VkEngine::getEngine().getDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout);
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -250,18 +250,18 @@ void RenderPass::initGraphicsPipeline()
 	pipelineInfo.basePipelineIndex = -1;
 	pipelineInfo.pDepthStencilState = &depthStencil;
 
-	VK_CHECK(vkCreateGraphicsPipelines(VkEngine::getInstance().getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(VkEngine::getEngine().getDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline));
 }
 
 void RenderPass::initDepthResources()
 {
-	VkFormat depthFormat = findDepthFormat(VkEngine::getInstance().getPhysicalDevice());
+	VkFormat depthFormat = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
 
 	createImage(
-		VkEngine::getInstance().getPhysicalDevice(), 
-		VkEngine::getInstance().getDevice(), 
-		VkEngine::getInstance().getSwapchainExtent().width, 
-		VkEngine::getInstance().getSwapchainExtent().height, 
+		VkEngine::getEngine().getPhysicalDevice(), 
+		VkEngine::getEngine().getDevice(), 
+		VkEngine::getEngine().getSwapchainExtent().width, 
+		VkEngine::getEngine().getSwapchainExtent().height, 
 		depthFormat, 
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
@@ -269,12 +269,12 @@ void RenderPass::initDepthResources()
 		depthImage.get(), 
 		depthImageMemory.get());
 	
-	createImageView(VkEngine::getInstance().getDevice(), depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView.get());
+	createImageView(VkEngine::getEngine().getDevice(), depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView.get());
 
 	transitionImageLayout(
-		VkEngine::getInstance().getDevice(), 
-		VkEngine::getInstance().getCommandPool(), 
-		VkEngine::getInstance().getGraphicsQueue(), 
+		VkEngine::getEngine().getDevice(), 
+		VkEngine::getEngine().getCommandPool(), 
+		VkEngine::getEngine().getGraphicsQueue(), 
 		depthImage, 
 		VK_IMAGE_LAYOUT_UNDEFINED, 
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
@@ -282,7 +282,7 @@ void RenderPass::initDepthResources()
 
 void RenderPass::initFramebuffers()
 {
-	auto imageViews = VkEngine::getInstance().getSwapchainImageViews();
+	auto imageViews = VkEngine::getEngine().getSwapchainImageViews();
 	size_t numImageViews = imageViews.size();
 
 	swapchainFramebuffers.resize(numImageViews);
@@ -296,11 +296,11 @@ void RenderPass::initFramebuffers()
 		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = attachments.size();
 		framebufferInfo.pAttachments = attachments.data();
-		framebufferInfo.width = VkEngine::getInstance().getSwapchainExtent().width;
-		framebufferInfo.height = VkEngine::getInstance().getSwapchainExtent().height;
+		framebufferInfo.width = VkEngine::getEngine().getSwapchainExtent().width;
+		framebufferInfo.height = VkEngine::getEngine().getSwapchainExtent().height;
 		framebufferInfo.layers = 1;
 
-		VK_CHECK(vkCreateFramebuffer(VkEngine::getInstance().getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]));
+		VK_CHECK(vkCreateFramebuffer(VkEngine::getEngine().getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]));
 	}
 }
 
@@ -309,8 +309,8 @@ void RenderPass::initCommandBuffers()
 	if (commandBuffers.size() > 0)
 	{
 		vkFreeCommandBuffers(
-			VkEngine::getInstance().getDevice(), 
-			VkEngine::getInstance().getCommandPool(), 
+			VkEngine::getEngine().getDevice(), 
+			VkEngine::getEngine().getCommandPool(), 
 			commandBuffers.size(), 
 			commandBuffers.data());
 	}
@@ -319,11 +319,11 @@ void RenderPass::initCommandBuffers()
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = VkEngine::getInstance().getCommandPool();
+	allocInfo.commandPool = VkEngine::getEngine().getCommandPool();
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
 
-	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getInstance().getDevice(), &allocInfo, commandBuffers.data()));
+	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, commandBuffers.data()));
 
 	for (size_t i = 0; i < commandBuffers.size(); i++)
 	{
@@ -339,7 +339,7 @@ void RenderPass::initCommandBuffers()
 		renderPassInfo.renderPass = renderPass;
 		renderPassInfo.framebuffer = swapchainFramebuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = VkEngine::getInstance().getSwapchainExtent();
+		renderPassInfo.renderArea.extent = VkEngine::getEngine().getSwapchainExtent();
 
 		std::array<VkClearValue, 2> clearValues = {};
 		clearValues[0].color = { 0.f, 0.f, 0.f, 1.f };
@@ -351,7 +351,7 @@ void RenderPass::initCommandBuffers()
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		for (SceneElem elem : VkEngine::getInstance().getScene()->getElems())
+		for (SceneElem elem : VkEngine::getEngine().getScene()->getElems())
 		{
 			VkBuffer vertexBuffers[] = { elem.getVertexBuffer() };
 			VkDeviceSize offsets[] = { 0 };
@@ -377,7 +377,7 @@ VkResult RenderPass::run()
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkSemaphore waitSemaphores[] = { VkEngine::getInstance().getImageAvailableSemaphore() };
+		VkSemaphore waitSemaphores[] = { VkEngine::getEngine().getImageAvailableSemaphore() };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
@@ -385,25 +385,25 @@ VkResult RenderPass::run()
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffers[i];
 
-		VkSemaphore signalSemaphores[] = { VkEngine::getInstance().getRenderFinishedSemaphore() };
+		VkSemaphore signalSemaphores[] = { VkEngine::getEngine().getRenderFinishedSemaphore() };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		VK_CHECK(vkQueueSubmit(VkEngine::getInstance().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+		VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 		VkPresentInfoKHR presentInfo = {};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = signalSemaphores;
 
-		VkSwapchainKHR swapChains[] = { VkEngine::getInstance().getSwapchain() };
+		VkSwapchainKHR swapChains[] = { VkEngine::getEngine().getSwapchain() };
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = swapChains;
 		presentInfo.pImageIndices = &i;
 
 		presentInfo.pResults = nullptr;
 
-		result = vkQueuePresentKHR(VkEngine::getInstance().getPresentationQueue(), &presentInfo);
+		result = vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);
 	}
 
 	return result;
@@ -413,18 +413,18 @@ void RenderPass::updateData()
 {
 	UniformBufferObject ubo = {};
 	ubo.model = glm::mat4(); // Useless
-	ubo.view = VkEngine::getInstance().getScene()->getCamera()->getViewMatrix();
-	ubo.proj = VkEngine::getInstance().getScene()->getCamera()->getProjMatrix();
+	ubo.view = VkEngine::getEngine().getScene()->getCamera()->getViewMatrix();
+	ubo.proj = VkEngine::getEngine().getScene()->getCamera()->getProjMatrix();
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getInstance().getDevice(), uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data));
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(VkEngine::getInstance().getDevice(), uniformStagingBufferMemory);
+	vkUnmapMemory(VkEngine::getEngine().getDevice(), uniformStagingBufferMemory);
 
 	copyBuffer(
-		VkEngine::getInstance().getDevice(), 
-		VkEngine::getInstance().getCommandPool(), 
-		VkEngine::getInstance().getGraphicsQueue(), 
+		VkEngine::getEngine().getDevice(), 
+		VkEngine::getEngine().getCommandPool(), 
+		VkEngine::getEngine().getGraphicsQueue(), 
 		uniformStagingBuffer, 
 		uniformBuffer, 
 		sizeof(ubo));
@@ -433,15 +433,15 @@ void RenderPass::updateData()
 void RenderPass::initDescriptorSet()
 {
 	std::unordered_map<std::string, Texture*>::iterator it;
-	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getInstance().getScene()->getTextureMap();
+	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = VkEngine::getInstance().getDescriptorPool();
+	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
 	allocInfo.descriptorSetCount = layouts.size();
 	allocInfo.pSetLayouts = layouts.data();
 
-	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getInstance().getDevice(), &allocInfo, &descriptorSet));
+	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
 
 	uint16_t i = 0;
 	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * layouts.size());
@@ -474,13 +474,13 @@ void RenderPass::initDescriptorSet()
 		descriptorWrites[2 * i + 1].pImageInfo = &imageInfo;
 	}
 
-	vkUpdateDescriptorSets(VkEngine::getInstance().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
 void RenderPass::getDescriptorSetLayouts()
 {
 	std::unordered_map<std::string, Texture*>::iterator it;
-	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getInstance().getScene()->getTextureMap();
+	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
 	
 	std::vector<Texture*> textures(textureMap.size());
 	
@@ -506,8 +506,8 @@ void RenderPass::initUniformBuffer()
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
 	createBuffer(
-		VkEngine::getInstance().getPhysicalDevice(), 
-		VkEngine::getInstance().getDevice(), 
+		VkEngine::getEngine().getPhysicalDevice(), 
+		VkEngine::getEngine().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
@@ -515,8 +515,8 @@ void RenderPass::initUniformBuffer()
 		uniformStagingBufferMemory.get());
 	
 	createBuffer(
-		VkEngine::getInstance().getPhysicalDevice(), 
-		VkEngine::getInstance().getDevice(), 
+		VkEngine::getEngine().getPhysicalDevice(), 
+		VkEngine::getEngine().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 

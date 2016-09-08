@@ -17,11 +17,11 @@ private:
 	std::string name;
 	std::string path;
 
-	VkWrap<VkImage> image { VkEngine::getInstance().getDevice(), vkDestroyImage };
-	VkWrap<VkImageView> imageView { VkEngine::getInstance().getDevice(), vkDestroyImageView };
-	VkWrap<VkDeviceMemory> imageMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
-	VkWrap<VkSampler> sampler { VkEngine::getInstance().getDevice(), vkDestroySampler };
-	VkWrap<VkDescriptorSetLayout> descriptorSetLayout { VkEngine::getInstance().getDevice(), vkDestroyDescriptorSetLayout };
+	VkWrap<VkImage> image { VkEngine::getEngine().getDevice(), vkDestroyImage };
+	VkWrap<VkImageView> imageView { VkEngine::getEngine().getDevice(), vkDestroyImageView };
+	VkWrap<VkDeviceMemory> imageMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
+	VkWrap<VkSampler> sampler { VkEngine::getEngine().getDevice(), vkDestroySampler };
+	VkWrap<VkDescriptorSetLayout> descriptorSetLayout { VkEngine::getEngine().getDevice(), vkDestroyDescriptorSetLayout };
 
 	void init();
 	void initImage();

@@ -5,12 +5,10 @@
 
 int main(int argc, char** argv)
 {
-	VkEngine engine = VkEngine::getInstance();
-
 	try
 	{
-		engine.init(argc, argv);
-		engine.run();
+		VkEngine::init(argc, argv);
+		VkEngine::run();
 	}
 	catch (const std::runtime_error& e)
 	{

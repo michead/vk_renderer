@@ -24,13 +24,14 @@ public:
 	VkEngine() { }
 	~VkEngine() { cleanup(); }
 
-	static VkEngine& getInstance() { static VkEngine engine; return engine; }
+	static VkEngine& getEngine() { static VkEngine engine; return engine; }
+	static void init(int argc, char** argv);
+	static void run();
 
-	void init(int argc, char** argv);
-	void run();
-
+	VkInstance& getInstance() { return instance.get(); }
 	VkDevice& getDevice() { return device.get(); }
 	VkPhysicalDevice& getPhysicalDevice() { return physicalDevice; }
+	VkSurfaceKHR& getSurface() { return surface.get(); }
 	VkCommandPool& getCommandPool() { return commandPool.get(); }
 	VkQueue& getGraphicsQueue() { return graphicsQueue; }
 	VkQueue& getPresentationQueue() { return presentationQueue; }
@@ -49,8 +50,6 @@ public:
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
 
 private:
-	static VkEngine* engine;
-
 	VkEngineConfig* config;
 	GLFWwindow* window;
 

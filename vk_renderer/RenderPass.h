@@ -32,20 +32,20 @@ protected:
 
 	std::vector<VkFramebuffer> swapchainFramebuffers;
 	
-	VkWrap<VkImage> depthImage { VkEngine::getInstance().getDevice(), vkDestroyImage };
-	VkWrap<VkImageView> depthImageView { VkEngine::getInstance().getDevice(), vkDestroyImageView };
-	VkWrap<VkDeviceMemory> depthImageMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
+	VkWrap<VkImage> depthImage { VkEngine::getEngine().getDevice(), vkDestroyImage };
+	VkWrap<VkImageView> depthImageView { VkEngine::getEngine().getDevice(), vkDestroyImageView };
+	VkWrap<VkDeviceMemory> depthImageMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
 
 	VkRenderPass renderPass;
-	VkWrap<VkPipelineLayout> pipelineLayout { VkEngine::getInstance().getDevice(), vkDestroyPipelineLayout };
+	VkWrap<VkPipelineLayout> pipelineLayout { VkEngine::getEngine().getDevice(), vkDestroyPipelineLayout };
 	VkPipeline graphicsPipeline;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
-	VkWrap<VkBuffer> uniformStagingBuffer { VkEngine::getInstance().getDevice(), vkDestroyBuffer };
-	VkWrap<VkDeviceMemory> uniformStagingBufferMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
-	VkWrap<VkBuffer> uniformBuffer { VkEngine::getInstance().getDevice() , vkDestroyBuffer};
-	VkWrap<VkDeviceMemory> uniformBufferMemory { VkEngine::getInstance().getDevice(), vkFreeMemory };
+	VkWrap<VkBuffer> uniformStagingBuffer { VkEngine::getEngine().getDevice(), vkDestroyBuffer };
+	VkWrap<VkDeviceMemory> uniformStagingBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
+	VkWrap<VkBuffer> uniformBuffer { VkEngine::getEngine().getDevice() , vkDestroyBuffer};
+	VkWrap<VkDeviceMemory> uniformBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
 
 	std::vector<VkDescriptorSetLayout> layouts;
 	VkDescriptorSet descriptorSet;
