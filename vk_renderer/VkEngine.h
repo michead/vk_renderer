@@ -12,10 +12,17 @@
 #define APPLICATION_NAME "VkEngine"
 #define ENGINE_NAME APPLICATION_NAME
 
+#define SHADER_MAIN "main"
+#define SHADER_PATH	"shaders/"
 
 struct VkEngineConfig;
 class RenderPass;
 struct Scene;
+
+enum ShadingModel {
+	DEFAULT,
+	NUM_SHADING_MODELS
+};
 
 
 class VkEngine

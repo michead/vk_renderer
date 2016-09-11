@@ -2,8 +2,6 @@
 
 #include "VkEngine.h"
 
-#define SHADER_MAIN "main"
-
 
 struct Texture;
 
@@ -18,6 +16,7 @@ struct UniformBufferObject {
 
 class RenderPass {
 public:
+	RenderPass(std::string vsPath, std::string fsPath) : vsPath(vsPath), fsPath(fsPath) { }
 	RenderPass(std::string vsPath, std::string gsPath, std::string fsPath) : vsPath(vsPath), gsPath(gsPath), fsPath(fsPath) { }
 	~RenderPass() { }
 
@@ -47,17 +46,17 @@ protected:
 	VkWrap<VkBuffer> uniformBuffer { VkEngine::getEngine().getDevice() , vkDestroyBuffer};
 	VkWrap<VkDeviceMemory> uniformBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
 
-	std::vector<VkDescriptorSetLayout> layouts;
+	VkDescriptorSetLayout layout;
 	VkDescriptorSet descriptorSet;
-
-	static void getDescriptorSetLayouts();
 
 	virtual void initUniformBuffer();
 	virtual void initDescriptorSet();
+	virtual void initDescriptorSetLayout();
 	virtual void initCommandBuffers();
 
 	virtual void initAttachments();
 	virtual void initFramebuffers();
+	virtual void initTextures();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();
 };

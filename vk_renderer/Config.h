@@ -11,6 +11,7 @@ public:
 	glm::ivec2 resolution;
 	bool fullscreen;
 	std::string scenePath;
+	ShadingModel shadingModel;
 
 	void parseCmdLineArgs(int argc, char** argv)
 	{
@@ -28,6 +29,9 @@ public:
 			fullscreen = false;
 			scenePath = DEFAULT_SCENE_PATH;
 		}
+
+		// TODO: This needs to be parsed as well
+		shadingModel = ShadingModel::DEFAULT;
 	}
 
 private:

@@ -21,13 +21,11 @@ void Scene::load()
 	uint16_t i = 0;
 	for (const tinyobj::material_t material : materials_)
 	{
-		if (!textureMap[material.diffuse_texname])
-		{
-			textureMap.insert(std::make_pair(material.diffuse_texname, new Texture(path + material.diffuse_texname)));
-		}
+		textureMap[material.diffuse_texname] = new Texture(path + material.diffuse_texname);
 	}
 
 	i = 0;
+	materials.resize(materials_.size());
 	for (const tinyobj::material_t material : materials_)
 	{
 		materials[i].kd = { material.diffuse[0], material.diffuse[1], material.diffuse[2] };
@@ -77,12 +75,16 @@ void Scene::load()
 	}
 }
 
+void Scene::initCamera()
+{
+	camera = new Camera();
+}
+
 void Scene::cleanup()
 {
 	std::unordered_map<std::string, Texture*>::iterator it;
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
 		delete it->second;
-		textureMap.erase(it);
 	}
 }

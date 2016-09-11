@@ -17,9 +17,9 @@ void VkEngine::init(int argc, char** argv)
 
 void VkEngine::run()
 {
+	getEngine().loadScene();
 	getEngine().initWindow();
 	getEngine().initVulkan();
-	getEngine().loadScene();
 	getEngine().initCamera();
 	getEngine().setupInputCallbacks();
 	getEngine().mainLoop();
@@ -448,12 +448,23 @@ void VkEngine::initDescriptorPool()
 
 void VkEngine::initRenderPasses()
 {
+	switch (config->shadingModel)
+	{
+	case ShadingModel::DEFAULT:
+	default:
+		renderPasses.push_back(new RenderPass(SHADER_PATH"vert.spv", SHADER_PATH"frag.spv"));
+		break;
+	}
+
 	for each(RenderPass* renderPass in renderPasses)
 		renderPass->init();
 }
 
 void VkEngine::cleanup()
 {
+	for each(RenderPass* renderPass in renderPasses)
+		delete renderPass;
+
 	delete scene;
 	delete config;
 }

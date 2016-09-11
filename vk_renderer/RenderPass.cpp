@@ -13,10 +13,11 @@
 void RenderPass::init()
 {
 	initAttachments();
-	getDescriptorSetLayouts();
+	initDescriptorSetLayout();
 	initGraphicsPipeline();
 	initDepthResources();
 	initFramebuffers();
+	initTextures();
 	initDescriptorSet();
 }
 
@@ -220,12 +221,10 @@ void RenderPass::initGraphicsPipeline()
 	dynamicState.dynamicStateCount = 2;
 	dynamicState.pDynamicStates = dynamicStates;
 
-	getDescriptorSetLayouts();
-
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = layouts.data();
+	pipelineLayoutInfo.pSetLayouts = &layout;
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pPushConstantRanges = 0;
 
@@ -278,6 +277,14 @@ void RenderPass::initDepthResources()
 		depthImage, 
 		VK_IMAGE_LAYOUT_UNDEFINED, 
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}
+
+void RenderPass::initTextures()
+{
+	for (auto textureEntry : VkEngine::getEngine().getScene()->getTextureMap())
+	{
+		textureEntry.second->init();
+	}
 }
 
 void RenderPass::initFramebuffers()
@@ -438,13 +445,13 @@ void RenderPass::initDescriptorSet()
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
-	allocInfo.descriptorSetCount = layouts.size();
-	allocInfo.pSetLayouts = layouts.data();
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &layout;
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
 
 	uint16_t i = 0;
-	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * layouts.size());
+	std::vector<VkWriteDescriptorSet> descriptorWrites(2);
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
 		VkDescriptorBufferInfo bufferInfo = {};
@@ -477,28 +484,30 @@ void RenderPass::initDescriptorSet()
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
-void RenderPass::getDescriptorSetLayouts()
+void RenderPass::initDescriptorSetLayout()
 {
-	std::unordered_map<std::string, Texture*>::iterator it;
-	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
-	
-	std::vector<Texture*> textures(textureMap.size());
-	
-	uint16_t i = 0;
-	for (it = textureMap.begin(); it != textureMap.end(); it++)
-	{
-		textures[i++] = it->second;
-	}
+	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	std::vector<VkDescriptorSetLayout> layouts;
+	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	layouts.resize(textures.size());
-	
-	i = 0;
-	for (Texture* texture : textures)
-	{
-		layouts[i++] = texture->getDescriptorSetLayout();
-	}
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = bindings.size();
+	layoutInfo.pBindings = bindings.data();
+
+	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getEngine().getDevice(), &layoutInfo, nullptr, &layout));
+
 }
 
 void RenderPass::initUniformBuffer()

@@ -5,9 +5,11 @@
 
 struct Texture {
 public:
-	Texture(std::string path) : path(path) { init(); }
+	Texture(std::string path) : path(path) { /*init();*/ }
 	~Texture() { }
 	
+	void init();
+
 	std::string getName() const { return name; }
 	VkImageView& getImageView() { return imageView.get(); }
 	VkSampler& getSampler() { return sampler.get(); }
@@ -23,7 +25,6 @@ private:
 	VkWrap<VkSampler> sampler { VkEngine::getEngine().getDevice(), vkDestroySampler };
 	VkWrap<VkDescriptorSetLayout> descriptorSetLayout { VkEngine::getEngine().getDevice(), vkDestroyDescriptorSetLayout };
 
-	void init();
 	void initImage();
 	void initImageView();
 	void initSampler();
