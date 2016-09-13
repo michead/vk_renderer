@@ -52,7 +52,7 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 							errCode = std::to_string(a); \
 							break; \
 						} \
-						throw std::runtime_error("[Vulkan] Error code in file " __FILE__ " at line " S__LINE__ ": " + errCode); \
+						throw std::runtime_error("[Vulkan] Error occurred in " __FILE__ " at line " S__LINE__ ": " + errCode); \
 					}
 
 struct SwapChainSupportDetails

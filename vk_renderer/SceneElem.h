@@ -17,6 +17,8 @@ public:
 	Mesh& getMesh() { return mesh; }
 	Material& getMaterial() { return material; }
 
+	virtual void initBuffers() { initVertexBuffer(); initIndexBuffer(); }
+
 private:
 	std::string name;
 	Mesh mesh;

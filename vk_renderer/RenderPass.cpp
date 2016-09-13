@@ -1,6 +1,6 @@
 #include "RenderPass.h"
 
-#include <unordered_map>
+#include <map>
 
 #include "Camera.h"
 #include "GeomStructs.h"
@@ -18,7 +18,10 @@ void RenderPass::init()
 	initDepthResources();
 	initFramebuffers();
 	initTextures();
+	initMeshBuffers();
+	initUniformBuffer();
 	initDescriptorSet();
+	initCommandBuffers();
 }
 
 void RenderPass::initAttachments()
@@ -279,9 +282,19 @@ void RenderPass::initDepthResources()
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
+void RenderPass::initMeshBuffers()
+{
+	std::vector<SceneElem*> elems = VkEngine::getEngine().getScene()->getElems();
+	for (const auto& elem : elems)
+	{
+		elem->initBuffers();
+	}
+}
+
 void RenderPass::initTextures()
 {
-	for (auto textureEntry : VkEngine::getEngine().getScene()->getTextureMap())
+	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
+	for (auto textureEntry : textureMap)
 	{
 		textureEntry.second->init();
 	}
@@ -358,15 +371,23 @@ void RenderPass::initCommandBuffers()
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-		for (SceneElem elem : VkEngine::getEngine().getScene()->getElems())
+		for (const auto& elem : VkEngine::getEngine().getScene()->getElems())
 		{
-			VkBuffer vertexBuffers[] = { elem.getVertexBuffer() };
+			VkBuffer vertexBuffers[] = { elem->getVertexBuffer() };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
-			vkCmdBindIndexBuffer(commandBuffers[i], elem.getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+			vkCmdBindIndexBuffer(commandBuffers[i], elem->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindDescriptorSets(
+				commandBuffers[i], 
+				VK_PIPELINE_BIND_POINT_GRAPHICS, 
+				pipelineLayout.get(), 
+				0, 
+				1, 
+				&descriptorSet, 
+				0, 
+				nullptr);
 
-			vkCmdDrawIndexed(commandBuffers[i], elem.getMesh().indices.size(), 1, 0, 0, 0);
+			vkCmdDrawIndexed(commandBuffers[i], elem->getMesh().indices.size(), 1, 0, 0, 0);
 		}
 
 		vkCmdEndRenderPass(commandBuffers[i]);
@@ -377,43 +398,38 @@ void RenderPass::initCommandBuffers()
 
 VkResult RenderPass::run()
 {
-	VkResult result;
+	uint32_t imageIndex = VkEngine::getEngine().getImageIndex();
 
-	for (uint32_t i = 0; i < swapchainFramebuffers.size(); i++)
-	{
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkSemaphore waitSemaphores[] = { VkEngine::getEngine().getImageAvailableSemaphore() };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffers[i];
+	VkSemaphore waitSemaphores[] = { VkEngine::getEngine().getImageAvailableSemaphore() };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
 
-		VkSemaphore signalSemaphores[] = { VkEngine::getEngine().getRenderFinishedSemaphore() };
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = signalSemaphores;
+	VkSemaphore signalSemaphores[] = { VkEngine::getEngine().getRenderFinishedSemaphore() };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
 
-		VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
-		VkPresentInfoKHR presentInfo = {};
-		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		presentInfo.waitSemaphoreCount = 1;
-		presentInfo.pWaitSemaphores = signalSemaphores;
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
 
-		VkSwapchainKHR swapChains[] = { VkEngine::getEngine().getSwapchain() };
-		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = swapChains;
-		presentInfo.pImageIndices = &i;
+	VkSwapchainKHR swapChains[] = { VkEngine::getEngine().getSwapchain() };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
 
-		presentInfo.pResults = nullptr;
+	presentInfo.pResults = nullptr;
 
-		result = vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);
-	}
-
-	return result;
+	return vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);
 }
 
 void RenderPass::updateData()
@@ -439,8 +455,8 @@ void RenderPass::updateData()
 
 void RenderPass::initDescriptorSet()
 {
-	std::unordered_map<std::string, Texture*>::iterator it;
-	std::unordered_map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
+	std::map<std::string, Texture*>::iterator it;
+	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -450,20 +466,29 @@ void RenderPass::initDescriptorSet()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
 
+	VkDescriptorBufferInfo bufferInfo = {};
+	bufferInfo.buffer = uniformBuffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(UniformBufferObject);
+
 	uint16_t i = 0;
-	std::vector<VkWriteDescriptorSet> descriptorWrites(2);
+	std::vector<VkDescriptorImageInfo> imageInfos(textureMap.size());
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
-		VkDescriptorBufferInfo bufferInfo = {};
-		bufferInfo.buffer = uniformBuffer;
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
 		VkDescriptorImageInfo imageInfo = {};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo.imageView = it->second->getImageView();
 		imageInfo.sampler = it->second->getSampler();
 
+		imageInfos[i] = imageInfo;
+
+		i++;
+	}
+
+	i = 0;
+	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * textureMap.size());
+	for (it = textureMap.begin(); it != textureMap.end(); it++)
+	{
 		descriptorWrites[2 * i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[2 * i].dstSet = descriptorSet;
 		descriptorWrites[2 * i].dstBinding = 0;
@@ -478,7 +503,9 @@ void RenderPass::initDescriptorSet()
 		descriptorWrites[2 * i + 1].dstArrayElement = 0;
 		descriptorWrites[2 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrites[2 * i + 1].descriptorCount = 1;
-		descriptorWrites[2 * i + 1].pImageInfo = &imageInfo;
+		descriptorWrites[2 * i + 1].pImageInfo = &imageInfos[i];
+
+		i++;
 	}
 
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);

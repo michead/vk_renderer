@@ -1,6 +1,6 @@
 #pragma once
 
-#include <unordered_map>
+#include <map>
 
 #include "VkEngine.h"
 #include "SceneElem.h"
@@ -19,19 +19,19 @@ public:
 		filename(path.substr(path.rfind(PATH_SEPARATOR) + 1)) { load(); initCamera(); }
 	~Scene() { cleanup(); }
 
-	std::vector<SceneElem>& getElems() { return elems; }
-	std::vector<Material>& getMaterials() { return materials; }
-	std::vector<Light>& getLights() { return lights; }
+	std::vector<SceneElem*>& getElems() { return elems; }
+	std::vector<Material*>& getMaterials() { return materials; }
+	std::vector<Light*>& getLights() { return lights; }
 	Camera* getCamera() { return camera; }
-	std::unordered_map<std::string, Texture*>& getTextureMap() { return textureMap; }
+	std::map<std::string, Texture*>& getTextureMap() { return textureMap; }
 
 private:
 	std::string filename;
 	std::string path;
-	std::vector<SceneElem> elems;
-	std::vector<Material> materials;
-	std::unordered_map<std::string, Texture*> textureMap;
-	std::vector<Light> lights;
+	std::vector<SceneElem*> elems;
+	std::vector<Material*> materials;
+	std::map<std::string, Texture*> textureMap;
+	std::vector<Light*> lights;
 	Camera* camera;
 	
 	void load();

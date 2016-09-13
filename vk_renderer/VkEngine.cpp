@@ -367,7 +367,6 @@ void VkEngine::initCommandPool()
 
 void VkEngine::draw()
 {
-	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(
 		device, 
 		swapchain, 

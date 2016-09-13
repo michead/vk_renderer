@@ -56,6 +56,7 @@ protected:
 
 	virtual void initAttachments();
 	virtual void initFramebuffers();
+	virtual void initMeshBuffers();
 	virtual void initTextures();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();

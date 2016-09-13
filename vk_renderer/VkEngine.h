@@ -51,6 +51,8 @@ public:
 	VkSemaphore& getRenderFinishedSemaphore() { return renderFinishedSemaphore.get(); }
 	VkDescriptorPool& getDescriptorPool() { return descriptorPool.get(); }
 
+	uint32_t getImageIndex() const { return imageIndex; }
+
 	Scene* getScene() { return scene; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
@@ -80,6 +82,8 @@ private:
 
 	VkQueue graphicsQueue;
 	VkQueue presentationQueue;
+
+	uint32_t imageIndex;
 
 	std::vector<RenderPass*> renderPasses;
 	

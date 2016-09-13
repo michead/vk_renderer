@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include <unordered_map>
+
 #include "Camera.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -28,13 +30,18 @@ void Scene::load()
 	materials.resize(materials_.size());
 	for (const tinyobj::material_t material : materials_)
 	{
-		materials[i].kd = { material.diffuse[0], material.diffuse[1], material.diffuse[2] };
-		materials[i].ks = { material.specular[0], material.specular[1], material.specular[2] };
-		materials[i].ke = { material.emission[0], material.emission[1], material.emission[2] };
+		materials[i] = new Material();
 
-		materials[i].kdTxt = textureMap[material.diffuse_texname];
-		materials[i].ksTxt = textureMap[material.specular_texname];
-		materials[i].keTxt = textureMap[material.emissive_texname];
+		materials[i]->kd = { material.diffuse[0], material.diffuse[1], material.diffuse[2] };
+		materials[i]->ks = { material.specular[0], material.specular[1], material.specular[2] };
+		materials[i]->ke = { material.emission[0], material.emission[1], material.emission[2] };
+
+		if (textureMap.find(material.diffuse_texname) != textureMap.end()) 
+			materials[i]->kdTxt = textureMap[material.diffuse_texname];
+		if (textureMap.find(material.specular_texname) != textureMap.end()) 
+			materials[i]->ksTxt = textureMap[material.specular_texname];
+		if (textureMap.find(material.emissive_texname) != textureMap.end()) 
+			materials[i]->keTxt = textureMap[material.emissive_texname];
 	}
 
 	elems.resize(shapes_.size());
@@ -42,10 +49,10 @@ void Scene::load()
 	i = 0;
 	for (const tinyobj::shape_t& shape : shapes_)
 	{
-		SceneElem elem = elems[i];
 		std::unordered_map<Vertex, int> uniqueVertices = {};
 
-		elem.name = shape.name;
+		elems[i] = new SceneElem();
+		elems[i]->name = shape.name;
 
 		for (const auto& index : shape.mesh.indices)
 		{
@@ -64,11 +71,11 @@ void Scene::load()
 
 			if (uniqueVertices.count(vertex) == 0)
 			{
-				uniqueVertices[vertex] = elem.mesh.vertices.size();
-				elem.mesh.vertices.push_back(vertex);
+				uniqueVertices[vertex] = elems[i]->mesh.vertices.size();
+				elems[i]->mesh.vertices.push_back(vertex);
 			}
 
-			elem.mesh.indices.push_back(uniqueVertices[vertex]);
+			elems[i]->mesh.indices.push_back(uniqueVertices[vertex]);
 		}
 
 		i++;
@@ -82,9 +89,27 @@ void Scene::initCamera()
 
 void Scene::cleanup()
 {
-	std::unordered_map<std::string, Texture*>::iterator it;
+	std::map<std::string, Texture*>::iterator it;
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
 		delete it->second;
+	}
+
+	std::vector<Material*>::iterator it2;
+	for (it2 = materials.begin(); it2 != materials.end(); it2++)
+	{
+		delete *it2;
+	}
+
+	std::vector<SceneElem*>::iterator it3;
+	for (it3 = elems.begin(); it3 != elems.end(); it3++)
+	{
+		delete *it3;
+	}
+
+	std::vector<Light*>::iterator it4;
+	for (it4 = lights.begin(); it4 != lights.end(); it4++)
+	{
+		delete *it4;
 	}
 }
