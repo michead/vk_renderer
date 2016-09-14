@@ -373,7 +373,7 @@ void VkEngine::draw()
 		std::numeric_limits<uint64_t>::max(), 
 		imageAvailableSemaphore, 
 		VK_NULL_HANDLE, 
-		&imageIndex);
+		&swapchainImageIndex);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -461,9 +461,46 @@ void VkEngine::initRenderPasses()
 
 void VkEngine::cleanup()
 {
+	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
+	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+
 	for each(RenderPass* renderPass in renderPasses)
-		delete renderPass;
+	{
+		renderPass->deleteUniformBuffers();
+	}
 
 	delete scene;
 	delete config;
+
+	for each(RenderPass* renderPass in renderPasses)
+	{
+		renderPass->deleteDepthResources();
+	}
+
+	vkDestroyCommandPool(device, commandPool, nullptr);
+
+	for each(RenderPass* renderPass in renderPasses)
+	{
+		renderPass->deleteGraphicsPipeline();
+		renderPass->deleteDescriptorSetLayout();
+		renderPass->deleteRenderPass();
+	}	
+
+	for each(auto& swapchainImageView in swapchainImageViews)
+	{
+		vkDestroyImageView(device, swapchainImageView, nullptr);
+	}
+
+	for each(RenderPass* renderPass in renderPasses)
+	{
+		renderPass->deleteSwapchainFramebuffers();
+		delete renderPass;
+	}
+
+	vkDestroySwapchainKHR(device, swapchain, nullptr);
+	vkDestroyDevice(device, nullptr);
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+	destroyDebugReportCallbackEXT(instance, callback, nullptr);
+	vkDestroyInstance(instance, nullptr);
 }

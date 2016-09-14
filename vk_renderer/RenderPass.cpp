@@ -227,7 +227,7 @@ void RenderPass::initGraphicsPipeline()
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &layout;
+	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pPushConstantRanges = 0;
 
@@ -268,10 +268,10 @@ void RenderPass::initDepthResources()
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		depthImage.get(), 
-		depthImageMemory.get());
+		depthImage, 
+		depthImageMemory);
 	
-	createImageView(VkEngine::getEngine().getDevice(), depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView.get());
+	createImageView(VkEngine::getEngine().getDevice(), depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, depthImageView);
 
 	transitionImageLayout(
 		VkEngine::getEngine().getDevice(), 
@@ -380,7 +380,7 @@ void RenderPass::initCommandBuffers()
 			vkCmdBindDescriptorSets(
 				commandBuffers[i], 
 				VK_PIPELINE_BIND_POINT_GRAPHICS, 
-				pipelineLayout.get(), 
+				pipelineLayout, 
 				0, 
 				1, 
 				&descriptorSet, 
@@ -398,7 +398,7 @@ void RenderPass::initCommandBuffers()
 
 VkResult RenderPass::run()
 {
-	uint32_t imageIndex = VkEngine::getEngine().getImageIndex();
+	uint32_t imageIndex = VkEngine::getEngine().getSwapchainImageIndex();
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -462,7 +462,7 @@ void RenderPass::initDescriptorSet()
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
 	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &layout;
+	allocInfo.pSetLayouts = &descriptorSetLayout;
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
 
@@ -533,7 +533,7 @@ void RenderPass::initDescriptorSetLayout()
 	layoutInfo.bindingCount = bindings.size();
 	layoutInfo.pBindings = bindings.data();
 
-	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getEngine().getDevice(), &layoutInfo, nullptr, &layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getEngine().getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
 
 }
 
@@ -547,8 +547,8 @@ void RenderPass::initUniformBuffer()
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-		uniformStagingBuffer.get(), 
-		uniformStagingBufferMemory.get());
+		uniformStagingBuffer, 
+		uniformStagingBufferMemory);
 	
 	createBuffer(
 		VkEngine::getEngine().getPhysicalDevice(), 
@@ -556,6 +556,45 @@ void RenderPass::initUniformBuffer()
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		uniformBuffer.get(), 
-		uniformBufferMemory.get());
+		uniformBuffer, 
+		uniformBufferMemory);
+}
+
+void RenderPass::deleteUniformBuffers()
+{
+	vkDestroyBuffer(VkEngine::getEngine().getDevice(), uniformStagingBuffer, nullptr);
+	vkFreeMemory(VkEngine::getEngine().getDevice(), uniformStagingBufferMemory, nullptr);
+	vkDestroyBuffer(VkEngine::getEngine().getDevice(), uniformBuffer, nullptr);
+	vkFreeMemory(VkEngine::getEngine().getDevice(), uniformBufferMemory, nullptr);
+}
+
+void RenderPass::deleteDepthResources()
+{
+	vkDestroyImage(VkEngine::getEngine().getDevice(), depthImage, nullptr);
+	vkDestroyImageView(VkEngine::getEngine().getDevice(), depthImageView, nullptr);
+	vkFreeMemory (VkEngine::getEngine().getDevice(), depthImageMemory, nullptr);
+}
+
+void RenderPass::deleteGraphicsPipeline()
+{
+	vkDestroyPipeline(VkEngine::getEngine().getDevice(), graphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(VkEngine::getEngine().getDevice(), pipelineLayout, nullptr);
+}
+
+void RenderPass::deleteDescriptorSetLayout()
+{
+	vkDestroyDescriptorSetLayout(VkEngine::getEngine().getDevice(), descriptorSetLayout, nullptr);
+}
+
+void RenderPass::deleteRenderPass()
+{
+	vkDestroyRenderPass(VkEngine::getEngine().getDevice(), renderPass, nullptr);
+}
+
+void RenderPass::deleteSwapchainFramebuffers()
+{
+	for each (auto& fb in swapchainFramebuffers)
+	{
+		vkDestroyFramebuffer(VkEngine::getEngine().getDevice(), fb, nullptr);
+	}
 }

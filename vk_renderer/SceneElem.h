@@ -5,11 +5,12 @@
 
 
 class SceneElem {
+	friend class VkEngine;
 	friend struct Scene;
 
 public:
 	SceneElem() { }
-	~SceneElem() { cleanup(); }
+	~SceneElem() { deleteBuffers(); }
 
 	std::string getName() const { return name; }
 	VkBuffer& getVertexBuffer() { return vertexBuffer; }
@@ -32,5 +33,5 @@ private:
 	virtual void initVertexBuffer();
 	virtual void initIndexBuffer();
 
-	void cleanup();
+	virtual void deleteBuffers();
 };

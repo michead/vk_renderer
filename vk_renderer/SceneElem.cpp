@@ -7,15 +7,16 @@ void SceneElem::initVertexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(mesh.vertices[0]) * mesh.vertices.size();
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VkWrap<VkBuffer> stagingBuffer { VkEngine::getEngine().getDevice(), vkDestroyBuffer };
+	VkWrap<VkDeviceMemory> stagingBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
+	
 	createBuffer(
 		VkEngine::getEngine().getPhysicalDevice(), 
 		VkEngine::getEngine().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-		stagingBuffer, 
-		stagingBufferMemory);
+		stagingBuffer.get(), 
+		stagingBufferMemory.get());
 
 	void* data;
 	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
@@ -44,16 +45,16 @@ void SceneElem::initIndexBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VkWrap<VkBuffer> stagingBuffer { VkEngine::getEngine().getDevice(), vkDestroyBuffer };
+	VkWrap<VkDeviceMemory> stagingBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
 	createBuffer(
 		VkEngine::getEngine().getPhysicalDevice(), 
 		VkEngine::getEngine().getDevice(), 
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-		stagingBuffer, 
-		stagingBufferMemory);
+		stagingBuffer.get(), 
+		stagingBufferMemory.get());
 
 	void* data;
 	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
@@ -78,7 +79,10 @@ void SceneElem::initIndexBuffer()
 		bufferSize);
 }
 
-void SceneElem::cleanup()
+void SceneElem::deleteBuffers()
 {
-
+	vkFreeMemory(VkEngine::getEngine().getDevice(), indexBufferMemory, nullptr);
+	vkDestroyBuffer(VkEngine::getEngine().getDevice(), indexBuffer, nullptr);
+	vkFreeMemory(VkEngine::getEngine().getDevice(), vertexBufferMemory, nullptr);
+	vkDestroyBuffer(VkEngine::getEngine().getDevice(), vertexBuffer, nullptr);
 }

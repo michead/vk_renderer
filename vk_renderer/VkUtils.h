@@ -154,7 +154,7 @@ inline VkResult CreateDebugReportCallbackEXT(
 	}
 }
 
-inline void DestroyDebugReportCallbackEXT(
+inline void destroyDebugReportCallbackEXT(
 	VkInstance instance, 
 	VkDebugReportCallbackEXT callback, 
 	const VkAllocationCallbacks* pAllocator)

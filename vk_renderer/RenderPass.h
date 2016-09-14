@@ -15,6 +15,8 @@ struct UniformBufferObject {
 
 
 class RenderPass {
+	friend class VkEngine;
+
 public:
 	RenderPass(std::string vsPath, std::string fsPath) : vsPath(vsPath), fsPath(fsPath) { }
 	RenderPass(std::string vsPath, std::string gsPath, std::string fsPath) : vsPath(vsPath), gsPath(gsPath), fsPath(fsPath) { }
@@ -30,23 +32,18 @@ protected:
 	std::string fsPath;
 
 	std::vector<VkFramebuffer> swapchainFramebuffers;
-	
-	VkWrap<VkImage> depthImage { VkEngine::getEngine().getDevice(), vkDestroyImage };
-	VkWrap<VkImageView> depthImageView { VkEngine::getEngine().getDevice(), vkDestroyImageView };
-	VkWrap<VkDeviceMemory> depthImageMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
-
 	VkRenderPass renderPass;
-	VkWrap<VkPipelineLayout> pipelineLayout { VkEngine::getEngine().getDevice(), vkDestroyPipelineLayout };
+	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
-
 	std::vector<VkCommandBuffer> commandBuffers;
-
-	VkWrap<VkBuffer> uniformStagingBuffer { VkEngine::getEngine().getDevice(), vkDestroyBuffer };
-	VkWrap<VkDeviceMemory> uniformStagingBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
-	VkWrap<VkBuffer> uniformBuffer { VkEngine::getEngine().getDevice() , vkDestroyBuffer};
-	VkWrap<VkDeviceMemory> uniformBufferMemory { VkEngine::getEngine().getDevice(), vkFreeMemory };
-
-	VkDescriptorSetLayout layout;
+	VkImage depthImage;
+	VkImageView depthImageView;
+	VkDeviceMemory depthImageMemory;
+	VkBuffer uniformStagingBuffer;
+	VkDeviceMemory uniformStagingBufferMemory;
+	VkBuffer uniformBuffer;
+	VkDeviceMemory uniformBufferMemory;
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorSet descriptorSet;
 
 	virtual void initUniformBuffer();
@@ -60,4 +57,11 @@ protected:
 	virtual void initTextures();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();
+
+	virtual void deleteSwapchainFramebuffers();
+	virtual void deleteUniformBuffers();
+	virtual void deleteDepthResources();
+	virtual void deleteDescriptorSetLayout();
+	virtual void deleteRenderPass();
+	virtual void deleteGraphicsPipeline();
 };
