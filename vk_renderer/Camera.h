@@ -5,9 +5,8 @@
 #include <glm\gtx\vector_angle.hpp>
 #include "MathUtils.h"
 
-#define CAMERA_POSITION		{ 0, 1, 3 }
+#define CAMERA_POSITION		{ 0, 0, 1 }
 #define CAMERA_TARGET		{ 0, 0, 0 }
-#define CAMERA_FORWARD		{ 0, 0, 1 }
 #define CAMERA_UP			{ 0, 1, 0 }
 #define CAMERA_FOVY			45.f
 #define CAMERA_NEAR			0.1f
@@ -17,6 +16,8 @@
 #define CAMERA_PAN_SCALE	0.001f
 #define MIN_THETA			0.01f
 #define MIN_FOCUS			0.00001f
+
+#define CAMERA_FILENAME		"camera.json"
 
 enum CameraMovement {
 	STILL,

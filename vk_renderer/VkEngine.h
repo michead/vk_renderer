@@ -53,7 +53,8 @@ public:
 
 	uint32_t getSwapchainImageIndex() const { return swapchainImageIndex; }
 
-	Scene* getScene() { return scene; }
+	VkEngineConfig* getConfig() const { return config; }
+	Scene* getScene() const { return scene; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
@@ -102,10 +103,10 @@ private:
 	void initDescriptorPool();
 	void initSemaphores();
 	void loadScene();
+	void initCamera();
 	void initRenderPasses();
 	void draw();
 	void recreateSwapchain();
-	void initCamera();
 	void updateBufferData();
 	void setupInputCallbacks();
 

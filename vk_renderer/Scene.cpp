@@ -6,6 +6,7 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tinyobjloader\tiny_obj_loader.h"
+#include "json11\json11.hpp"
 
 
 void Scene::load()
@@ -85,6 +86,57 @@ void Scene::load()
 void Scene::initCamera()
 {
 	camera = new Camera();
+
+	glm::vec3 position;
+	glm::vec3 target;
+
+	std::ifstream f(path + CAMERA_FILENAME);
+
+	if (f.good())
+	{
+		std::stringstream buffer;
+		buffer << f.rdbuf();
+
+		std::string s = buffer.str();
+		std::string err;
+
+		json11::Json json = json11::Json::parse(s, err);
+
+		if (!err.empty())
+		{
+			throw std::runtime_error(err);
+		}
+
+		if (json.has_member("position"))
+		{
+			std::vector<json11::Json> jsonPosArray = json["position"].array_items();
+			position = { 
+				jsonPosArray[0].number_value(), 
+				jsonPosArray[1].number_value(), 
+				jsonPosArray[2].number_value() };
+		}
+		else
+		{
+			camera->frame.origin = CAMERA_POSITION;
+		}
+
+		if (json.has_member("center"))
+		{
+			std::vector<json11::Json> jsonPosArray = json["center"].array_items();
+			target = {
+				jsonPosArray[0].number_value(),
+				jsonPosArray[1].number_value(),
+				jsonPosArray[2].number_value() };
+		}
+		else
+		{
+			camera->target = CAMERA_TARGET;
+		}
+	}
+
+	camera->frame = Frame::lookAtFrame(position, target, CAMERA_UP);
+	camera->target = target;
+	camera->fovy = CAMERA_FOVY;
 }
 
 void Scene::cleanup()

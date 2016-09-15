@@ -33,12 +33,7 @@ void VkEngine::loadScene()
 void VkEngine::initCamera()
 {
 	Camera* camera = scene->getCamera();
-
-	camera->frame.origin = CAMERA_POSITION;
-	camera->frame = Frame::lookAtFrame(CAMERA_POSITION, CAMERA_TARGET, CAMERA_UP);
 	camera->aspectRatio = swapchainExtent.width / (float) swapchainExtent.height;
-	camera->target = CAMERA_TARGET;
-	camera->fovy = CAMERA_FOVY;
 	camera->movement = STILL;
 }
 
@@ -350,7 +345,12 @@ void VkEngine::initImageViews()
 
 	for (uint32_t i = 0; i < swapchainImages.size(); i++)
 	{
-		createImageView(device, swapchainImages[i], swapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, swapchainImageViews[i]);
+		createImageView(
+			device, 
+			swapchainImages[i], 
+			swapchainImageFormat, 
+			VK_IMAGE_ASPECT_COLOR_BIT, 
+			swapchainImageViews[i]);
 	}
 }
 
