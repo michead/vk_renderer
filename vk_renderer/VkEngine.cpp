@@ -126,69 +126,9 @@ void VkEngine::onWindowResized(GLFWwindow* window, int width, int height)
 	engine->recreateSwapchain();
 }
 
-void VkEngine::initInstance()
-{
-	if (ENABLE_VALIDATION_LAYERS && !checkValidationLayerSupport())
-	{
-		throw std::runtime_error("Requested validation layers are not available!");
-	}
-
-	auto extensions = getRequiredExtensions();
-
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = APPLICATION_NAME;
-	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.pEngineName = ENGINE_NAME;
-	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
-
-	VkInstanceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	createInfo.pApplicationInfo = &appInfo;
-	createInfo.enabledExtensionCount = extensions.size();
-	createInfo.ppEnabledExtensionNames = extensions.data();
-	
-	if (ENABLE_VALIDATION_LAYERS)
-	{
-		createInfo.enabledLayerCount = validationLayers.size();
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
-	}
-
-	VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
-}
-
-void VkEngine::setupDebugCallback()
-{
-	if (!ENABLE_VALIDATION_LAYERS)
-		return;
-
-	VkDebugReportCallbackCreateInfoEXT createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	createInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT) debugCallback;
-
-	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback));
-}
-
-void VkEngine::initSurface()
-{
-	glfwCreateWindowSurface(instance, window, nullptr, &surface);
-}
-
 void VkEngine::initVulkan()
 {
-	initInstance();
-	setupDebugCallback();
-	initSurface();
-	selectPhysicalDevice();
-	initLogicalDevice();
 	initPool();
-	initSwapchain();
 	initImageViews();
 	initCommandPool();
 	initDescriptorPool();
@@ -209,143 +149,21 @@ void VkEngine::mainLoop()
 	VK_CHECK(vkDeviceWaitIdle(device));
 }
 
-void VkEngine::selectPhysicalDevice()
-{
-	uint32_t deviceCount = 0;
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
-
-	if (deviceCount == 0)
-	{
-		throw std::runtime_error("Failed to find GPUs with Vulkan support!");
-	}
-
-	std::vector<VkPhysicalDevice> devices(deviceCount);
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
-
-	for (const VkPhysicalDevice& device : devices)
-	{
-		if (isDeviceSuitable(device, surface))
-		{
-			physicalDevice = device;
-			break;
-		}
-	}
-
-	if (physicalDevice == VK_NULL_HANDLE)
-	{
-		throw std::runtime_error("Failed to find a suitable GPU!");
-	}
-}
-
-void VkEngine::initLogicalDevice()
-{
-	QueueFamilyIndices indices = findQueueFamilyIndices(physicalDevice, surface);
-
-	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentationFamily };
-
-	float queuePriority = 1.f;
-	for (int queueFamily : uniqueQueueFamilies)
-	{
-		VkDeviceQueueCreateInfo queueCreateInfo = {};
-		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-		queueCreateInfo.queueFamilyIndex = queueFamily;
-		queueCreateInfo.queueCount = 1;
-		queueCreateInfo.pQueuePriorities = &queuePriority;
-		queueCreateInfos.push_back(queueCreateInfo);
-	}
-
-	VkPhysicalDeviceFeatures deviceFeatures = {};
-
-	VkDeviceCreateInfo createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-
-	createInfo.pQueueCreateInfos = queueCreateInfos.data();
-	createInfo.queueCreateInfoCount = (uint32_t) queueCreateInfos.size();
-
-	createInfo.pEnabledFeatures = &deviceFeatures;
-
-	createInfo.enabledExtensionCount = deviceExtensions.size();
-	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-	if (ENABLE_VALIDATION_LAYERS)
-	{
-		createInfo.enabledLayerCount = validationLayers.size();
-		createInfo.ppEnabledLayerNames = validationLayers.data();
-	}
-	else
-	{
-		createInfo.enabledLayerCount = 0;
-	}
-
-	VK_CHECK(vkCreateDevice(physicalDevice, &createInfo, nullptr, &device));
-
-	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
-	vkGetDeviceQueue(device, indices.presentationFamily, 0, &presentationQueue);
-}
-
 void VkEngine::initPool()
 {
-	pool = new VkPool(instance, physicalDevice, device);
-}
-
-void VkEngine::initSwapchain()
-{
-	SwapChainSupportDetails swapchainSupport = querySwapchainSupport(physicalDevice, surface);
-	VkSurfaceFormatKHR surfaceFormat = pickSurfaceFormat(swapchainSupport.formats);
-	VkPresentModeKHR presentMode = getPresentationMode(swapchainSupport.presentationModes);
-	VkExtent2D extent = pickExtent(swapchainSupport.capabilities, config->resolution);
-
-	uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
-	if (swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount)
-	{
-		imageCount = swapchainSupport.capabilities.maxImageCount;
-	}
-
-	VkSwapchainCreateInfoKHR createInfo = {};
-	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = surface;
-
-	createInfo.minImageCount = imageCount;
-	createInfo.imageFormat = surfaceFormat.format;
-	createInfo.imageColorSpace = surfaceFormat.colorSpace;
-	createInfo.imageExtent = extent;
-	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	QueueFamilyIndices indices = findQueueFamilyIndices(physicalDevice, surface);
-	uint32_t queueFamilyIndices[] = { (uint32_t) indices.graphicsFamily, (uint32_t) indices.presentationFamily };
-
-	if (indices.graphicsFamily != indices.presentationFamily)
-	{
-		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices = queueFamilyIndices;
-	}
-	else
-	{
-		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	}
-
-	createInfo.preTransform = swapchainSupport.capabilities.currentTransform;
-	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	createInfo.presentMode = presentMode;
-	createInfo.clipped = VK_TRUE;
-
-	VkSwapchainKHR oldSwapchain = swapchain;
-	createInfo.oldSwapchain = oldSwapchain;
-
-	VkSwapchainKHR newSwapChain;
-	vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain);
-
-	*&swapchain = newSwapChain;
-
-	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
-	swapchainImages.resize(imageCount);
-	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
-
-	swapchainImageFormat = surfaceFormat.format;
-	swapchainExtent = extent;
+	pool = new VkPool(window, config);
+	
+	instance = pool->getInstance();
+	device = pool->getDevice();
+	physicalDevice = pool->getPhysicalDevice();
+	surface = pool->getSurface();
+	debugCallback = pool->getDebugCallback();
+	swapchain = pool->getSwapchain();
+	graphicsQueue = pool->getGraphicsQueue();
+	presentationQueue = pool->getPresentationQueue();
+	swapchainImages = pool->getSCImages();
+	swapchainFormat = pool->getSCFormat();
+	swapchainExtent = pool->getSCExtent();
 }
 
 void VkEngine::initImageViews()
@@ -357,7 +175,7 @@ void VkEngine::initImageViews()
 		createImageView(
 			device, 
 			swapchainImages[i], 
-			swapchainImageFormat, 
+			swapchainFormat, 
 			VK_IMAGE_ASPECT_COLOR_BIT, 
 			swapchainImageViews[i]);
 	}
@@ -473,6 +291,6 @@ void VkEngine::cleanup()
 	vkDestroySwapchainKHR(device, swapchain, nullptr);
 	vkDestroyDevice(device, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
-	destroyDebugReportCallbackEXT(instance, callback, nullptr);
+	destroyDebugReportCallbackEXT(instance, debugCallback, nullptr);
 	vkDestroyInstance(instance, nullptr);
 }

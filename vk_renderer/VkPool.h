@@ -4,6 +4,7 @@
 
 #include "vulkan\vulkan.h"
 #include "Vertex.h"
+#include "Config.h"
 
 
 struct BufferData {
@@ -27,9 +28,16 @@ struct PipelineData {
 
 class VkPool {
 public:
-	VkPool(VkInstance instance, VkPhysicalDevice physicalDevice, VkDevice device) : 
-		instance(instance), physicalDevice(physicalDevice), device(device) 
-	{ createInstance(); createDevice(); createSurface(); createDebugCallback(); createSwapchain(); }
+	VkPool(GLFWwindow* window, VkEngineConfig* config)
+	{ 
+		createInstance(); 
+		choosePhysicalDevice();
+		createDevice(); 
+		createSurface(window); 
+		createDebugCallback(); 
+		createSwapchain(config->resolution); 
+	}
+
 	~VkPool() { freeResources(); }
 
 	VkSwapchainKHR getSwapchain() { return swapchain; }
@@ -38,6 +46,11 @@ public:
 	VkPhysicalDevice getPhysicalDevice() { return physicalDevice; };
 	VkDevice getDevice() { return device; };
 	VkInstance getInstance() { return instance; };
+	VkQueue getGraphicsQueue() { return graphicsQueue; }
+	VkQueue getPresentationQueue() { return presentationQueue; }
+	std::vector<VkImage>& getSCImages() { return scImages; }
+	VkFormat getSCFormat() { return swapchainFormat; }
+	VkExtent2D getSCExtent() { return swapchainExtent; }
 
 	VkSemaphore createSemaphore();
 	VkDescriptorPool createDescriptorPool();
@@ -58,11 +71,12 @@ public:
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
 	VkImageView createSCImageView(VkImage scImage, VkFormat scImageFormat);
 
-	VkSwapchainKHR createSwapchain();
-	VkDebugReportCallbackEXT createDebugCallback();
-	VkSurfaceKHR createSurface();
-	VkDevice createDevice();
-	VkInstance createInstance();
+	void createSwapchain(glm::ivec2 resolution);
+	void createDebugCallback();
+	void createSurface(GLFWwindow* window);
+	void choosePhysicalDevice();
+	void createDevice();
+	void createInstance();
 
 private:
 	std::vector<VkSemaphore> semaphores;
@@ -85,11 +99,18 @@ private:
 	std::vector<VkImageView> scImageViews;
 
 	VkSwapchainKHR swapchain;
-	VkPhysicalDevice physicalDevice;
 	VkDevice device;
 	VkSurfaceKHR surface;
 	VkDebugReportCallbackEXT debugCallback;
 	VkInstance instance;
+	VkQueue graphicsQueue;
+	VkQueue presentationQueue;
+
+	// These do not need to be collected
+	std::vector<VkImage> scImages;
+	VkPhysicalDevice physicalDevice;
+	VkFormat swapchainFormat;
+	VkExtent2D swapchainExtent;
 
 	void freeResources();
 };

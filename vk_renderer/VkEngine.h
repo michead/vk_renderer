@@ -44,7 +44,7 @@ public:
 	VkCommandPool getCommandPool() { return commandPool; }
 	VkQueue getGraphicsQueue() { return graphicsQueue; }
 	VkQueue getPresentationQueue() { return presentationQueue; }
-	VkFormat getSwapchainImageFormat() { return swapchainImageFormat; }
+	VkFormat getSwapchainFormat() { return swapchainFormat; }
 	VkExtent2D& getSwapchainExtent() { return swapchainExtent; }
 	std::vector<VkImage>& getSwapchainImages() { return swapchainImages; }
 	std::vector<VkImageView>& getSwapchainImageViews() { return swapchainImageViews; }
@@ -66,7 +66,7 @@ private:
 	VkPool* pool;
 
 	VkInstance instance;
-	VkDebugReportCallbackEXT callback;
+	VkDebugReportCallbackEXT debugCallback;
 	VkSurfaceKHR surface;
 	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 	VkDevice device;
@@ -76,7 +76,7 @@ private:
 	VkExtent2D swapchainExtent;
 	std::vector<VkImageView> swapchainImageViews;
 	std::vector<VkImage> swapchainImages;
-	VkFormat swapchainImageFormat;
+	VkFormat swapchainFormat;
 	VkQueue graphicsQueue;
 	VkQueue presentationQueue;
 	VkSemaphore imageAvailableSemaphore;
@@ -94,13 +94,7 @@ private:
 	void initWindow();
 	void initVulkan();
 	void mainLoop();
-	void initInstance();
-	void setupDebugCallback();
-	void initSurface();
-	void selectPhysicalDevice();
-	void initLogicalDevice();
 	void initPool();
-	void initSwapchain();
 	void initImageViews();
 	void initCommandPool();
 	void initDescriptorPool();
