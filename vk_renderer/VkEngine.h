@@ -24,6 +24,8 @@ enum ShadingModel {
 	NUM_SHADING_MODELS
 };
 
+class VkPool;
+
 
 class VkEngine
 {
@@ -35,26 +37,25 @@ public:
 	static void init(int argc, char** argv);
 	static void run();
 
-	VkInstance& getInstance() { return instance; }
-	VkDevice& getDevice() { return device; }
-	VkPhysicalDevice& getPhysicalDevice() { return physicalDevice; }
-	VkSurfaceKHR& getSurface() { return surface; }
-	VkCommandPool& getCommandPool() { return commandPool; }
-	VkQueue& getGraphicsQueue() { return graphicsQueue; }
-	VkQueue& getPresentationQueue() { return presentationQueue; }
-	VkFormat& getSwapchainImageFormat() { return swapchainImageFormat; }
+	VkInstance getInstance() { return instance; }
+	VkDevice getDevice() { return device; }
+	VkPhysicalDevice getPhysicalDevice() { return physicalDevice; }
+	VkSurfaceKHR getSurface() { return surface; }
+	VkCommandPool getCommandPool() { return commandPool; }
+	VkQueue getGraphicsQueue() { return graphicsQueue; }
+	VkQueue getPresentationQueue() { return presentationQueue; }
+	VkFormat getSwapchainImageFormat() { return swapchainImageFormat; }
 	VkExtent2D& getSwapchainExtent() { return swapchainExtent; }
 	std::vector<VkImage>& getSwapchainImages() { return swapchainImages; }
 	std::vector<VkImageView>& getSwapchainImageViews() { return swapchainImageViews; }
 	VkSwapchainKHR& getSwapchain() { return swapchain; }
-	VkSemaphore& getImageAvailableSemaphore() { return imageAvailableSemaphore; }
-	VkSemaphore& getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
-	VkDescriptorPool& getDescriptorPool() { return descriptorPool; }
-
+	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
+	VkSemaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
+	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
 	uint32_t getSwapchainImageIndex() const { return swapchainImageIndex; }
-
 	VkEngineConfig* getConfig() const { return config; }
 	Scene* getScene() const { return scene; }
+	VkPool* getPool() const { return pool; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
@@ -62,6 +63,7 @@ public:
 private:
 	VkEngineConfig* config;
 	GLFWwindow* window;
+	VkPool* pool;
 
 	VkInstance instance;
 	VkDebugReportCallbackEXT callback;
@@ -97,6 +99,7 @@ private:
 	void initSurface();
 	void selectPhysicalDevice();
 	void initLogicalDevice();
+	void initPool();
 	void initSwapchain();
 	void initImageViews();
 	void initCommandPool();

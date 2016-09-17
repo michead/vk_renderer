@@ -593,8 +593,10 @@ void RenderPass::deleteRenderPass()
 
 void RenderPass::deleteSwapchainFramebuffers()
 {
-	for each (auto& fb in swapchainFramebuffers)
+	std::vector<VkFramebuffer>::iterator it;
+	for (it = swapchainFramebuffers.begin(); it != swapchainFramebuffers.end(); it++)
 	{
-		vkDestroyFramebuffer(VkEngine::getEngine().getDevice(), fb, nullptr);
+		VkDevice device = VkEngine::getEngine().getDevice();
+		vkDestroyFramebuffer(device, *it, nullptr);
 	}
 }

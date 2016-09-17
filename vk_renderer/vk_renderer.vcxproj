@@ -159,6 +159,7 @@
     <ClCompile Include="SceneElem.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VkEngine.cpp" />
+    <ClCompile Include="VkPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GeomStructs.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VkEngine.h" />
+    <ClInclude Include="VkPool.h" />
     <ClInclude Include="VkUtils.h" />
     <ClInclude Include="VkWrap.h" />
   </ItemGroup>

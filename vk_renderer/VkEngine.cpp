@@ -7,6 +7,7 @@
 #include "RenderPass.h"
 #include "Scene.h"
 #include "VkUtils.h"
+#include "VkPool.h"
 
 
 void VkEngine::init(int argc, char** argv)
@@ -33,6 +34,8 @@ void VkEngine::loadScene()
 void VkEngine::initCamera()
 {
 	Camera* camera = scene->getCamera();
+	assert(camera);
+	
 	camera->aspectRatio = swapchainExtent.width / (float) swapchainExtent.height;
 	camera->movement = STILL;
 }
@@ -184,6 +187,7 @@ void VkEngine::initVulkan()
 	initSurface();
 	selectPhysicalDevice();
 	initLogicalDevice();
+	initPool();
 	initSwapchain();
 	initImageViews();
 	initCommandPool();
@@ -278,6 +282,11 @@ void VkEngine::initLogicalDevice()
 
 	vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, indices.presentationFamily, 0, &presentationQueue);
+}
+
+void VkEngine::initPool()
+{
+	pool = new VkPool(instance, physicalDevice, device);
 }
 
 void VkEngine::initSwapchain()
@@ -412,10 +421,6 @@ void VkEngine::initSemaphores()
 void VkEngine::recreateSwapchain()
 {
 	VK_CHECK(vkDeviceWaitIdle(device));
-
-	initSwapchain();
-	initImageViews();
-	initRenderPasses();
 }
 
 void VkEngine::updateBufferData()
@@ -461,42 +466,9 @@ void VkEngine::initRenderPasses()
 
 void VkEngine::cleanup()
 {
-	vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
-	vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
-	vkDestroyDescriptorPool(device, descriptorPool, nullptr);
-
-	for each(RenderPass* renderPass in renderPasses)
-	{
-		renderPass->deleteUniformBuffers();
-	}
-
-	delete scene;
 	delete config;
-
-	for each(RenderPass* renderPass in renderPasses)
-	{
-		renderPass->deleteDepthResources();
-	}
-
-	vkDestroyCommandPool(device, commandPool, nullptr);
-
-	for each(RenderPass* renderPass in renderPasses)
-	{
-		renderPass->deleteGraphicsPipeline();
-		renderPass->deleteDescriptorSetLayout();
-		renderPass->deleteRenderPass();
-	}	
-
-	for each(auto& swapchainImageView in swapchainImageViews)
-	{
-		vkDestroyImageView(device, swapchainImageView, nullptr);
-	}
-
-	for each(RenderPass* renderPass in renderPasses)
-	{
-		renderPass->deleteSwapchainFramebuffers();
-		delete renderPass;
-	}
+	delete scene;
+	delete pool;
 
 	vkDestroySwapchainKHR(device, swapchain, nullptr);
 	vkDestroyDevice(device, nullptr);

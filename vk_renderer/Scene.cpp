@@ -141,6 +141,12 @@ void Scene::initCamera()
 
 void Scene::cleanup()
 {
+	std::vector<SceneElem*>::iterator it3;
+	for (it3 = elems.begin(); it3 != elems.end(); it3++)
+	{
+		delete *it3;
+	}
+
 	std::map<std::string, Texture*>::iterator it;
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
@@ -151,12 +157,6 @@ void Scene::cleanup()
 	for (it2 = materials.begin(); it2 != materials.end(); it2++)
 	{
 		delete *it2;
-	}
-
-	std::vector<SceneElem*>::iterator it3;
-	for (it3 = elems.begin(); it3 != elems.end(); it3++)
-	{
-		delete *it3;
 	}
 
 	std::vector<Light*>::iterator it4;
