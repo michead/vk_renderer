@@ -8,10 +8,8 @@
 
 
 struct BufferData {
-	VkBuffer uniformBuffer;
-	VkDeviceMemory uniformBufferMemory;
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VkBuffer buffer;
+	VkDeviceMemory bufferMemory;
 };
 
 struct DepthData {
@@ -48,17 +46,17 @@ public:
 	VkInstance getInstance() { return instance; };
 	VkQueue getGraphicsQueue() { return graphicsQueue; }
 	VkQueue getPresentationQueue() { return presentationQueue; }
-	std::vector<VkImage>& getSCImages() { return scImages; }
-	VkFormat getSCFormat() { return swapchainFormat; }
-	VkExtent2D getSCExtent() { return swapchainExtent; }
+	std::vector<VkImage>& getSwapchainImages() { return scImages; }
+	VkFormat getSwapchainFormat() { return swapchainFormat; }
+	VkExtent2D getSwapchainExtent() { return swapchainExtent; }
 
 	VkSemaphore createSemaphore();
 	VkDescriptorPool createDescriptorPool();
-	BufferData createUniformBuffer(size_t bufferSize);
+	std::array<BufferData, 2> createUniformBuffer(size_t bufferSize);
 	BufferData createVertexBuffer(std::vector<Vertex> vertices);
 	BufferData createIndexBuffer(std::vector<uint32_t> indices);
-	DepthData createDepthResources(VkExtent2D extent);
-	VkCommandPool createCommandPool(VkSurfaceKHR surface);
+	DepthData createDepthResources();
+	VkCommandPool createCommandPool();
 	PipelineData createPipeline(
 		VkRenderPass renderPass,
 		VkDescriptorSetLayout descriptorSetLayout,
@@ -69,7 +67,7 @@ public:
 	VkDescriptorSetLayout createDescriptorSetLayout();
 	VkRenderPass createRenderPass(VkRenderPassCreateInfo createInfo);
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
-	VkImageView createSCImageView(VkImage scImage, VkFormat scImageFormat);
+	VkImageView createSCImageView(VkImage swapchainImage);
 
 	void createSwapchain(glm::ivec2 resolution);
 	void createDebugCallback();

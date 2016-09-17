@@ -161,9 +161,9 @@ void VkEngine::initPool()
 	swapchain = pool->getSwapchain();
 	graphicsQueue = pool->getGraphicsQueue();
 	presentationQueue = pool->getPresentationQueue();
-	swapchainImages = pool->getSCImages();
-	swapchainFormat = pool->getSCFormat();
-	swapchainExtent = pool->getSCExtent();
+	swapchainImages = pool->getSwapchainImages();
+	swapchainFormat = pool->getSwapchainFormat();
+	swapchainExtent = pool->getSwapchainExtent();
 }
 
 void VkEngine::initImageViews()

@@ -10,7 +10,7 @@ class SceneElem {
 
 public:
 	SceneElem() { }
-	~SceneElem() { deleteBuffers(); }
+	~SceneElem() { }
 
 	std::string getName() const { return name; }
 	VkBuffer& getVertexBuffer() { return vertexBuffer; }
@@ -32,6 +32,4 @@ private:
 
 	virtual void initVertexBuffer();
 	virtual void initIndexBuffer();
-
-	virtual void deleteBuffers();
 };

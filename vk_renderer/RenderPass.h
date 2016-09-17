@@ -57,11 +57,4 @@ protected:
 	virtual void initTextures();
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();
-
-	virtual void deleteSwapchainFramebuffers();
-	virtual void deleteUniformBuffers();
-	virtual void deleteDepthResources();
-	virtual void deleteDescriptorSetLayout();
-	virtual void deleteRenderPass();
-	virtual void deleteGraphicsPipeline();
 };

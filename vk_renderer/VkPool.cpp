@@ -37,7 +37,7 @@ VkDescriptorPool VkPool::createDescriptorPool()
 	return descriptorPools.back();
 }
 
-BufferData VkPool::createUniformBuffer(size_t bufferSize)
+std::array<BufferData, 2> VkPool::createUniformBuffer(size_t bufferSize)
 {
 	buffers.push_back(VK_NULL_HANDLE);
 	buffers.push_back(VK_NULL_HANDLE);
@@ -62,13 +62,11 @@ BufferData VkPool::createUniformBuffer(size_t bufferSize)
 		buffers.back(),
 		deviceMemoryList.back());
 
-	BufferData bufferData = { 
-		buffers[buffers.size() - 2],
-		deviceMemoryList[deviceMemoryList.size() - 2],
-		buffers.back(),
-		deviceMemoryList.back() };
+	std::array<BufferData, 2> bufferDataArray;
+	bufferDataArray[0] = { buffers[buffers.size() - 2], deviceMemoryList[deviceMemoryList.size() - 2] };
+	bufferDataArray[1] = { buffers.back(), deviceMemoryList.back() };
 
-	return bufferData;
+	return bufferDataArray;
 }
 
 BufferData VkPool::createVertexBuffer(std::vector<Vertex> vertices)
@@ -167,7 +165,7 @@ BufferData VkPool::createIndexBuffer(std::vector<uint32_t> indices)
 	return bufferData;
 }
 
-DepthData VkPool::createDepthResources(VkExtent2D extent)
+DepthData VkPool::createDepthResources()
 {
 	VkFormat depthFormat = findDepthFormat(physicalDevice);
 
@@ -178,8 +176,8 @@ DepthData VkPool::createDepthResources(VkExtent2D extent)
 	createImage(
 		physicalDevice,
 		device,
-		extent.width,
-		extent.height,
+		swapchainExtent.width,
+		swapchainExtent.height,
 		depthFormat,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -211,7 +209,7 @@ DepthData VkPool::createDepthResources(VkExtent2D extent)
 	return depthData;
 }
 
-VkCommandPool VkPool::createCommandPool(VkSurfaceKHR surface)
+VkCommandPool VkPool::createCommandPool()
 {
 	commandPools.push_back(VK_NULL_HANDLE);
 
@@ -459,14 +457,14 @@ VkFramebuffer VkPool::createFramebuffer(VkFramebufferCreateInfo createInfo)
 	return framebuffers.back();
 }
 
-VkImageView VkPool::createSCImageView(VkImage scImage, VkFormat scImageFormat)
+VkImageView VkPool::createSCImageView(VkImage swapchainImage)
 {
 	scImageViews.push_back(VK_NULL_HANDLE);
 
 	createImageView(
 		device,
-		scImage,
-		scImageFormat,
+		swapchainImage,
+		swapchainFormat,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		scImageViews.back());
 

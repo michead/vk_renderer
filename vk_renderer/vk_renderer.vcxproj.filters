@@ -16,9 +16,6 @@
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{8eefbb60-ce65-4647-a442-d7fe29b066a0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ext">
-      <UniqueIdentifier>{22ddb97d-7879-4f18-8d1f-c2b1e047cee1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -44,9 +41,6 @@
     </ClCompile>
     <ClCompile Include="VkEngine.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="inc\json11\json11.cpp">
-      <Filter>Source Files\ext</Filter>
     </ClCompile>
     <ClCompile Include="VkPool.cpp">
       <Filter>Source Files</Filter>
