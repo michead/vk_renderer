@@ -12,10 +12,11 @@ struct BufferData {
 	VkDeviceMemory bufferMemory;
 };
 
-struct DepthData {
+struct ImageData {
 	VkImage image;
 	VkImageView imageView;
 	VkDeviceMemory imageMemory;
+	VkSampler sampler;
 };
 
 struct PipelineData {
@@ -29,10 +30,10 @@ public:
 	VkPool(GLFWwindow* window, VkEngineConfig* config)
 	{ 
 		createInstance(); 
+		createDebugCallback();
+		createSurface(window);
 		choosePhysicalDevice();
-		createDevice(); 
-		createSurface(window); 
-		createDebugCallback(); 
+		createDevice();  
 		createSwapchain(config->resolution); 
 	}
 
@@ -46,7 +47,7 @@ public:
 	VkInstance getInstance() { return instance; };
 	VkQueue getGraphicsQueue() { return graphicsQueue; }
 	VkQueue getPresentationQueue() { return presentationQueue; }
-	std::vector<VkImage>& getSwapchainImages() { return scImages; }
+	std::vector<VkImage>& getSwapchainImages() { return swapchainImages; }
 	VkFormat getSwapchainFormat() { return swapchainFormat; }
 	VkExtent2D getSwapchainExtent() { return swapchainExtent; }
 
@@ -55,7 +56,7 @@ public:
 	std::array<BufferData, 2> createUniformBuffer(size_t bufferSize);
 	BufferData createVertexBuffer(std::vector<Vertex> vertices);
 	BufferData createIndexBuffer(std::vector<uint32_t> indices);
-	DepthData createDepthResources();
+	ImageData createDepthResources();
 	VkCommandPool createCommandPool();
 	PipelineData createPipeline(
 		VkRenderPass renderPass,
@@ -67,7 +68,9 @@ public:
 	VkDescriptorSetLayout createDescriptorSetLayout();
 	VkRenderPass createRenderPass(VkRenderPassCreateInfo createInfo);
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
-	VkImageView createSCImageView(VkImage swapchainImage);
+	VkImageView createSwapchainImageView(VkImage swapchainImage);
+	ImageData createTextureResources(std::string path);
+	
 
 	void createSwapchain(glm::ivec2 resolution);
 	void createDebugCallback();
@@ -94,21 +97,25 @@ private:
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
 	std::vector<VkRenderPass> renderPasses;
 	std::vector<VkFramebuffer> framebuffers;
-	std::vector<VkImageView> scImageViews;
+	std::vector<VkImageView> swapchainImageViews;
+	std::vector<VkSampler> textureSamplers;
+	std::vector<VkImage> textureImages;
+	std::vector<VkImageView> textureImageViews;
+	std::vector<VkDeviceMemory> textureImageMemoryList;
 
 	VkSwapchainKHR swapchain;
 	VkDevice device;
 	VkSurfaceKHR surface;
 	VkDebugReportCallbackEXT debugCallback;
 	VkInstance instance;
-	VkQueue graphicsQueue;
-	VkQueue presentationQueue;
 
 	// These do not need to be collected
-	std::vector<VkImage> scImages;
+	std::vector<VkImage> swapchainImages;
 	VkPhysicalDevice physicalDevice;
 	VkFormat swapchainFormat;
 	VkExtent2D swapchainExtent;
+	VkQueue graphicsQueue;
+	VkQueue presentationQueue;
 
 	void freeResources();
 };

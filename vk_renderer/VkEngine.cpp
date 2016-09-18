@@ -12,18 +12,18 @@
 
 void VkEngine::init(int argc, char** argv)
 {
-	getEngine().config = new VkEngineConfig();
-	getEngine().config->parseCmdLineArgs(argc, argv);
+	config = new VkEngineConfig();
+	config->parseCmdLineArgs(argc, argv);
 }
 
 void VkEngine::run()
 {
-	getEngine().loadScene();
-	getEngine().initWindow();
-	getEngine().initVulkan();
-	getEngine().initCamera();
-	getEngine().setupInputCallbacks();
-	getEngine().mainLoop();
+	loadScene();
+	initWindow();
+	initVulkan();
+	initCamera();
+	setupInputCallbacks();
+	mainLoop();
 }
 
 void VkEngine::loadScene()
@@ -172,24 +172,13 @@ void VkEngine::initImageViews()
 
 	for (uint32_t i = 0; i < swapchainImages.size(); i++)
 	{
-		createImageView(
-			device, 
-			swapchainImages[i], 
-			swapchainFormat, 
-			VK_IMAGE_ASPECT_COLOR_BIT, 
-			swapchainImageViews[i]);
+		swapchainImageViews[i] = VkEngine::getEngine().getPool()->createSwapchainImageView(swapchainImages[i]);
 	}
 }
 
 void VkEngine::initCommandPool()
 {
-	QueueFamilyIndices queueFamilyIndices = findQueueFamilyIndices(physicalDevice, surface);
-
-	VkCommandPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
-
-	VK_CHECK(vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool));
+	commandPool = VkEngine::getEngine().getPool()->createCommandPool();
 }
 
 void VkEngine::draw()
@@ -229,16 +218,15 @@ void VkEngine::draw()
 
 void VkEngine::initSemaphores()
 {
-	VkSemaphoreCreateInfo semaphoreInfo = {};
-	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore));
-	VK_CHECK(vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore));
+	imageAvailableSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	renderFinishedSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
 void VkEngine::recreateSwapchain()
 {
 	VK_CHECK(vkDeviceWaitIdle(device));
+
+	// TODO
 }
 
 void VkEngine::updateBufferData()
@@ -253,19 +241,7 @@ void VkEngine::updateBufferData()
 
 void VkEngine::initDescriptorPool()
 {
-	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
-	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 1;
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 1;
-
-	VkDescriptorPoolCreateInfo poolInfo = {};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = poolSizes.size();
-	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 1;
-
-	VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool));
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool();
 }
 
 void VkEngine::initRenderPasses()
@@ -284,13 +260,7 @@ void VkEngine::initRenderPasses()
 
 void VkEngine::cleanup()
 {
+	delete pool;
 	delete config;
 	delete scene;
-	delete pool;
-
-	vkDestroySwapchainKHR(device, swapchain, nullptr);
-	vkDestroyDevice(device, nullptr);
-	vkDestroySurfaceKHR(instance, surface, nullptr);
-	destroyDebugReportCallbackEXT(instance, debugCallback, nullptr);
-	vkDestroyInstance(instance, nullptr);
 }

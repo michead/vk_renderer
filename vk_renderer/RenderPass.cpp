@@ -93,12 +93,12 @@ void RenderPass::initGraphicsPipeline()
 		gs = readFile(gsPath);
 	}
 
-	PipelineData pipelineData = VkEngine().getEngine().getPool()->createPipeline(
-		renderPass, 
-		descriptorSetLayout, 
+	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
+		renderPass,
+		descriptorSetLayout,
 		VkEngine::getEngine().getSwapchainExtent(),
-		vs, 
-		fs, 
+		vs,
+		fs,
 		gs);
 
 	graphicsPipeline = pipelineData.pipeline;
@@ -107,7 +107,7 @@ void RenderPass::initGraphicsPipeline()
 
 void RenderPass::initDepthResources()
 {
-	DepthData depthData = VkEngine::getEngine().getPool()->createDepthResources();
+	ImageData depthData = VkEngine::getEngine().getPool()->createDepthResources();
 	depthImage = depthData.image;
 	depthImageView = depthData.imageView;
 	depthImageMemory = depthData.imageMemory;
@@ -151,7 +151,7 @@ void RenderPass::initFramebuffers()
 		framebufferInfo.height = VkEngine::getEngine().getSwapchainExtent().height;
 		framebufferInfo.layers = 1;
 
-		VK_CHECK(vkCreateFramebuffer(VkEngine::getEngine().getDevice(), &framebufferInfo, nullptr, &swapchainFramebuffers[i]));
+		swapchainFramebuffers[i] = VkEngine::getEngine().getPool()->createFramebuffer(framebufferInfo);
 	}
 }
 
@@ -344,27 +344,7 @@ void RenderPass::initDescriptorSet()
 
 void RenderPass::initDescriptorSetLayout()
 {
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = bindings.size();
-	layoutInfo.pBindings = bindings.data();
-
-	VK_CHECK(vkCreateDescriptorSetLayout(VkEngine::getEngine().getDevice(), &layoutInfo, nullptr, &descriptorSetLayout));
+	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout();
 
 }
 

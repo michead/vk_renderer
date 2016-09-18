@@ -89,6 +89,7 @@
       <AdditionalLibraryDirectories>lib\x86\</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;json11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
       <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
@@ -104,6 +105,7 @@
     <Link>
       <AdditionalLibraryDirectories>lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;json11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
       <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
@@ -125,6 +127,7 @@
       <AdditionalLibraryDirectories>lib\x86\</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;json11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
       <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
@@ -144,6 +147,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>lib\x64\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;json11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
       <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>

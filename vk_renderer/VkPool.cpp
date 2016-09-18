@@ -4,6 +4,9 @@
 
 #include "VkUtils.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb\stb_image.h>
+
 
 VkSemaphore VkPool::createSemaphore()
 {
@@ -165,7 +168,7 @@ BufferData VkPool::createIndexBuffer(std::vector<uint32_t> indices)
 	return bufferData;
 }
 
-DepthData VkPool::createDepthResources()
+ImageData VkPool::createDepthResources()
 {
 	VkFormat depthFormat = findDepthFormat(physicalDevice);
 
@@ -200,7 +203,7 @@ DepthData VkPool::createDepthResources()
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
-	DepthData depthData = {
+	ImageData depthData = {
 		depthImages.back(),
 		depthImageViews.back(),
 		depthImageMemoryList.back()
@@ -457,18 +460,137 @@ VkFramebuffer VkPool::createFramebuffer(VkFramebufferCreateInfo createInfo)
 	return framebuffers.back();
 }
 
-VkImageView VkPool::createSCImageView(VkImage swapchainImage)
+VkImageView VkPool::createSwapchainImageView(VkImage swapchainImage)
 {
-	scImageViews.push_back(VK_NULL_HANDLE);
+	swapchainImageViews.push_back(VK_NULL_HANDLE);
 
 	createImageView(
 		device,
 		swapchainImage,
 		swapchainFormat,
 		VK_IMAGE_ASPECT_COLOR_BIT,
-		scImageViews.back());
+		swapchainImageViews.back());
 
-	return scImageViews.back();
+	return swapchainImageViews.back();
+}
+
+ImageData VkPool::createTextureResources(std::string path)
+{
+	textureImages.push_back(VK_NULL_HANDLE);
+	textureImageViews.push_back(VK_NULL_HANDLE);
+	textureImageMemoryList.push_back(VK_NULL_HANDLE);
+	textureSamplers.push_back(VK_NULL_HANDLE);
+
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+
+	if (!pixels)
+	{
+		throw std::runtime_error("Failed to load texture image!");
+	}
+
+	VkWrap<VkImage> stagingImage{ VkEngine::getEngine().getDevice(), vkDestroyImage };
+	VkWrap<VkDeviceMemory> stagingImageMemory{ VkEngine::getEngine().getDevice(), vkFreeMemory };
+	createImage(
+		VkEngine::getEngine().getPhysicalDevice(),
+		VkEngine::getEngine().getDevice(),
+		texWidth,
+		texHeight,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_IMAGE_TILING_LINEAR,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingImage.get(),
+		stagingImageMemory.get());
+
+	void* data;
+	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingImageMemory, 0, imageSize, 0, &data));
+	memcpy(data, pixels, (size_t) imageSize);
+	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingImageMemory);
+
+	stbi_image_free(pixels);
+
+	createImage(
+		VkEngine::getEngine().getPhysicalDevice(),
+		VkEngine::getEngine().getDevice(),
+		texWidth,
+		texHeight,
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		textureImages.back(),
+		textureImageMemoryList.back());
+
+	transitionImageLayout(
+		VkEngine::getEngine().getDevice(),
+		VkEngine::getEngine().getCommandPool(),
+		VkEngine::getEngine().getGraphicsQueue(),
+		stagingImage,
+		VK_IMAGE_LAYOUT_PREINITIALIZED,
+		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+	transitionImageLayout(
+		VkEngine::getEngine().getDevice(),
+		VkEngine::getEngine().getCommandPool(),
+		VkEngine::getEngine().getGraphicsQueue(),
+		textureImages.back(),
+		VK_IMAGE_LAYOUT_PREINITIALIZED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+	copyImage(
+		VkEngine::getEngine().getDevice(),
+		VkEngine::getEngine().getCommandPool(),
+		VkEngine::getEngine().getGraphicsQueue(),
+		stagingImage,
+		textureImages.back(),
+		texWidth,
+		texHeight);
+
+	transitionImageLayout(
+		VkEngine::getEngine().getDevice(),
+		VkEngine::getEngine().getCommandPool(),
+		VkEngine::getEngine().getGraphicsQueue(),
+		textureImages.back(),
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	createImageView(
+		device,
+		textureImages.back(),
+		VK_FORMAT_R8G8B8A8_UNORM,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		textureImageViews.back());
+
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.f;
+	samplerInfo.minLod = 0.f;
+	samplerInfo.maxLod = 0.f;
+
+	VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &textureSamplers.back()));
+
+	ImageData imageData = {
+		textureImages.back(),
+		textureImageViews.back(),
+		textureImageMemoryList.back(),
+		textureSamplers.back()
+	};
+
+	return imageData;
 }
 
 void VkPool::choosePhysicalDevice()
@@ -551,8 +673,8 @@ void VkPool::createSwapchain(glm::ivec2 resolution)
 	*&swapchain = newSwapChain;
 
 	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
-	scImages.resize(imageCount);
-	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, scImages.data()));
+	swapchainImages.resize(imageCount);
+	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
 
 	swapchainFormat = surfaceFormat.format;
 	swapchainExtent = extent;
@@ -573,7 +695,7 @@ void VkPool::createDebugCallback()
 
 void VkPool::createSurface(GLFWwindow* window)
 {
-	glfwCreateWindowSurface(instance, window, nullptr, &surface);
+	VK_CHECK(glfwCreateWindowSurface(instance, window, nullptr, &surface));
 }
 
 void VkPool::createDevice()
@@ -669,14 +791,24 @@ void VkPool::freeResources()
 	for (VkBuffer buffer : indexBuffers) { vkDestroyBuffer(device, buffer, nullptr); }
 	for (VkDeviceMemory deviceMemory : vertexDeviceMemoryList) { vkFreeMemory(device, deviceMemory, nullptr); }
 	for (VkBuffer buffer : vertexBuffers) { vkDestroyBuffer(device, buffer, nullptr); }
+	for (VkSampler sampler : textureSamplers) { vkDestroySampler(device, sampler, nullptr); }
+	for (VkImageView imageView : textureImageViews) { vkDestroyImageView(device, imageView, nullptr); }
+	for (VkDeviceMemory deviceMemory : textureImageMemoryList) { vkFreeMemory(device, deviceMemory, nullptr); }
+	for (VkImage image : textureImages) { vkDestroyImage(device, image, nullptr); }
 	for (VkImage depthImage : depthImages) { vkDestroyImage(device, depthImage, nullptr); }
 	for (VkImageView depthImageView : depthImageViews) { vkDestroyImageView(device, depthImageView, nullptr); }
-	for (VkDeviceMemory depthImageMemory : depthImageMemoryList) { vkDestroyImage(device, depthImageMemory, nullptr); }
+	for (VkDeviceMemory depthImageMemory : depthImageMemoryList) { vkFreeMemory(device, depthImageMemory, nullptr); }
 	for (VkCommandPool commandPool : commandPools) { vkDestroyCommandPool(device, commandPool, nullptr); }
 	for (VkPipeline pipeline : pipelines) { vkDestroyPipeline(device, pipeline, nullptr); }
 	for (VkPipelineLayout pipelineLayout : pipelineLayouts) { vkDestroyPipelineLayout(device, pipelineLayout, nullptr); }
 	for (VkDescriptorSetLayout descriptorSetLayout : descriptorSetLayouts) { vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr); }
 	for (VkRenderPass renderPass : renderPasses) { vkDestroyRenderPass(device, renderPass, nullptr); }
 	for (VkFramebuffer framebuffer : framebuffers) { vkDestroyFramebuffer(device, framebuffer, nullptr); }
-	for (VkImageView scImageView : scImageViews) { vkDestroyImageView(device, scImageView, nullptr); }
+	for (VkImageView swapchainImageView : swapchainImageViews) { vkDestroyImageView(device, swapchainImageView, nullptr); }
+
+	vkDestroySwapchainKHR(device, swapchain, nullptr);
+	vkDestroySurfaceKHR(instance, surface, nullptr);
+	destroyDebugReportCallbackEXT(instance, debugCallback, nullptr);
+	vkDestroyDevice(device, nullptr);
+	vkDestroyInstance(instance, nullptr);
 }

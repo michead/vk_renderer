@@ -8,6 +8,9 @@
 
 struct VkEngineConfig {
 public:
+	VkEngineConfig() { }
+	~VkEngineConfig() { }
+
 	glm::ivec2 resolution;
 	bool fullscreen;
 	std::string scenePath;

@@ -34,8 +34,8 @@ public:
 	~VkEngine() { cleanup(); }
 
 	static VkEngine& getEngine() { static VkEngine engine; return engine; }
-	static void init(int argc, char** argv);
-	static void run();
+	void init(int argc, char** argv);
+	void run();
 
 	VkInstance getInstance() { return instance; }
 	VkDevice getDevice() { return device; }
@@ -45,10 +45,10 @@ public:
 	VkQueue getGraphicsQueue() { return graphicsQueue; }
 	VkQueue getPresentationQueue() { return presentationQueue; }
 	VkFormat getSwapchainFormat() { return swapchainFormat; }
-	VkExtent2D& getSwapchainExtent() { return swapchainExtent; }
+	VkExtent2D getSwapchainExtent() { return swapchainExtent; }
 	std::vector<VkImage>& getSwapchainImages() { return swapchainImages; }
 	std::vector<VkImageView>& getSwapchainImageViews() { return swapchainImageViews; }
-	VkSwapchainKHR& getSwapchain() { return swapchain; }
+	VkSwapchainKHR getSwapchain() { return swapchain; }
 	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
 	VkSemaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
@@ -61,9 +61,9 @@ public:
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
 
 private:
+	VkPool* pool;
 	VkEngineConfig* config;
 	GLFWwindow* window;
-	VkPool* pool;
 
 	VkInstance instance;
 	VkDebugReportCallbackEXT debugCallback;

@@ -7,8 +7,8 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		VkEngine::init(argc, argv);
-		VkEngine::run();
+		VkEngine::getEngine().init(argc, argv);
+		VkEngine::getEngine().run();
 	}
 	catch (const std::runtime_error& e)
 	{
