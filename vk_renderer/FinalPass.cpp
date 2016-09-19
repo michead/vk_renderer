@@ -121,6 +121,8 @@ void FinalPass::initFramebuffers()
 
 void FinalPass::initDescriptorSet()
 {
+	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getDescriptorSetLayout();
+
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();

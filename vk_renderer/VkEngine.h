@@ -48,6 +48,7 @@ public:
 	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
 	VkSemaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
+	VkDescriptorSetLayout getDescriptorSetLayout() { return descriptorSetLayout; }
 	uint32_t getSwapchainImageIndex() const { return swapchainImageIndex; }
 	Config* getConfig() const { return config; }
 	Scene* getScene() const { return scene; }
@@ -71,6 +72,7 @@ private:
 	VkDevice device;
 	VkCommandPool commandPool;
 	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout descriptorSetLayout;
 	VkSwapchainKHR swapchain;
 	VkExtent2D swapchainExtent;
 	std::vector<VkImageView> swapchainImageViews;
@@ -95,6 +97,7 @@ private:
 	void initVulkan();
 	void mainLoop();
 	void initPool();
+	void initDescriptorSetLayout();
 	void initImageViews();
 	void initCommandPool();
 	void initDescriptorPool();

@@ -47,11 +47,9 @@ protected:
 	VkDeviceMemory uniformStagingBufferMemory;
 	VkBuffer uniformBuffer;
 	VkDeviceMemory uniformBufferMemory;
-	VkDescriptorSetLayout descriptorSetLayout;
 	VkDescriptorSet descriptorSet;
 
 	virtual void initUniformBuffer();
-	virtual void initDescriptorSetLayout();
 	virtual void initMeshBuffers();
 	virtual void initTextures();
 	virtual void initDepthResources();

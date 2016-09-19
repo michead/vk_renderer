@@ -255,6 +255,11 @@ void VkEngine::initGBuffers()
 	}
 }
 
+void VkEngine::initDescriptorSetLayout()
+{
+	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout();
+}
+
 void VkEngine::initRenderPasses()
 {
 	renderPasses.clear();

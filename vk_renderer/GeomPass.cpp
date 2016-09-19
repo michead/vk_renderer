@@ -165,6 +165,8 @@ void GeomPass::initDescriptorSet()
 	std::map<std::string, Texture*>::iterator it;
 	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
 
+	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getDescriptorSetLayout();
+
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();

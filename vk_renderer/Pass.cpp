@@ -14,7 +14,6 @@
 void Pass::init()
 {
 	initAttachments();
-	initDescriptorSetLayout();
 	initGraphicsPipeline();
 	initDepthResources();
 	initFramebuffers();
@@ -95,7 +94,7 @@ void Pass::initGraphicsPipeline()
 
 	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
 		renderPass,
-		descriptorSetLayout,
+		VkEngine::getEngine().getDescriptorSetLayout(),
 		VkEngine::getEngine().getSwapchainExtent(),
 		vs,
 		fs,
@@ -165,11 +164,6 @@ VkResult Pass::run()
 	presentInfo.pResults = nullptr;
 
 	return vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);
-}
-
-void Pass::initDescriptorSetLayout()
-{
-	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout();
 }
 
 void Pass::initUniformBuffer()
