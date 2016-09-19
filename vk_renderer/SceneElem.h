@@ -13,8 +13,8 @@ public:
 	~SceneElem() { }
 
 	std::string getName() const { return name; }
-	VkBuffer& getVertexBuffer() { return vertexBuffer; }
-	VkBuffer& getIndexBuffer() { return indexBuffer; }
+	VkBuffer getVertexBuffer() { return vertexBuffer; }
+	VkBuffer getIndexBuffer() { return indexBuffer; }
 	Mesh& getMesh() { return mesh; }
 	Material& getMaterial() { return material; }
 

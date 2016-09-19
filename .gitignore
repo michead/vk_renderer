@@ -253,3 +253,6 @@ paket-files/
 
 # Scene data
 data/
+
+# Shader compiler
+glslangValidator.exe

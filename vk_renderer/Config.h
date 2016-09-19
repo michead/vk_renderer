@@ -1,20 +1,21 @@
 #pragma once
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm\glm.hpp"
 
 #define DEFAULT_WINDOW_WIDTH	1280
 #define DEFAULT_WINDOW_HEIGHT	720
 #define DEFAULT_SCENE_PATH		"data/head/head.OBJ"
 
-struct VkEngineConfig {
+struct Config {
 public:
-	VkEngineConfig() { }
-	~VkEngineConfig() { }
+	Config() { }
+	~Config() { }
 
 	glm::ivec2 resolution;
 	bool fullscreen;
 	std::string scenePath;
-	ShadingModel shadingModel;
 
 	void parseCmdLineArgs(int argc, char** argv)
 	{
@@ -32,9 +33,6 @@ public:
 			fullscreen = false;
 			scenePath = DEFAULT_SCENE_PATH;
 		}
-
-		// TODO: This needs to be parsed as well
-		shadingModel = ShadingModel::DEFAULT;
 	}
 
 private:

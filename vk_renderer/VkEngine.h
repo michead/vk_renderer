@@ -1,7 +1,9 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
+#include "GBuffer.h"
 #include "VkUtils.h"
 
 #define GLM_FORCE_RADIANS
@@ -11,19 +13,13 @@
 
 #define APPLICATION_NAME "VkEngine"
 #define ENGINE_NAME APPLICATION_NAME
-
 #define SHADER_MAIN "main"
 #define SHADER_PATH	"shaders/"
 
-struct VkEngineConfig;
-class RenderPass;
+
+struct Config;
+class Pass;
 struct Scene;
-
-enum ShadingModel {
-	DEFAULT,
-	NUM_SHADING_MODELS
-};
-
 class VkPool;
 
 
@@ -53,16 +49,19 @@ public:
 	VkSemaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
 	uint32_t getSwapchainImageIndex() const { return swapchainImageIndex; }
-	VkEngineConfig* getConfig() const { return config; }
+	Config* getConfig() const { return config; }
 	Scene* getScene() const { return scene; }
 	VkPool* getPool() const { return pool; }
+	GBuffer* getCurrentGBuffer() { return &gBuffers[gBufferIndex]; }
+	GBuffer* getNextGBuffer() { gBufferIndex++; gBufferIndex %= gBuffers.size(); return &gBuffers[gBufferIndex]; }
+	std::array<GBuffer, 3>& getGBuffers() { return gBuffers; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
 
 private:
 	VkPool* pool;
-	VkEngineConfig* config;
+	Config* config;
 	GLFWwindow* window;
 
 	VkInstance instance;
@@ -83,9 +82,10 @@ private:
 	VkSemaphore renderFinishedSemaphore;
 
 	uint32_t swapchainImageIndex;
+	uint16_t gBufferIndex = 0;
+	std::array<GBuffer, 3> gBuffers;
+	std::vector<Pass*> renderPasses;
 
-	std::vector<RenderPass*> renderPasses;
-	
 	int oldX;
 	int oldY;
 
@@ -98,10 +98,12 @@ private:
 	void initImageViews();
 	void initCommandPool();
 	void initDescriptorPool();
+	void initGBuffers();
 	void initSemaphores();
 	void loadScene();
 	void initCamera();
 	void initRenderPasses();
+
 	void draw();
 	void recreateSwapchain();
 	void updateBufferData();

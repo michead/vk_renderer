@@ -1,8 +1,14 @@
 #pragma once
 
-#include "RenderPass.h"
+#include "Pass.h"
 
 
-class ShadowPass : RenderPass {
+class ShadowPass : Pass {
+	using Pass::Pass;
 
+private:
+private:
+	virtual void initAttachments() override;
+	virtual void initCommandBuffers() override;
+	virtual void initFramebuffers() override;
 };

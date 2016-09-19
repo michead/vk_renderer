@@ -324,6 +324,38 @@ inline bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface)
 	return indices.isValid() && extensionsSupported && swapChainAdequate;
 }
 
+inline VkPhysicalDevice choosePhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
+{
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+	uint32_t deviceCount = 0;
+	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
+
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+	}
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
+
+	for (const VkPhysicalDevice& device : devices)
+	{
+		if (isDeviceSuitable(device, surface))
+		{
+			physicalDevice = device;
+			break;
+		}
+	}
+
+	if (physicalDevice == VK_NULL_HANDLE)
+	{
+		throw std::runtime_error("Failed to find a suitable GPU!");
+	}
+
+	return physicalDevice;
+}
+
 inline std::vector<char> readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);

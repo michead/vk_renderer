@@ -27,12 +27,12 @@ struct PipelineData {
 
 class VkPool {
 public:
-	VkPool(GLFWwindow* window, VkEngineConfig* config)
+	VkPool(GLFWwindow* window, Config* config)
 	{ 
 		createInstance(); 
 		createDebugCallback();
 		createSurface(window);
-		choosePhysicalDevice();
+		setPhysicalDevice();
 		createDevice();  
 		createSwapchain(config->resolution); 
 	}
@@ -64,18 +64,19 @@ public:
 		VkExtent2D extent,
 		std::vector<char> vs,
 		std::vector<char> fs,
-		std::vector<char> gs = std::vector<char>());
+		std::vector<char> gs = std::vector<char>(),
+		uint16_t numColorAttachments = 1);
 	VkDescriptorSetLayout createDescriptorSetLayout();
 	VkRenderPass createRenderPass(VkRenderPassCreateInfo createInfo);
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
 	VkImageView createSwapchainImageView(VkImage swapchainImage);
 	ImageData createTextureResources(std::string path);
-	
+	GBufferAttachment createGBufferAttachment(GBufferAttachmentType type);
 
 	void createSwapchain(glm::ivec2 resolution);
 	void createDebugCallback();
 	void createSurface(GLFWwindow* window);
-	void choosePhysicalDevice();
+	void setPhysicalDevice();
 	void createDevice();
 	void createInstance();
 
@@ -88,6 +89,7 @@ private:
 	std::vector<VkBuffer> indexBuffers;
 	std::vector<VkDeviceMemory> vertexDeviceMemoryList;
 	std::vector<VkDeviceMemory> indexDeviceMemoryList;
+	std::vector<VkSampler> depthSamplers;
 	std::vector<VkImage> depthImages;
 	std::vector<VkImageView> depthImageViews;
 	std::vector<VkDeviceMemory> depthImageMemoryList;
@@ -102,6 +104,10 @@ private:
 	std::vector<VkImage> textureImages;
 	std::vector<VkImageView> textureImageViews;
 	std::vector<VkDeviceMemory> textureImageMemoryList;
+	std::vector<VkImage> offscreenImages;
+	std::vector<VkImageView> offscreenImageViews;
+	std::vector<VkDeviceMemory> offscreenImageMemoryList;
+	std::vector<VkSampler> offscreenImageSamplers;
 
 	VkSwapchainKHR swapchain;
 	VkDevice device;

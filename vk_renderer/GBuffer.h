@@ -1,33 +1,36 @@
 #pragma once
 
-#include "VkEngine.h"
+#include "VkUtils.h"
 
 
 enum GBufferAttachmentType {
-	GBUFFER_DIFFUSE,
-	GBUFFER_TEXCOORD,
-	GBUFFER_NORMAL,
-	GBUFFER_DEPTH,
-	GBUFFER_POSITION,
-	GBUFFER_NUM_TEXTURES
+	COLOR,
+	POSITION,
+	NORMAL,
+	DEPTH,
+	NUM_TYPES
 };
 
-class GBuffer {
-public:
-	GBuffer() { }
-	~GBuffer() { cleanup(); }
 
+struct GBufferAttachment {
+	VkImage image;
+	VkImageView imageView;
+	VkDeviceMemory imageMemory;
+	VkSampler imageSampler;
+};
+
+
+
+struct GBuffer {
 	void init();
 	void bind();
 
-private:
-	std::vector<VkImage> textureImages;
-	std::vector<VkImageView> textureImageViews;
-	std::vector<VkSampler> textureSamplers;
-	std::vector<VkDeviceMemory> textureImageMemories;
-	VkImage depthImage;
-	VkDeviceMemory depthImageMemory;
-	VkImageView depthImageView;
+	VkCommandBuffer commandBuffer;
+	VkFramebuffer framebuffer;
+	VkRenderPass renderPass;
 
-	void cleanup();
+	GBufferAttachment colorAttachment;
+	GBufferAttachment positionAttachment;
+	GBufferAttachment normalAttachment;
+	GBufferAttachment depthAttachment;
 };

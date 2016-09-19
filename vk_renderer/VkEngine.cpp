@@ -4,7 +4,9 @@
 
 #include "Camera.h"
 #include "Config.h"
-#include "RenderPass.h"
+#include "Pass.h"
+#include "GeomPass.h"
+#include "FinalPass.h"
 #include "Scene.h"
 #include "VkUtils.h"
 #include "VkPool.h"
@@ -12,7 +14,7 @@
 
 void VkEngine::init(int argc, char** argv)
 {
-	config = new VkEngineConfig();
+	config = new Config();
 	config->parseCmdLineArgs(argc, argv);
 }
 
@@ -132,6 +134,7 @@ void VkEngine::initVulkan()
 	initImageViews();
 	initCommandPool();
 	initDescriptorPool();
+	initGBuffers();
 	initSemaphores();
 	initRenderPasses();
 }
@@ -201,7 +204,7 @@ void VkEngine::draw()
 		VK_CHECK(result);
 	}
 	
-	for (RenderPass* renderPass : renderPasses)
+	for (Pass* renderPass : renderPasses)
 	{
 		VkResult result = renderPass->run();
 
@@ -233,7 +236,7 @@ void VkEngine::updateBufferData()
 {
 	scene->getCamera()->updateMatrices();
 
-	for (RenderPass* renderPass : renderPasses)
+	for (Pass* renderPass : renderPasses)
 	{
 		renderPass->updateData();
 	}
@@ -244,18 +247,24 @@ void VkEngine::initDescriptorPool()
 	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool();
 }
 
+void VkEngine::initGBuffers()
+{
+	for (size_t i = 0; i < gBuffers.size(); i++)
+	{ 
+		gBuffers[i].init();
+	}
+}
+
 void VkEngine::initRenderPasses()
 {
-	switch (config->shadingModel)
-	{
-	case ShadingModel::DEFAULT:
-	default:
-		renderPasses.push_back(new RenderPass(SHADER_PATH"vert.spv", SHADER_PATH"frag.spv"));
-		break;
-	}
+	renderPasses.clear();
+	renderPasses.push_back(new GeomPass(SHADER_PATH"geom/vert.spv", SHADER_PATH"geom/frag.spv"));
+	renderPasses.push_back(new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv"));
 
-	for each(RenderPass* renderPass in renderPasses)
+	for (Pass* renderPass : renderPasses)
+	{
 		renderPass->init();
+	}
 }
 
 void VkEngine::cleanup()

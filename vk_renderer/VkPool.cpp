@@ -175,6 +175,7 @@ ImageData VkPool::createDepthResources()
 	depthImages.push_back(VK_NULL_HANDLE);
 	depthImageViews.push_back(VK_NULL_HANDLE);
 	depthImageMemoryList.push_back(VK_NULL_HANDLE);
+	depthSamplers.push_back(VK_NULL_HANDLE);
 
 	createImage(
 		physicalDevice,
@@ -203,10 +204,31 @@ ImageData VkPool::createDepthResources()
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.f;
+	samplerInfo.minLod = 0.f;
+	samplerInfo.maxLod = 0.f;
+
+	VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &depthSamplers.back()));
+
 	ImageData depthData = {
 		depthImages.back(),
 		depthImageViews.back(),
-		depthImageMemoryList.back()
+		depthImageMemoryList.back(),
+		depthSamplers.back()
 	};
 
 	return depthData;
@@ -233,7 +255,8 @@ PipelineData VkPool::createPipeline(
 	VkExtent2D extent,
 	std::vector<char> vs, 
 	std::vector<char> fs, 
-	std::vector<char> gs)
+	std::vector<char> gs,
+	uint16_t numColorAttachments)
 {
 	pipelines.push_back(VK_NULL_HANDLE);
 	pipelineLayouts.push_back(VK_NULL_HANDLE);
@@ -345,22 +368,25 @@ PipelineData VkPool::createPipeline(
 	depthStencil.front = {};
 	depthStencil.back = {};
 
-	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_TRUE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(numColorAttachments);
+	for (VkPipelineColorBlendAttachmentState& colorBlendAttachment : colorBlendAttachments)
+	{
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	}
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
+	colorBlending.attachmentCount = colorBlendAttachments.size();
+	colorBlending.pAttachments = colorBlendAttachments.data();
 	colorBlending.blendConstants[0] = 0.f;
 	colorBlending.blendConstants[1] = 0.f;
 	colorBlending.blendConstants[2] = 0.f;
@@ -593,32 +619,84 @@ ImageData VkPool::createTextureResources(std::string path)
 	return imageData;
 }
 
-void VkPool::choosePhysicalDevice()
+GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 {
-	uint32_t deviceCount = 0;
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr));
+	VkFormat format;
+	VkImageUsageFlagBits imageFlags;
+	VkImageAspectFlagBits imageViewFlags;
 
-	if (deviceCount == 0)
+	offscreenImages.push_back(VK_NULL_HANDLE);
+	offscreenImageViews.push_back(VK_NULL_HANDLE);
+	offscreenImageMemoryList.push_back(VK_NULL_HANDLE);
+	offscreenImageSamplers.push_back(VK_NULL_HANDLE);
+
+	switch (type)
 	{
-		throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+	case DEPTH:
+		format = findDepthFormat(physicalDevice);
+		imageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageViewFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
+		break;
+	case COLOR:
+	default:
+		format = VK_FORMAT_R8G8B8A8_UNORM;
+		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		imageViewFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+		break;
 	}
 
-	std::vector<VkPhysicalDevice> devices(deviceCount);
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data()));
+	createImage(
+		physicalDevice,
+		device,
+		swapchainExtent.width,
+		swapchainExtent.height,
+		format,
+		VK_IMAGE_TILING_OPTIMAL,
+		imageFlags,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		offscreenImages.back(),
+		offscreenImageMemoryList.back());
 
-	for (const VkPhysicalDevice& device : devices)
-	{
-		if (isDeviceSuitable(device, surface))
-		{
-			physicalDevice = device;
-			break;
-		}
-	}
+	createImageView(
+		device,
+		offscreenImages.back(),
+		format,
+		imageViewFlags,
+		offscreenImageViews.back());
 
-	if (physicalDevice == VK_NULL_HANDLE)
-	{
-		throw std::runtime_error("Failed to find a suitable GPU!");
-	}
+	VkSamplerCreateInfo samplerInfo = {};
+	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
+	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerInfo.anisotropyEnable = VK_TRUE;
+	samplerInfo.maxAnisotropy = 16;
+	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.unnormalizedCoordinates = VK_FALSE;
+	samplerInfo.compareEnable = VK_FALSE;
+	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerInfo.mipLodBias = 0.f;
+	samplerInfo.minLod = 0.f;
+	samplerInfo.maxLod = 0.f;
+
+	VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenImageSamplers.back()));
+
+	GBufferAttachment attachment = {
+		offscreenImages.back(),
+		offscreenImageViews.back(),
+		offscreenImageMemoryList.back(),
+		offscreenImageSamplers.back()
+	};
+
+	return attachment;
+}
+
+void VkPool::setPhysicalDevice()
+{
+	physicalDevice = choosePhysicalDevice(instance, surface);
 }
 
 void VkPool::createSwapchain(glm::ivec2 resolution)
@@ -795,9 +873,14 @@ void VkPool::freeResources()
 	for (VkImageView imageView : textureImageViews) { vkDestroyImageView(device, imageView, nullptr); }
 	for (VkDeviceMemory deviceMemory : textureImageMemoryList) { vkFreeMemory(device, deviceMemory, nullptr); }
 	for (VkImage image : textureImages) { vkDestroyImage(device, image, nullptr); }
+	for (VkSampler sampler : depthSamplers) { vkDestroySampler(device, sampler, nullptr); }
 	for (VkImage depthImage : depthImages) { vkDestroyImage(device, depthImage, nullptr); }
 	for (VkImageView depthImageView : depthImageViews) { vkDestroyImageView(device, depthImageView, nullptr); }
 	for (VkDeviceMemory depthImageMemory : depthImageMemoryList) { vkFreeMemory(device, depthImageMemory, nullptr); }
+	for (VkSampler sampler : offscreenImageSamplers) { vkDestroySampler(device, sampler, nullptr); }
+	for (VkImage depthImage : offscreenImages) { vkDestroyImage(device, depthImage, nullptr); }
+	for (VkImageView depthImageView : offscreenImageViews) { vkDestroyImageView(device, depthImageView, nullptr); }
+	for (VkDeviceMemory depthImageMemory : offscreenImageMemoryList) { vkFreeMemory(device, depthImageMemory, nullptr); }
 	for (VkCommandPool commandPool : commandPools) { vkDestroyCommandPool(device, commandPool, nullptr); }
 	for (VkPipeline pipeline : pipelines) { vkDestroyPipeline(device, pipeline, nullptr); }
 	for (VkPipelineLayout pipelineLayout : pipelineLayouts) { vkDestroyPipelineLayout(device, pipelineLayout, nullptr); }

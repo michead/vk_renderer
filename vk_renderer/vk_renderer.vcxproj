@@ -155,24 +155,31 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="FinalPass.cpp" />
     <ClCompile Include="GBuffer.cpp" />
+    <ClCompile Include="GeomPass.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="RenderPass.cpp" />
+    <ClCompile Include="Pass.cpp" />
+    <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneElem.cpp" />
+    <ClCompile Include="ShadowPass.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VkEngine.cpp" />
     <ClCompile Include="VkPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FinalPass.h" />
     <ClInclude Include="GeomStructs.h" />
+    <ClInclude Include="LightingPass.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="GBuffer.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="GeomPass.h" />
-    <ClInclude Include="RenderPass.h" />
+    <ClInclude Include="Pass.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneElem.h" />
     <ClInclude Include="ShadowPass.h" />
@@ -183,6 +190,9 @@
     <ClInclude Include="VkWrap.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="compileShaders.bat" />
+    <None Include="shaders\final\shader.frag" />
+    <None Include="shaders\final\shader.vert" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
   </ItemGroup>

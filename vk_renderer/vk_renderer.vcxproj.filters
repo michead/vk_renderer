@@ -16,6 +16,15 @@
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{8eefbb60-ce65-4647-a442-d7fe29b066a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="SPIR-V">
+      <UniqueIdentifier>{c4ea512d-24bf-41a7-a79a-312de14f9356}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\geom">
+      <UniqueIdentifier>{2c32b6a3-b3c8-47bc-b2c0-dae020595c4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\final">
+      <UniqueIdentifier>{dc012836-8dbb-43e7-a065-8b3804146cdd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -33,9 +42,6 @@
     <ClCompile Include="Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,6 +49,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VkPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeomPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FinalPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Quad.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,9 +78,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GeomPass.h">
@@ -95,13 +113,34 @@
     <ClInclude Include="VkPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Pass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LightingPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FinalPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Quad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader.vert">
-      <Filter>Source Files\shaders</Filter>
+    <None Include="compileShaders.bat">
+      <Filter>SPIR-V</Filter>
     </None>
     <None Include="shaders\shader.frag">
-      <Filter>Source Files\shaders</Filter>
+      <Filter>Source Files\shaders\geom</Filter>
+    </None>
+    <None Include="shaders\shader.vert">
+      <Filter>Source Files\shaders\geom</Filter>
+    </None>
+    <None Include="shaders\final\shader.frag">
+      <Filter>Source Files\shaders\final</Filter>
+    </None>
+    <None Include="shaders\final\shader.vert">
+      <Filter>Source Files\shaders\final</Filter>
     </None>
   </ItemGroup>
 </Project>
