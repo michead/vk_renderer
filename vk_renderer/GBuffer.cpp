@@ -93,7 +93,7 @@ void GBuffer::init()
 	framebufferCreateInfo.pNext = NULL;
 	framebufferCreateInfo.renderPass = renderPass;
 	framebufferCreateInfo.pAttachments = attachments.data();
-	framebufferCreateInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+	framebufferCreateInfo.attachmentCount = attachments.size();
 	framebufferCreateInfo.width = extent.width;
 	framebufferCreateInfo.height = extent.height;
 	framebufferCreateInfo.layers = 1;

@@ -19,21 +19,24 @@ VkSemaphore VkPool::createSemaphore()
 	return semaphores.back();
 }
 
-VkDescriptorPool VkPool::createDescriptorPool()
+VkDescriptorPool VkPool::createDescriptorPool(
+	uint32_t bufferDescriptorCount, 
+	uint32_t imageSamplerDescriptorCount,
+	uint32_t maxSets)
 {
 	descriptorPools.push_back(VK_NULL_HANDLE);
 
 	std::array<VkDescriptorPoolSize, 2> poolSizes = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 1;
+	poolSizes[0].descriptorCount = bufferDescriptorCount;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 1;
+	poolSizes[1].descriptorCount = imageSamplerDescriptorCount;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = poolSizes.size();
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 1;
+	poolInfo.maxSets = maxSets;
 
 	VK_CHECK(vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPools.back()));
 
@@ -655,7 +658,7 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		swapchainExtent.height,
 		format,
 		VK_IMAGE_TILING_OPTIMAL,
-		imageFlags,
+		imageFlags | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		offscreenImages.back(),
 		offscreenImageMemoryList.back());

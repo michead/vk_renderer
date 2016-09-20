@@ -52,7 +52,10 @@ public:
 	VkExtent2D getSwapchainExtent() { return swapchainExtent; }
 
 	VkSemaphore createSemaphore();
-	VkDescriptorPool createDescriptorPool();
+	VkDescriptorPool createDescriptorPool(
+		uint32_t bufferDescriptorCount,
+		uint32_t imageSamplerDescriptorCount,
+		uint32_t maxSets = 3);
 	std::array<BufferData, 2> createUniformBuffer(size_t bufferSize);
 	BufferData createVertexBuffer(std::vector<Vertex> vertices);
 	BufferData createIndexBuffer(std::vector<uint32_t> indices);

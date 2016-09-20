@@ -136,6 +136,7 @@ void VkEngine::initVulkan()
 	initDescriptorPool();
 	initGBuffers();
 	initSemaphores();
+	initDescriptorSetLayout();
 	initRenderPasses();
 }
 
@@ -244,7 +245,7 @@ void VkEngine::updateBufferData()
 
 void VkEngine::initDescriptorPool()
 {
-	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool();
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(NUM_PASSES, NUM_PASSES + 1);
 }
 
 void VkEngine::initGBuffers()
@@ -262,9 +263,8 @@ void VkEngine::initDescriptorSetLayout()
 
 void VkEngine::initRenderPasses()
 {
-	renderPasses.clear();
-	renderPasses.push_back(new GeomPass(SHADER_PATH"geom/vert.spv", SHADER_PATH"geom/frag.spv"));
-	renderPasses.push_back(new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv"));
+	renderPasses[0] = new GeomPass(SHADER_PATH"geom/vert.spv", SHADER_PATH"geom/frag.spv");
+	renderPasses[1] = new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv");
 
 	for (Pass* renderPass : renderPasses)
 	{

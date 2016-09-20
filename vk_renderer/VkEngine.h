@@ -15,7 +15,8 @@
 #define ENGINE_NAME APPLICATION_NAME
 #define SHADER_MAIN "main"
 #define SHADER_PATH	"shaders/"
-
+#define NUM_PASSES		2
+#define NUM_GBUFFERS	3
 
 struct Config;
 class Pass;
@@ -55,7 +56,7 @@ public:
 	VkPool* getPool() const { return pool; }
 	GBuffer* getCurrentGBuffer() { return &gBuffers[gBufferIndex]; }
 	GBuffer* getNextGBuffer() { gBufferIndex++; gBufferIndex %= gBuffers.size(); return &gBuffers[gBufferIndex]; }
-	std::array<GBuffer, 3>& getGBuffers() { return gBuffers; }
+	std::array<GBuffer, NUM_GBUFFERS>& getGBuffers() { return gBuffers; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
@@ -85,8 +86,8 @@ private:
 
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;
-	std::array<GBuffer, 3> gBuffers;
-	std::vector<Pass*> renderPasses;
+	std::array<GBuffer, NUM_GBUFFERS> gBuffers;
+	std::array<Pass*, NUM_PASSES> renderPasses;
 
 	int oldX;
 	int oldY;

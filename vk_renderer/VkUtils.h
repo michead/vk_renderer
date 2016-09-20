@@ -521,7 +521,6 @@ inline void createImage(
 	allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, properties);
 
 	VK_CHECK(vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory));
-
 	VK_CHECK(vkBindImageMemory(device, image, imageMemory, 0));
 }
 
@@ -640,13 +639,15 @@ inline void createImageView(
 	VkDevice device, 
 	VkImage image, 
 	VkFormat format, 
-	VkImageAspectFlags aspectFlags, VkImageView& imageView)
+	VkImageAspectFlags aspectFlags, 
+	VkImageView& imageView)
 {
 	VkImageViewCreateInfo viewInfo = {};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
 	viewInfo.format = format;
+	viewInfo.subresourceRange = {};
 	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;

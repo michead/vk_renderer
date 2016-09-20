@@ -162,9 +162,6 @@ void GeomPass::initFramebuffers()
 
 void GeomPass::initDescriptorSet()
 {
-	std::map<std::string, Texture*>::iterator it;
-	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
-
 	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getDescriptorSetLayout();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
@@ -181,6 +178,8 @@ void GeomPass::initDescriptorSet()
 	bufferInfo.range = sizeof(UniformBufferObject);
 
 	uint16_t i = 0;
+	std::map<std::string, Texture*>::iterator it;
+	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
 	std::vector<VkDescriptorImageInfo> imageInfos(textureMap.size());
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
