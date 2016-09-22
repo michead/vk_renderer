@@ -256,3 +256,6 @@ data/
 
 # Shader compiler
 glslangValidator.exe
+
+# Validation layers
+vk_renderer/inc/vulkan/layers/

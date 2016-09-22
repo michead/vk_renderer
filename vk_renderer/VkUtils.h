@@ -75,13 +75,7 @@ struct QueueFamilyIndices
 };
 
 const std::vector<const char*> validationLayers = { 
-	LUNARG_THREADING_VALIDATION,
-	LUNARG_PARAMETER_VALIDATION,
-	LUNARG_TRACKER_VALIDATION,
-	LUNARG_IMAGE_VALIDATION,
-	LUNARG_CORE_VALIDATION,
-	LUNARG_SWAPCHAIN_VALIDATION,
-	LUNARG_UNIQUE_VALIDATION
+	LUNARG_STANDARD_VALIDATION
 };
 
 const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
@@ -166,7 +160,7 @@ inline void destroyDebugReportCallbackEXT(
 	}
 }
 
-inline static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+inline static VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(
 	VkDebugReportFlagsEXT flags,
 	VkDebugReportObjectTypeEXT objType,
 	uint64_t obj,
@@ -177,7 +171,7 @@ inline static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 	void* userData)
 {
 
-	std::cerr << "Validation layer: " << msg << std::endl;
+	std::cerr << "[" << layerPrefix << "] " << msg << std::endl;
 
 	return VK_FALSE;
 }

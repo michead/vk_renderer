@@ -703,6 +703,11 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 void VkPool::setPhysicalDevice()
 {
 	physicalDevice = choosePhysicalDevice(instance, surface);
+
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+
+	std::cout << "Device in use: " << deviceProperties.deviceName << std::endl;
 }
 
 void VkPool::createSwapchain(glm::ivec2 resolution)
@@ -743,18 +748,15 @@ void VkPool::createSwapchain(glm::ivec2 resolution)
 		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	}
 
+	// TODO: Old swapchain should be noted here
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+	
 	createInfo.preTransform = swapchainSupport.capabilities.currentTransform;
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = presentMode;
 	createInfo.clipped = VK_TRUE;
 
-	VkSwapchainKHR oldSwapchain = swapchain;
-	createInfo.oldSwapchain = oldSwapchain;
-
-	VkSwapchainKHR newSwapChain;
-	vkCreateSwapchainKHR(device, &createInfo, nullptr, &newSwapChain);
-
-	*&swapchain = newSwapChain;
+	vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain);
 
 	VK_CHECK(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
 	swapchainImages.resize(imageCount);
@@ -772,7 +774,7 @@ void VkPool::createDebugCallback()
 	VkDebugReportCallbackCreateInfoEXT createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 	createInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	createInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT) debugCallback;
+	createInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT) debugReportCallback;
 
 	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &debugCallback));
 }
@@ -833,7 +835,7 @@ void VkPool::createInstance()
 {
 	if (ENABLE_VALIDATION_LAYERS && !checkValidationLayerSupport())
 	{
-		throw std::runtime_error("Requested validation layers are not available!");
+		std::cerr << "Support for one or more requested layers is missing!" << std::endl;
 	}
 
 	auto extensions = getRequiredExtensions();
