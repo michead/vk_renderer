@@ -9,6 +9,8 @@ class GeomPass : public Pass {
 public:
 	virtual void updateData() override;
 
+	virtual VkCommandBuffer getCurrentCommandBuffer() override { return commandBuffers[0]; }
+
 private:
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;

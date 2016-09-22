@@ -15,13 +15,12 @@
 #define ENGINE_NAME APPLICATION_NAME
 #define SHADER_MAIN "main"
 #define SHADER_PATH	"shaders/"
-#define NUM_PASSES		2
 #define NUM_GBUFFERS	3
 
 struct Config;
-class Pass;
 struct Scene;
 class VkPool;
+class GfxPipeline;
 
 
 class VkEngine
@@ -47,7 +46,6 @@ public:
 	std::vector<VkImageView>& getSwapchainImageViews() { return swapchainImageViews; }
 	VkSwapchainKHR getSwapchain() { return swapchain; }
 	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
-	VkSemaphore getRenderFinishedSemaphore() { return renderFinishedSemaphore; }
 	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
 	VkDescriptorSetLayout getDescriptorSetLayout() { return descriptorSetLayout; }
 	uint32_t getSwapchainImageIndex() const { return swapchainImageIndex; }
@@ -82,12 +80,11 @@ private:
 	VkQueue graphicsQueue;
 	VkQueue presentationQueue;
 	VkSemaphore imageAvailableSemaphore;
-	VkSemaphore renderFinishedSemaphore;
 
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;
 	std::array<GBuffer, NUM_GBUFFERS> gBuffers;
-	std::array<Pass*, NUM_PASSES> renderPasses;
+	GfxPipeline* gfxPipeline;
 
 	int oldX;
 	int oldY;

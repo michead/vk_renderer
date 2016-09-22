@@ -26,9 +26,9 @@ public:
 	~Pass() { }
 
 	virtual void init();
-	virtual VkResult run();
-
 	virtual void updateData() { /*NOP*/ }
+	
+	virtual VkCommandBuffer getCurrentCommandBuffer() = 0;
 
 protected:
 	std::string vsPath;
@@ -55,7 +55,6 @@ protected:
 	virtual void initDepthResources();
 	virtual void initGraphicsPipeline();
 
-	/** So this is abstract, uh? */
 	virtual void initAttachments() = 0;
 	virtual void initCommandBuffers() = 0;
 	virtual void initFramebuffers() = 0;

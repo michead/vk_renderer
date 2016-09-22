@@ -10,6 +10,7 @@
 #include "Scene.h"
 #include "VkUtils.h"
 #include "VkPool.h"
+#include "GfxPipeline.h"
 
 
 void VkEngine::init(int argc, char** argv)
@@ -200,30 +201,16 @@ void VkEngine::draw()
 		recreateSwapchain();
 		return;
 	}
-	else
-	{
-		VK_CHECK(result);
-	}
 	
-	for (Pass* renderPass : renderPasses)
+	if(!gfxPipeline->run())
 	{
-		VkResult result = renderPass->run();
-
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-		{
-			recreateSwapchain();
-		}
-		else
-		{
-			VK_CHECK(result);
-		}
+		recreateSwapchain();
 	}
 }
 
 void VkEngine::initSemaphores()
 {
 	imageAvailableSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
-	renderFinishedSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
 void VkEngine::recreateSwapchain()
@@ -237,15 +224,13 @@ void VkEngine::updateBufferData()
 {
 	scene->getCamera()->updateMatrices();
 
-	for (Pass* renderPass : renderPasses)
-	{
-		renderPass->updateData();
-	}
+	gfxPipeline->updateData();
 }
 
 void VkEngine::initDescriptorPool()
 {
-	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(NUM_PASSES, NUM_PASSES + 1);
+	uint16_t numPasses = gfxPipeline->getNumPasses();
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses, numPasses);
 }
 
 void VkEngine::initGBuffers()
@@ -263,17 +248,12 @@ void VkEngine::initDescriptorSetLayout()
 
 void VkEngine::initRenderPasses()
 {
-	renderPasses[0] = new GeomPass(SHADER_PATH"geom/vert.spv", SHADER_PATH"geom/frag.spv");
-	renderPasses[1] = new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv");
-
-	for (Pass* renderPass : renderPasses)
-	{
-		renderPass->init();
-	}
+	gfxPipeline = new GfxPipeline();
 }
 
 void VkEngine::cleanup()
 {
+	delete gfxPipeline;
 	delete pool;
 	delete config;
 	delete scene;
