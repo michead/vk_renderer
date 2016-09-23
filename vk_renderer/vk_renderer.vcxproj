@@ -195,8 +195,8 @@
     <None Include="compileShaders.bat" />
     <None Include="shaders\final\shader.frag" />
     <None Include="shaders\final\shader.vert" />
-    <None Include="shaders\shader.frag" />
-    <None Include="shaders\shader.vert" />
+    <None Include="shaders\geom\shader.frag" />
+    <None Include="shaders\geom\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

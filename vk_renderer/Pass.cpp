@@ -81,29 +81,6 @@ void Pass::initAttachments()
 	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
 }
 
-void Pass::initGraphicsPipeline()
-{
-	std::vector<char> vs = readFile(vsPath);
-	std::vector<char> fs = readFile(fsPath);
-	std::vector<char> gs;
-
-	if (!gsPath.empty())
-	{
-		gs = readFile(gsPath);
-	}
-
-	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
-		renderPass,
-		VkEngine::getEngine().getDescriptorSetLayout(),
-		VkEngine::getEngine().getSwapchainExtent(),
-		vs,
-		fs,
-		gs);
-
-	pipeline = pipelineData.pipeline;
-	pipelineLayout = pipelineData.pipelineLayout;
-}
-
 void Pass::initDepthResources()
 {
 	ImageData depthData = VkEngine::getEngine().getPool()->createDepthResources();

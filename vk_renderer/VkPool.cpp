@@ -442,27 +442,35 @@ PipelineData VkPool::createPipeline(
 	return pipelineData;
 }
 
-VkDescriptorSetLayout VkPool::createDescriptorSetLayout()
+VkDescriptorSetLayout VkPool::createDescriptorSetLayout(VkDescriptorType vsDescType, VkDescriptorType fsDescType)
 {
 	descriptorSetLayouts.push_back(VK_NULL_HANDLE);
 
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	if (vsDescType != VK_DESCRIPTOR_TYPE_BEGIN_RANGE)
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1;
+		uboLayoutBinding.descriptorType = vsDescType;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { 
-		uboLayoutBinding, 
-		samplerLayoutBinding };
+		bindings.push_back(uboLayoutBinding);
+	}
+
+	if (fsDescType != VK_DESCRIPTOR_TYPE_BEGIN_RANGE)
+	{
+		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = fsDescType;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		bindings.push_back(samplerLayoutBinding);
+	}
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -662,6 +670,17 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		offscreenImages.back(),
 		offscreenImageMemoryList.back());
+
+	if (type == GBufferAttachmentType::DEPTH)
+	{
+		transitionImageLayout(
+			VkEngine::getEngine().getDevice(), 
+			VkEngine::getEngine().getCommandPool(),
+			VkEngine::getEngine().getGraphicsQueue(),
+			offscreenImages.back(),
+			VK_IMAGE_LAYOUT_UNDEFINED, 
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	}
 
 	createImageView(
 		device,
@@ -886,15 +905,15 @@ void VkPool::freeResources()
 	for (VkImageView depthImageView : depthImageViews) { vkDestroyImageView(device, depthImageView, nullptr); }
 	for (VkDeviceMemory depthImageMemory : depthImageMemoryList) { vkFreeMemory(device, depthImageMemory, nullptr); }
 	for (VkSampler sampler : offscreenImageSamplers) { vkDestroySampler(device, sampler, nullptr); }
-	for (VkImage depthImage : offscreenImages) { vkDestroyImage(device, depthImage, nullptr); }
-	for (VkImageView depthImageView : offscreenImageViews) { vkDestroyImageView(device, depthImageView, nullptr); }
-	for (VkDeviceMemory depthImageMemory : offscreenImageMemoryList) { vkFreeMemory(device, depthImageMemory, nullptr); }
-	for (VkCommandPool commandPool : commandPools) { vkDestroyCommandPool(device, commandPool, nullptr); }
+	for (VkImage image : offscreenImages) { vkDestroyImage(device, image, nullptr); }
+	for (VkImageView imageView : offscreenImageViews) { vkDestroyImageView(device, imageView, nullptr); }
+	for (VkDeviceMemory imageMemory : offscreenImageMemoryList) { vkFreeMemory(device, imageMemory, nullptr); }\
 	for (VkPipeline pipeline : pipelines) { vkDestroyPipeline(device, pipeline, nullptr); }
 	for (VkPipelineLayout pipelineLayout : pipelineLayouts) { vkDestroyPipelineLayout(device, pipelineLayout, nullptr); }
 	for (VkDescriptorSetLayout descriptorSetLayout : descriptorSetLayouts) { vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr); }
 	for (VkRenderPass renderPass : renderPasses) { vkDestroyRenderPass(device, renderPass, nullptr); }
 	for (VkFramebuffer framebuffer : framebuffers) { vkDestroyFramebuffer(device, framebuffer, nullptr); }
+	for (VkCommandPool commandPool : commandPools) { vkDestroyCommandPool(device, commandPool, nullptr); }
 	for (VkImageView swapchainImageView : swapchainImageViews) { vkDestroyImageView(device, swapchainImageView, nullptr); }
 
 	vkDestroySwapchainKHR(device, swapchain, nullptr);

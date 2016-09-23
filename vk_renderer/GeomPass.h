@@ -16,4 +16,5 @@ private:
 	virtual void initCommandBuffers() override;
 	virtual void initFramebuffers() override;
 	virtual void initDescriptorSet() override;
+	virtual void initGraphicsPipeline() override;
 };

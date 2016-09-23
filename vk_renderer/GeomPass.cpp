@@ -162,7 +162,7 @@ void GeomPass::initFramebuffers()
 
 void GeomPass::initDescriptorSet()
 {
-	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getDescriptorSetLayout();
+	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getOneStageDescriptorSetLayout();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -238,4 +238,27 @@ void GeomPass::updateData()
 		uniformStagingBuffer,
 		uniformBuffer,
 		sizeof(ubo));
+}
+
+void GeomPass::initGraphicsPipeline()
+{
+	std::vector<char> vs = readFile(vsPath);
+	std::vector<char> fs = readFile(fsPath);
+	std::vector<char> gs;
+
+	if (!gsPath.empty())
+	{
+		gs = readFile(gsPath);
+	}
+
+	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
+		renderPass,
+		VkEngine::getEngine().getOneStageDescriptorSetLayout(),
+		VkEngine::getEngine().getSwapchainExtent(),
+		vs,
+		fs,
+		gs);
+
+	pipeline = pipelineData.pipeline;
+	pipelineLayout = pipelineData.pipelineLayout;
 }

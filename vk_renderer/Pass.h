@@ -53,10 +53,10 @@ protected:
 	virtual void initMeshBuffers();
 	virtual void initTextures();
 	virtual void initDepthResources();
-	virtual void initGraphicsPipeline();
 
 	virtual void initAttachments() = 0;
 	virtual void initCommandBuffers() = 0;
 	virtual void initFramebuffers() = 0;
 	virtual void initDescriptorSet() = 0;
+	virtual void initGraphicsPipeline() = 0;
 };

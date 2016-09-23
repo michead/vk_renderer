@@ -19,8 +19,8 @@ void GfxPipeline::init()
 
 bool GfxPipeline::run()
 {
-	VkSemaphore imgAvailableSemaphore = VkEngine::getEngine().getImageAvailableSemaphore();
 	uint32_t swapchainImgIndex = VkEngine::getEngine().getSwapchainImageIndex();
+	VkSemaphore imgAvailableSemaphore = VkEngine::getEngine().getImageAvailableSemaphore();
 	
 	VkCommandBuffer geomPassCmdBuffer = geomPass->getCurrentCommandBuffer();
 	VkCommandBuffer finalPassCmdBuffer = finalPass->getCurrentCommandBuffer();

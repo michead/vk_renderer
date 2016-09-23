@@ -137,7 +137,7 @@ void VkEngine::initVulkan()
 	initDescriptorPool();
 	initGBuffers();
 	initSemaphores();
-	initDescriptorSetLayout();
+	initDescriptorSetLayouts();
 	initRenderPasses();
 }
 
@@ -241,9 +241,10 @@ void VkEngine::initGBuffers()
 	}
 }
 
-void VkEngine::initDescriptorSetLayout()
+void VkEngine::initDescriptorSetLayouts()
 {
-	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout();
+	oneStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	twoStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_BEGIN_RANGE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void VkEngine::initRenderPasses()

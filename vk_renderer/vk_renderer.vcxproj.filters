@@ -136,17 +136,17 @@
     <None Include="compileShaders.bat">
       <Filter>SPIR-V</Filter>
     </None>
-    <None Include="shaders\shader.frag">
-      <Filter>Source Files\shaders\geom</Filter>
-    </None>
-    <None Include="shaders\shader.vert">
-      <Filter>Source Files\shaders\geom</Filter>
-    </None>
     <None Include="shaders\final\shader.frag">
       <Filter>Source Files\shaders\final</Filter>
     </None>
     <None Include="shaders\final\shader.vert">
       <Filter>Source Files\shaders\final</Filter>
+    </None>
+    <None Include="shaders\geom\shader.frag">
+      <Filter>Source Files\shaders\geom</Filter>
+    </None>
+    <None Include="shaders\geom\shader.vert">
+      <Filter>Source Files\shaders\geom</Filter>
     </None>
   </ItemGroup>
 </Project>

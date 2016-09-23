@@ -69,7 +69,7 @@ public:
 		std::vector<char> fs,
 		std::vector<char> gs = std::vector<char>(),
 		uint16_t numColorAttachments = 1);
-	VkDescriptorSetLayout createDescriptorSetLayout();
+	VkDescriptorSetLayout createDescriptorSetLayout(VkDescriptorType vsDescType, VkDescriptorType fsDescType);
 	VkRenderPass createRenderPass(VkRenderPassCreateInfo createInfo);
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
 	VkImageView createSwapchainImageView(VkImage swapchainImage);
