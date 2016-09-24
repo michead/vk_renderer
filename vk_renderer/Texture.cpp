@@ -30,6 +30,6 @@ void Texture::initResources()
 
 void Texture::initDescriptorSetLayout()
 {
-	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_BEGIN_RANGE, 
+	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
 																					 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }

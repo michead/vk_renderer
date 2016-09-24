@@ -162,7 +162,7 @@ void GeomPass::initFramebuffers()
 
 void GeomPass::initDescriptorSet()
 {
-	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getOneStageDescriptorSetLayout();
+	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getTwoStageDescriptorSetLayout();
 
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -253,7 +253,7 @@ void GeomPass::initGraphicsPipeline()
 
 	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
 		renderPass,
-		VkEngine::getEngine().getOneStageDescriptorSetLayout(),
+		VkEngine::getEngine().getTwoStageDescriptorSetLayout(),
 		VkEngine::getEngine().getSwapchainExtent(),
 		vs,
 		fs,

@@ -243,8 +243,8 @@ void VkEngine::initGBuffers()
 
 void VkEngine::initDescriptorSetLayouts()
 {
-	oneStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-	twoStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_BEGIN_RANGE, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	oneStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_MAX_ENUM, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	twoStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 }
 
 void VkEngine::initRenderPasses()

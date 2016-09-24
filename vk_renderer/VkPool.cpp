@@ -446,12 +446,13 @@ VkDescriptorSetLayout VkPool::createDescriptorSetLayout(VkDescriptorType vsDescT
 {
 	descriptorSetLayouts.push_back(VK_NULL_HANDLE);
 
+	uint32_t bindingIndex = 0;
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-	if (vsDescType != VK_DESCRIPTOR_TYPE_BEGIN_RANGE)
+	if (vsDescType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
 	{
 		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.binding = bindingIndex++;
 		uboLayoutBinding.descriptorCount = 1;
 		uboLayoutBinding.descriptorType = vsDescType;
 		uboLayoutBinding.pImmutableSamplers = nullptr;
@@ -460,10 +461,10 @@ VkDescriptorSetLayout VkPool::createDescriptorSetLayout(VkDescriptorType vsDescT
 		bindings.push_back(uboLayoutBinding);
 	}
 
-	if (fsDescType != VK_DESCRIPTOR_TYPE_BEGIN_RANGE)
+	if (fsDescType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
 	{
 		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.binding = bindingIndex++;
 		samplerLayoutBinding.descriptorCount = 1;
 		samplerLayoutBinding.descriptorType = fsDescType;
 		samplerLayoutBinding.pImmutableSamplers = nullptr;
