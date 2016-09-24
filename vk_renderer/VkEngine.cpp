@@ -139,7 +139,6 @@ void VkEngine::initVulkan()
 	initGBuffers();
 	initSemaphores();
 	initDescriptorSetLayouts();
-	initDepthResources();
 	initFramebuffers();
 	initOffscreenRenderPasses();
 }
@@ -186,39 +185,25 @@ void VkEngine::initImageViews()
 
 void VkEngine::initRenderPass()
 {
-	std::array<VkAttachmentDescription, 2> attachments = {};
-
-	attachments[0].format = swapchainFormat;
-	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	attachments[1].format = findDepthFormat(physicalDevice);
-	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	VkAttachmentDescription attachment = {};
+	attachment.format = swapchainFormat;
+	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VkAttachmentReference colorReference = {};
 	colorReference.attachment = 0;
 	colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	VkAttachmentReference depthReference = {};
-	depthReference.attachment = 1;
-	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
 	VkSubpassDescription subpassDescription = {};
 	subpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpassDescription.colorAttachmentCount = 1;
 	subpassDescription.pColorAttachments = &colorReference;
-	subpassDescription.pDepthStencilAttachment = &depthReference;
+	subpassDescription.pDepthStencilAttachment = nullptr;
 	subpassDescription.inputAttachmentCount = 0;
 	subpassDescription.pInputAttachments = nullptr;
 	subpassDescription.preserveAttachmentCount = 0;
@@ -245,8 +230,8 @@ void VkEngine::initRenderPass()
 
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = attachments.size();
-	renderPassInfo.pAttachments = attachments.data();
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &attachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpassDescription;
 	renderPassInfo.dependencyCount = dependencies.size();
@@ -291,21 +276,17 @@ void VkEngine::initFramebuffers()
 {
 	framebuffers.resize(swapchainImageViews.size());
 
-	VkImageView attachments[2];
-	attachments[1] = depthImageView;
-
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebufferInfo.renderPass = renderPass;
-	framebufferInfo.attachmentCount = 2;
-	framebufferInfo.pAttachments = attachments;
+	framebufferInfo.attachmentCount = 1;
 	framebufferInfo.width = VkEngine::getEngine().getSwapchainExtent().width;
 	framebufferInfo.height = VkEngine::getEngine().getSwapchainExtent().height;
 	framebufferInfo.layers = 1;
 
 	for (size_t i = 0; i < swapchainImageViews.size(); i++)
 	{
-		attachments[0] = swapchainImageViews[swapchainImageIndex];
+		framebufferInfo.pAttachments = &swapchainImageViews[swapchainImageIndex];
 		framebuffers[i] = VkEngine::getEngine().getPool()->createFramebuffer(framebufferInfo);
 	}
 }

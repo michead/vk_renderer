@@ -55,7 +55,7 @@ void FinalPass::initCommandBuffers()
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = VkEngine::getEngine().getCommandPool();
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t) commandBuffers.size();
+	allocInfo.commandBufferCount = commandBuffers.size();
 
 	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, commandBuffers.data()));
 
@@ -127,6 +127,7 @@ void FinalPass::initDescriptorSet()
 	imageInfo.sampler = VkEngine::getEngine().getCurrentGBuffer()->colorAttachment.imageSampler;
 
 	std::vector<VkWriteDescriptorSet> descriptorWrites(2);
+
 	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[0].dstSet = descriptorSet;
 	descriptorWrites[0].dstBinding = 0;
@@ -134,6 +135,7 @@ void FinalPass::initDescriptorSet()
 	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrites[0].descriptorCount = 1;
 	descriptorWrites[0].pBufferInfo = &bufferInfo;
+
 	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[1].dstSet = descriptorSet;
 	descriptorWrites[1].dstBinding = 1;
