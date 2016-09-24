@@ -44,6 +44,7 @@ public:
 	VkExtent2D getSwapchainExtent() { return swapchainExtent; }
 	std::vector<VkImage>& getSwapchainImages() { return swapchainImages; }
 	std::vector<VkImageView>& getSwapchainImageViews() { return swapchainImageViews; }
+	std::vector<VkFramebuffer>& getSwapchainFramebuffers() { return framebuffers; }
 	VkSwapchainKHR getSwapchain() { return swapchain; }
 	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
 	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
@@ -78,6 +79,11 @@ private:
 	VkExtent2D swapchainExtent;
 	std::vector<VkImageView> swapchainImageViews;
 	std::vector<VkImage> swapchainImages;
+	VkRenderPass renderPass;
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
+	std::vector<VkFramebuffer> framebuffers;
 	VkFormat swapchainFormat;
 	VkQueue graphicsQueue;
 	VkQueue presentationQueue;
@@ -99,13 +105,16 @@ private:
 	void initPool();
 	void initDescriptorSetLayouts();
 	void initImageViews();
+	void initRenderPass();
+	void initDepthResources();
+	void initFramebuffers();
 	void initCommandPool();
 	void initDescriptorPool();
 	void initGBuffers();
 	void initSemaphores();
 	void loadScene();
 	void initCamera();
-	void initRenderPasses();
+	void initOffscreenRenderPasses();
 
 	void draw();
 	void recreateSwapchain();

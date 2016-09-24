@@ -35,7 +35,6 @@ protected:
 	std::string gsPath;
 	std::string fsPath;
 
-	std::vector<VkFramebuffer> framebuffers;
 	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline pipeline;
@@ -53,10 +52,13 @@ protected:
 	virtual void initMeshBuffers();
 	virtual void initTextures();
 	virtual void initDepthResources();
+	virtual void initFramebuffers() { }
 
 	virtual void initAttachments() = 0;
 	virtual void initCommandBuffers() = 0;
-	virtual void initFramebuffers() = 0;
 	virtual void initDescriptorSet() = 0;
 	virtual void initGraphicsPipeline() = 0;
+
+private:
+	std::vector<VkFramebuffer> framebuffers;
 };

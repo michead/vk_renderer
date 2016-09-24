@@ -5,6 +5,7 @@
 #include "glm\glm.hpp"
 #include "glm\gtc\quaternion.hpp"
 #include <glm\gtx\vector_angle.hpp>
+
 #include "MathUtils.h"
 
 #define CAMERA_POSITION		{ 0, 0, 1 }

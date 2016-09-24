@@ -30,6 +30,8 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 #define LUNARG_SWAPCHAIN_VALIDATION "VK_LAYER_LUNARG_swapchain"
 #define LUNARG_UNIQUE_VALIDATION	"VK_LAYER_GOOGLE_unique_objects"
 
+#define VK_CHECK_PRESENT(a, b) if ((a) == VK_ERROR_OUT_OF_DATE_KHR || (a) == VK_SUBOPTIMAL_KHR) { b(); }
+
 #define VK_CHECK(a) if ((a) != VK_SUCCESS && (a) != VK_SUBOPTIMAL_KHR) { \
 						std::string errCode; \
 						switch(a) { \

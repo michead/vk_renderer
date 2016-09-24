@@ -44,20 +44,6 @@ bool GfxPipeline::run()
 	submitInfo.pCommandBuffers = &finalPassCmdBuffer;
 
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
-
-	VkPresentInfoKHR presentInfo = {};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &finalPassCompleteSemaphore;
-
-	VkSwapchainKHR swapChains[] = { VkEngine::getEngine().getSwapchain() };
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
-	presentInfo.pImageIndices = &swapchainImgIndex;
-
-	presentInfo.pResults = nullptr;
-
-	return vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo) == VK_SUCCESS;
 }
 
 void GfxPipeline::updateData()

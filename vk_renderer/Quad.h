@@ -12,8 +12,10 @@ public:
 	Quad() { initVertexBuffer(); initIndexBuffer(); }
 	~Quad() { }
 
-	static std::vector<Vertex> vertices;
-	static std::vector<uint32_t> indices;
+	static const std::vector<glm::vec3> positions;
+	static const std::vector<uint32_t> indices;
+	static const std::vector<glm::vec2> uvs;
+	static const std::vector<Vertex> vertices;
 
 	VkBuffer getVertexBuffer() { return vertexBuffer; }
 	VkBuffer getIndexBuffer() { return indexBuffer; }

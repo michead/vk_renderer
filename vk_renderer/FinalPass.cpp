@@ -49,7 +49,7 @@ void FinalPass::initAttachments()
 
 void FinalPass::initCommandBuffers()
 {
-	commandBuffers.resize(framebuffers.size());
+	commandBuffers.resize(VkEngine::getEngine().getSwapchainImageViews().size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -59,28 +59,30 @@ void FinalPass::initCommandBuffers()
 
 	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, commandBuffers.data()));
 
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	beginInfo.pInheritanceInfo = nullptr;
+
+	std::array<VkClearValue, 2> clearValues = {};
+	clearValues[0].color = OPAQUE_BLACK_CLEAR;
+	clearValues[1].depthStencil = DEPTH_STENCIL_CLEAR;
+
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = renderPass;
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = VkEngine::getEngine().getSwapchainExtent();
+	renderPassInfo.clearValueCount = clearValues.size();
+	renderPassInfo.pClearValues = clearValues.data();
+
+	std::vector<VkFramebuffer> framebuffers = VkEngine::getEngine().getSwapchainFramebuffers();
+
 	for (size_t i = 0; i < commandBuffers.size(); i++)
 	{
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		beginInfo.pInheritanceInfo = nullptr;
-
 		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = renderPass;
 		renderPassInfo.framebuffer = framebuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = VkEngine::getEngine().getSwapchainExtent();
-
-		std::array<VkClearValue, 2> clearValues = {};
-		clearValues[0].color = OPAQUE_BLACK_CLEAR;
-		clearValues[1].depthStencil = DEPTH_STENCIL_CLEAR;
-
-		renderPassInfo.clearValueCount = clearValues.size();
-		renderPassInfo.pClearValues = clearValues.data();
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
@@ -89,7 +91,7 @@ void FinalPass::initCommandBuffers()
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
 		vkCmdBindIndexBuffer(commandBuffers[i], quad->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(commandBuffers[i], quad->indices.size(), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffers[i], quad->indices.size(), 1, 0, 0, 1);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -99,24 +101,7 @@ void FinalPass::initCommandBuffers()
 
 void FinalPass::initFramebuffers()
 {
-	auto imageViews = VkEngine::getEngine().getSwapchainImageViews();
-	size_t numImageViews = imageViews.size();
-
-	framebuffers.resize(numImageViews);
-
-	for (size_t i = 0; i < numImageViews; i++)
-	{
-		VkFramebufferCreateInfo framebufferInfo = {};
-		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &imageViews[i];
-		framebufferInfo.width = VkEngine::getEngine().getSwapchainExtent().width;
-		framebufferInfo.height = VkEngine::getEngine().getSwapchainExtent().height;
-		framebufferInfo.layers = 1;
-
-		framebuffers[i] = VkEngine::getEngine().getPool()->createFramebuffer(framebufferInfo);
-	}
+	
 }
 
 void FinalPass::initDescriptorSet()

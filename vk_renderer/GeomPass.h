@@ -12,6 +12,8 @@ public:
 	virtual VkCommandBuffer getCurrentCommandBuffer() override { return commandBuffers[0]; }
 
 private:
+	std::vector<VkFramebuffer> framebuffers;
+
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;
 	virtual void initFramebuffers() override;
