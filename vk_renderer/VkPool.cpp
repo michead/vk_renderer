@@ -443,36 +443,9 @@ PipelineData VkPool::createPipeline(
 	return pipelineData;
 }
 
-VkDescriptorSetLayout VkPool::createDescriptorSetLayout(VkDescriptorType vsDescType, VkDescriptorType fsDescType)
+VkDescriptorSetLayout VkPool::createDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>& bindings)
 {
 	descriptorSetLayouts.push_back(VK_NULL_HANDLE);
-
-	uint32_t bindingIndex = 0;
-	std::vector<VkDescriptorSetLayoutBinding> bindings;
-
-	if (vsDescType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
-	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-		uboLayoutBinding.binding = bindingIndex++;
-		uboLayoutBinding.descriptorCount = 1;
-		uboLayoutBinding.descriptorType = vsDescType;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		bindings.push_back(uboLayoutBinding);
-	}
-
-	if (fsDescType != VK_DESCRIPTOR_TYPE_MAX_ENUM)
-	{
-		VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-		samplerLayoutBinding.binding = bindingIndex++;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = fsDescType;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		bindings.push_back(samplerLayoutBinding);
-	}
 
 	VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

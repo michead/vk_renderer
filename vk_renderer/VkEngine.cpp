@@ -135,7 +135,6 @@ void VkEngine::initVulkan()
 	initCommandPool();
 	initDescriptorPool();
 	initSemaphores();
-	initDescriptorSetLayouts();
 	initFramebuffers();
 	initOffscreenRenderPasses();
 }
@@ -319,13 +318,7 @@ void VkEngine::updateBufferData()
 void VkEngine::initDescriptorPool()
 {
 	uint16_t numPasses = gfxPipeline->getNumPasses();
-	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses, numPasses);
-}
-
-void VkEngine::initDescriptorSetLayouts()
-{
-	oneStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_MAX_ENUM, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
-	twoStageDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses * 4, numPasses * 4); // Rough estimate
 }
 
 void VkEngine::initOffscreenRenderPasses()

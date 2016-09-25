@@ -11,13 +11,6 @@
 struct Texture;
 
 
-struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-};
-
-
 class Pass {
 	friend class VkEngine;
 
@@ -47,8 +40,8 @@ protected:
 	VkBuffer uniformBuffer;
 	VkDeviceMemory uniformBufferMemory;
 	VkDescriptorSet descriptorSet;
+	VkDescriptorSetLayout descriptorSetLayout;
 
-	virtual void initUniformBuffer();
 	virtual void initMeshBuffers();
 	virtual void initTextures();
 	virtual void initDepthResources();
@@ -57,7 +50,9 @@ protected:
 	virtual void initAttachments() = 0;
 	virtual void initCommandBuffers() = 0;
 	virtual void initDescriptorSet() = 0;
+	virtual void initDescriptorSetLayout() = 0;
 	virtual void initGraphicsPipeline() = 0;
+	virtual void initUniformBuffer() = 0;
 
 private:
 	VkRenderPass renderPass;

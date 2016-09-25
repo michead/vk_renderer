@@ -5,6 +5,13 @@
 #include "VkPool.h"
 
 
+struct UniformBufferObject {
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
+
 void GeometryPass::initAttachments()
 {
 	gBuffer.init();
@@ -100,8 +107,6 @@ void GeometryPass::initCommandBuffers()
 
 void GeometryPass::initDescriptorSet()
 {
-	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getTwoStageDescriptorSetLayout();
-
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
@@ -191,7 +196,7 @@ void GeometryPass::initGraphicsPipeline()
 
 	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
 		gBuffer.renderPass,
-		VkEngine::getEngine().getTwoStageDescriptorSetLayout(),
+		descriptorSetLayout,
 		VkEngine::getEngine().getSwapchainExtent(),
 		vs,
 		fs,
@@ -199,4 +204,40 @@ void GeometryPass::initGraphicsPipeline()
 
 	pipeline = pipelineData.pipeline;
 	pipelineLayout = pipelineData.pipelineLayout;
+}
+
+void GeometryPass::initUniformBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+
+	std::array<BufferData, 2> bufferDataArray = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize);
+	uniformStagingBuffer = bufferDataArray[0].buffer;
+	uniformStagingBufferMemory = bufferDataArray[0].bufferMemory;
+	uniformBuffer = bufferDataArray[1].buffer;
+	uniformBufferMemory = bufferDataArray[1].bufferMemory;
+}
+
+void GeometryPass::initDescriptorSetLayout()
+{
+	std::vector<VkDescriptorSetLayoutBinding> bindings(2);
+
+	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.pImmutableSamplers = nullptr;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	bindings[0] = uboLayoutBinding;
+
+	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[1] = samplerLayoutBinding;
+
+	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }

@@ -13,6 +13,7 @@
 
 void Pass::init()
 {
+	initDescriptorSetLayout();
 	initAttachments();
 	initGraphicsPipeline();
 	initDepthResources();
@@ -105,15 +106,4 @@ void Pass::initTextures()
 	{
 		textureEntry.second->init();
 	}
-}
-
-void Pass::initUniformBuffer()
-{
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	std::array<BufferData, 2> bufferDataArray = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize);
-	uniformStagingBuffer = bufferDataArray[0].buffer;
-	uniformStagingBufferMemory = bufferDataArray[0].bufferMemory;
-	uniformBuffer = bufferDataArray[1].buffer;
-	uniformBufferMemory = bufferDataArray[1].bufferMemory;
 }

@@ -30,6 +30,16 @@ void Texture::initResources()
 
 void Texture::initDescriptorSetLayout()
 {
-	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 
-																					 VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	std::vector<VkDescriptorSetLayoutBinding> bindings(1);
+
+	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[0] = samplerLayoutBinding;
+
+	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }

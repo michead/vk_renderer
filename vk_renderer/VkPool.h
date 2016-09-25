@@ -70,7 +70,7 @@ public:
 		std::vector<char> fs,
 		std::vector<char> gs = std::vector<char>(),
 		uint16_t numColorAttachments = GBufferAttachmentType::NUM_TYPES - 1);
-	VkDescriptorSetLayout createDescriptorSetLayout(VkDescriptorType vsDescType, VkDescriptorType fsDescType);
+	VkDescriptorSetLayout createDescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>& bindings);
 	VkRenderPass createRenderPass(VkRenderPassCreateInfo createInfo);
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
 	VkImageView createSwapchainImageView(VkImage swapchainImage);
