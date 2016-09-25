@@ -81,6 +81,8 @@ void Scene::load()
 
 		i++;
 	}
+
+	loadLights();
 }
 
 void Scene::initCamera()
@@ -137,6 +139,57 @@ void Scene::initCamera()
 	camera->frame = Frame::lookAtFrame(position, target, CAMERA_UP);
 	camera->target = target;
 	camera->fovy = CAMERA_FOVY;
+}
+
+void Scene::loadLights()
+{
+	std::ifstream f(path + LIGHTS_FILENAME);
+
+	if (f.good())
+	{
+		std::stringstream buffer;
+		buffer << f.rdbuf();
+
+		std::string s = buffer.str();
+		std::string err;
+
+		json11::Json json = json11::Json::parse(s, err);
+
+		if (!err.empty())
+		{
+			throw std::runtime_error(err);
+		}
+
+		if (json.has_member("lights"))
+		{
+			const std::vector<json11::Json> jsonLights = json["lights"].array_items();
+
+			for (const json11::Json jsonLight : jsonLights)
+			{
+				Light* light = new Light();
+
+				if (jsonLight.has_member("position"))
+				{
+					std::vector<json11::Json> jsonPosArray = jsonLight["position"].array_items();
+					light->pos = {
+						jsonPosArray[0].number_value(),
+						jsonPosArray[1].number_value(),
+						jsonPosArray[2].number_value() };
+				}
+
+				if (jsonLight.has_member("ke"))
+				{
+					std::vector<json11::Json> jsonColorArray = jsonLight["ke"].array_items();
+					light->color = {
+						jsonColorArray[0].number_value(),
+						jsonColorArray[1].number_value(),
+						jsonColorArray[2].number_value() };
+				}
+
+				lights.push_back(light);
+			}
+		}
+	}
 }
 
 void Scene::cleanup()

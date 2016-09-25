@@ -9,6 +9,7 @@
 
 #define MAX_NUM_LIGHTS	8
 #define PATH_SEPARATOR	'/'
+#define LIGHTS_FILENAME	"lights.json"
 
 
 struct Camera;
@@ -37,5 +38,6 @@ private:
 	
 	void load();
 	void initCamera();
+	void loadLights();
 	void cleanup();
 };
