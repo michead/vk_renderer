@@ -1,8 +1,11 @@
 #include "GfxPipeline.h"
 
-#include "GeomPass.h"
+#include "Camera.h"
 #include "FinalPass.h"
+#include "GeomPass.h"
+#include "Scene.h"
 #include "VkPool.h"
+#include "VkUtils.h"
 
 
 void GfxPipeline::init()
@@ -50,7 +53,7 @@ void GfxPipeline::run()
 
 void GfxPipeline::updateData()
 {
-
+	geomPass->updateData();
 }
 
 void GfxPipeline::cleanup()

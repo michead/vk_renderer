@@ -18,7 +18,7 @@ void GBuffer::init()
 
 	std::array<VkAttachmentDescription, 2> attachmentDescs = {};
 
-	for (uint32_t i = 0; i < attachmentDescs.size(); ++i)
+	for (size_t i = 0; i < attachmentDescs.size(); i++)
 	{
 		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachmentDescs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -51,7 +51,7 @@ void GBuffer::init()
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.pColorAttachments = colorReferences.data();
-	subpass.colorAttachmentCount = static_cast<uint32_t>(colorReferences.size());
+	subpass.colorAttachmentCount = colorReferences.size();
 	subpass.pDepthStencilAttachment = &depthReference;
 
 	std::array<VkSubpassDependency, 2> dependencies;
