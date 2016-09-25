@@ -53,7 +53,8 @@ void GfxPipeline::run()
 
 void GfxPipeline::updateData()
 {
-	geometryPass->updateData();
+	geometryPass->updateBufferData();
+	lightingPass->updateBufferData();
 }
 
 void GfxPipeline::cleanup()

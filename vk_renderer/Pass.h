@@ -20,7 +20,7 @@ public:
 	~Pass() { }
 
 	virtual void init();
-	virtual void updateData() { /*NOP*/ }
+	virtual void updateBufferData() { /*NOP*/ }
 	
 	virtual VkCommandBuffer getCurrentCommandBuffer() const = 0;
 	virtual GBuffer* getGBuffer() { return nullptr; }

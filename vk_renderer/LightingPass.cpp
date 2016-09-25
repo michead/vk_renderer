@@ -7,7 +7,8 @@
 
 
 struct UniformBufferObject {
-	// TODO: Lights here
+	Light lights[MAX_NUM_LIGHTS];
+	glm::vec3 cameraPos;
 };
 
 
@@ -279,4 +280,9 @@ void LightingPass::initDescriptorSetLayout()
 	bindings[4] = depthLayoutBinding;
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
+}
+
+void LightingPass::updateBufferData()
+{
+
 }

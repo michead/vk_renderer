@@ -115,15 +115,11 @@ void GeometryPass::initDescriptorSet()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
 
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = uniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(UniformBufferObject);
+	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
+	std::vector<VkDescriptorImageInfo> imageInfos(textureMap.size());
 
 	uint16_t i = 0;
 	std::map<std::string, Texture*>::iterator it;
-	std::map<std::string, Texture*> textureMap = VkEngine::getEngine().getScene()->getTextureMap();
-	std::vector<VkDescriptorImageInfo> imageInfos(textureMap.size());
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
 		VkDescriptorImageInfo imageInfo = {};
@@ -136,25 +132,31 @@ void GeometryPass::initDescriptorSet()
 		i++;
 	}
 
-	i = 0;
-	std::vector<VkWriteDescriptorSet> descriptorWrites(2 * textureMap.size());
+	VkDescriptorBufferInfo bufferInfo = {};
+	bufferInfo.buffer = uniformBuffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = sizeof(UniformBufferObject);
+
+	std::vector<VkWriteDescriptorSet> descriptorWrites(textureMap.size() + 1);
+
+	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[0].dstSet = descriptorSet;
+	descriptorWrites[0].dstBinding = 0;
+	descriptorWrites[0].dstArrayElement = 0;
+	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[0].descriptorCount = 1;
+	descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+	i = 1;
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
-		descriptorWrites[2 * i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[2 * i].dstSet = descriptorSet;
-		descriptorWrites[2 * i].dstBinding = 0;
-		descriptorWrites[2 * i].dstArrayElement = 0;
-		descriptorWrites[2 * i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[2 * i].descriptorCount = 1;
-		descriptorWrites[2 * i].pBufferInfo = &bufferInfo;
-
-		descriptorWrites[2 * i + 1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[2 * i + 1].dstSet = descriptorSet;
-		descriptorWrites[2 * i + 1].dstBinding = 1;
-		descriptorWrites[2 * i + 1].dstArrayElement = 0;
-		descriptorWrites[2 * i + 1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[2 * i + 1].descriptorCount = 1;
-		descriptorWrites[2 * i + 1].pImageInfo = &imageInfos[i];
+		descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[i].dstSet = descriptorSet;
+		descriptorWrites[i].dstBinding = i;
+		descriptorWrites[i].dstArrayElement = 0;
+		descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrites[i].descriptorCount = 1;
+		descriptorWrites[i].pImageInfo = &imageInfos[i - 1];
 
 		i++;
 	}
@@ -162,7 +164,7 @@ void GeometryPass::initDescriptorSet()
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
-void GeometryPass::updateData()
+void GeometryPass::updateBufferData()
 {
 	UniformBufferObject ubo = {};
 	ubo.model = glm::mat4(); // Useless

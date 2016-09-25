@@ -15,6 +15,8 @@ public:
 		return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; 
 	}
 
+	virtual void updateBufferData() override;
+
 private:
 	VkRenderPass renderPass;
 	std::vector<VkCommandBuffer> commandBuffers;

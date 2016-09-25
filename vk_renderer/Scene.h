@@ -7,7 +7,8 @@
 #include "GeometryStructs.h"
 #include "Texture.h"
 
-#define PATH_SEPARATOR '/'
+#define MAX_NUM_LIGHTS	16
+#define PATH_SEPARATOR	'/'
 
 
 struct Camera;

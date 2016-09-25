@@ -8,7 +8,7 @@ class GeometryPass : public Pass {
 	using Pass::Pass;
 
 public:
-	virtual void updateData() override;
+	virtual void updateBufferData() override;
 
 	virtual VkCommandBuffer getCurrentCommandBuffer() const override { return commandBuffer; }
 	virtual GBuffer* getGBuffer() override { return &gBuffer; }
