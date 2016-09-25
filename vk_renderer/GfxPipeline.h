@@ -13,7 +13,7 @@ public:
 	~GfxPipeline() { cleanup(); }
 
 	void init();
-	bool run();
+	void run();
 	void updateData();
 
 	uint16_t getNumPasses() const { return 2; }

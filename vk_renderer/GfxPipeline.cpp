@@ -17,7 +17,7 @@ void GfxPipeline::init()
 	finalPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
-bool GfxPipeline::run()
+void GfxPipeline::run()
 {
 	uint32_t swapchainImgIndex = VkEngine::getEngine().getSwapchainImageIndex();
 	VkSemaphore imgAvailableSemaphore = VkEngine::getEngine().getImageAvailableSemaphore();

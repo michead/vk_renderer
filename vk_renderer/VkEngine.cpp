@@ -241,37 +241,6 @@ void VkEngine::initRenderPass()
 
 }
 
-void VkEngine::initDepthResources()
-{
-	VkFormat depthFormat = findDepthFormat(physicalDevice);
-	createImage(
-		physicalDevice, 
-		device, 
-		swapchainExtent.width, 
-		swapchainExtent.height, 
-		depthFormat, 
-		VK_IMAGE_TILING_OPTIMAL, 
-		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		depthImage, 
-		depthImageMemory);
-
-	createImageView(
-		device,
-		depthImage, 
-		depthFormat, 
-		VK_IMAGE_ASPECT_DEPTH_BIT, 
-		depthImageView);
-
-	transitionImageLayout(
-		device,
-		commandPool,
-		graphicsQueue,
-		depthImage, 
-		VK_IMAGE_LAYOUT_UNDEFINED, 
-		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
-}
-
 void VkEngine::initFramebuffers()
 {
 	framebuffers.resize(swapchainImageViews.size());
@@ -298,13 +267,19 @@ void VkEngine::initCommandPool()
 
 void VkEngine::draw()
 {
-	VK_CHECK_PRESENT(vkAcquireNextImageKHR(
+	VkResult result = vkAcquireNextImageKHR(
 		device, 
 		swapchain, 
 		std::numeric_limits<uint64_t>::max(), 
 		imageAvailableSemaphore, 
 		VK_NULL_HANDLE, 
-		&swapchainImageIndex), recreateSwapchain);
+		&swapchainImageIndex);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
+		recreateSwapchain();
+		return;
+	}
 	
 	gfxPipeline->run();
 
@@ -319,7 +294,12 @@ void VkEngine::draw()
 	presentInfo.pImageIndices = &swapchainImageIndex;
 	presentInfo.pResults = nullptr;
 
-	VK_CHECK_PRESENT(vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo), recreateSwapchain);
+	result = vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
+		recreateSwapchain();
+	}
 }
 
 void VkEngine::initSemaphores()

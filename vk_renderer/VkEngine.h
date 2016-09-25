@@ -80,9 +80,6 @@ private:
 	std::vector<VkImageView> swapchainImageViews;
 	std::vector<VkImage> swapchainImages;
 	VkRenderPass renderPass;
-	VkImage depthImage;
-	VkDeviceMemory depthImageMemory;
-	VkImageView depthImageView;
 	std::vector<VkFramebuffer> framebuffers;
 	VkFormat swapchainFormat;
 	VkQueue graphicsQueue;
@@ -106,7 +103,6 @@ private:
 	void initDescriptorSetLayouts();
 	void initImageViews();
 	void initRenderPass();
-	void initDepthResources();
 	void initFramebuffers();
 	void initCommandPool();
 	void initDescriptorPool();
