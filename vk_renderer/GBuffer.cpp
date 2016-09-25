@@ -14,10 +14,13 @@ void GBuffer::init()
 	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, &commandBuffer));
 
 	colorAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR);
+	positionAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::POSITION);
+	normalAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::NORMAL);
 	depthAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH);
 
-	std::array<VkAttachmentDescription, 2> attachmentDescs = {};
+	std::array<VkAttachmentDescription, 4> attachmentDescs = {};
 
+	// Assumes depth is the last attachment
 	for (size_t i = 0; i < attachmentDescs.size(); i++)
 	{
 		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -30,22 +33,23 @@ void GBuffer::init()
 		{
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachmentDescs[i].format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
 		}
 		else
 		{
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			attachmentDescs[i].format = VK_FORMAT_R8G8B8A8_UNORM;
 		}
 	}
 
-	attachmentDescs[0].format = VK_FORMAT_R8G8B8A8_UNORM;
-	attachmentDescs[1].format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
-
-	std::vector<VkAttachmentReference> colorReferences;
-	colorReferences.push_back({ 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
+	std::array<VkAttachmentReference, 3> colorReferences = {};
+	colorReferences[0] = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	colorReferences[1] = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	colorReferences[2] = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
 	VkAttachmentReference depthReference = {};
-	depthReference.attachment = 1;
+	depthReference.attachment = 3;
 	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkSubpassDescription subpass = {};
@@ -82,9 +86,12 @@ void GBuffer::init()
 
 	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
 
-	std::array<VkImageView, 2> attachments = {};
-	attachments[0] = colorAttachment.imageView;
-	attachments[1] = depthAttachment.imageView;
+	std::array<VkImageView, 4> attachments = {
+		colorAttachment.imageView,
+		positionAttachment.imageView,
+		normalAttachment.imageView,
+		depthAttachment.imageView
+	};
 
 	VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
 
@@ -99,9 +106,4 @@ void GBuffer::init()
 	framebufferCreateInfo.layers = 1;
 	
 	framebuffer = VkEngine::getEngine().getPool()->createFramebuffer(framebufferCreateInfo);
-}
-
-void GBuffer::bind()
-{
-	// TODO
 }

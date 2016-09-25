@@ -192,10 +192,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="compileShaders.bat" />
-    <None Include="shaders\final\shader.frag" />
-    <None Include="shaders\final\shader.vert" />
-    <None Include="shaders\geom\shader.frag" />
-    <None Include="shaders\geom\shader.vert" />
+    <None Include="shaders\geometry\shader.frag" />
+    <None Include="shaders\geometry\shader.vert" />
+    <None Include="shaders\lighting\shader.frag" />
+    <None Include="shaders\lighting\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

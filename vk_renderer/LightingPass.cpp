@@ -169,7 +169,8 @@ void LightingPass::initGraphicsPipeline()
 		VkEngine::getEngine().getSwapchainExtent(),
 		vs,
 		fs,
-		gs);
+		gs,
+		1);
 
 	pipeline = pipelineData.pipeline;
 	pipelineLayout = pipelineData.pipelineLayout;

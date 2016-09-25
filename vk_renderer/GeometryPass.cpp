@@ -53,9 +53,11 @@ void GeometryPass::initCommandBuffers()
 	renderPassInfo.framebuffer = gBuffer.framebuffer;
 	renderPassInfo.renderArea = renderArea;
 
-	std::array<VkClearValue, 2> clearValues = {};
+	std::array<VkClearValue, 4> clearValues = {};
 	clearValues[0].color = OPAQUE_BLACK_CLEAR;
-	clearValues[1].depthStencil = DEPTH_STENCIL_CLEAR;
+	clearValues[1].color = OPAQUE_BLACK_CLEAR;
+	clearValues[2].color = OPAQUE_BLACK_CLEAR;
+	clearValues[3].depthStencil = DEPTH_STENCIL_CLEAR;
 
 	renderPassInfo.clearValueCount = clearValues.size();
 	renderPassInfo.pClearValues = clearValues.data();
