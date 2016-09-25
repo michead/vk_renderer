@@ -155,9 +155,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="FinalPass.cpp" />
+    <ClCompile Include="LightingPass.cpp" />
     <ClCompile Include="GBuffer.cpp" />
-    <ClCompile Include="GeomPass.cpp" />
+    <ClCompile Include="GeometryPass.cpp" />
     <ClCompile Include="GfxPipeline.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Pass.cpp" />
@@ -170,17 +170,16 @@
     <ClCompile Include="VkPool.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FinalPass.h" />
-    <ClInclude Include="GeomStructs.h" />
-    <ClInclude Include="GfxPipeline.h" />
     <ClInclude Include="LightingPass.h" />
+    <ClInclude Include="GeometryStructs.h" />
+    <ClInclude Include="GfxPipeline.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="Vertex.h" />
-    <ClInclude Include="GeomPass.h" />
+    <ClInclude Include="GeometryPass.h" />
     <ClInclude Include="Pass.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneElem.h" />

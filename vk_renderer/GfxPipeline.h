@@ -3,8 +3,8 @@
 #include "vulkan\vulkan.h"
 
 
-class GeomPass;
-class FinalPass;
+class GeometryPass;
+class LightingPass;
 
 
 class GfxPipeline {
@@ -19,8 +19,8 @@ public:
 	uint16_t getNumPasses() const { return 2; }
 
 private:
-	GeomPass* geomPass;
-	FinalPass* finalPass;
+	GeometryPass* geometryPass;
+	LightingPass* lightingPass;
 
 	VkSemaphore geomPassCompleteSemaphore;
 	VkSemaphore finalPassCompleteSemaphore;

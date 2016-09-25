@@ -1,8 +1,8 @@
 #include "GfxPipeline.h"
 
 #include "Camera.h"
-#include "FinalPass.h"
-#include "GeomPass.h"
+#include "LightingPass.h"
+#include "GeometryPass.h"
 #include "Scene.h"
 #include "VkPool.h"
 #include "VkUtils.h"
@@ -10,11 +10,11 @@
 
 void GfxPipeline::init()
 {
-	geomPass = new GeomPass(SHADER_PATH"geom/vert.spv", SHADER_PATH"geom/frag.spv");
-	finalPass = new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv", geomPass->getGBuffer());
+	geometryPass = new GeometryPass(SHADER_PATH"geometry/vert.spv", SHADER_PATH"geometry/frag.spv");
+	lightingPass = new LightingPass(SHADER_PATH"lighting/vert.spv", SHADER_PATH"lighting/frag.spv", geometryPass->getGBuffer());
 
-	geomPass->init();
-	finalPass->init();
+	geometryPass->init();
+	lightingPass->init();
 
 	geomPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	finalPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
@@ -27,8 +27,8 @@ void GfxPipeline::run()
 	VkSemaphore imageAvailableSemaphore = VkEngine::getEngine().getImageAvailableSemaphore();
 	VkSemaphore renderCompleteSemaphore = VkEngine::getEngine().getRenderCompleteSemaphore();
 	
-	VkCommandBuffer geomPassCmdBuffer = geomPass->getCurrentCommandBuffer();
-	VkCommandBuffer finalPassCmdBuffer = finalPass->getCurrentCommandBuffer();
+	VkCommandBuffer geomPassCmdBuffer = geometryPass->getCurrentCommandBuffer();
+	VkCommandBuffer finalPassCmdBuffer = lightingPass->getCurrentCommandBuffer();
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -53,11 +53,11 @@ void GfxPipeline::run()
 
 void GfxPipeline::updateData()
 {
-	geomPass->updateData();
+	geometryPass->updateData();
 }
 
 void GfxPipeline::cleanup()
 {
-	delete finalPass;
-	delete geomPass;
+	delete lightingPass;
+	delete geometryPass;
 }

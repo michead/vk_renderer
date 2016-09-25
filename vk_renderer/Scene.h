@@ -4,7 +4,7 @@
 
 #include "VkEngine.h"
 #include "SceneElem.h"
-#include "GeomStructs.h"
+#include "GeometryStructs.h"
 #include "Texture.h"
 
 #define PATH_SEPARATOR '/'

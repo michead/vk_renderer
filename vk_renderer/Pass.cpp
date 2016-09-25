@@ -3,7 +3,7 @@
 #include <map>
 
 #include "Camera.h"
-#include "GeomStructs.h"
+#include "GeometryStructs.h"
 #include "Scene.h"
 #include "SceneElem.h"
 #include "Texture.h"

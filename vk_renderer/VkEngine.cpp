@@ -5,8 +5,6 @@
 #include "Camera.h"
 #include "Config.h"
 #include "Pass.h"
-#include "GeomPass.h"
-#include "FinalPass.h"
 #include "Scene.h"
 #include "VkUtils.h"
 #include "VkPool.h"

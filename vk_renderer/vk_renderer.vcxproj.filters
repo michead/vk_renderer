@@ -19,11 +19,11 @@
     <Filter Include="SPIR-V">
       <UniqueIdentifier>{c4ea512d-24bf-41a7-a79a-312de14f9356}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\shaders\geom">
-      <UniqueIdentifier>{2c32b6a3-b3c8-47bc-b2c0-dae020595c4b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\shaders\final">
+    <Filter Include="Source Files\shaders\lighting">
       <UniqueIdentifier>{dc012836-8dbb-43e7-a065-8b3804146cdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\geometry">
+      <UniqueIdentifier>{2c32b6a3-b3c8-47bc-b2c0-dae020595c4b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -51,13 +51,7 @@
     <ClCompile Include="VkPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeomPass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Pass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FinalPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Quad.cpp">
@@ -67,6 +61,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GfxPipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LightingPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -81,9 +81,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeomPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShadowPass.h">
@@ -110,19 +107,10 @@
     <ClInclude Include="Vertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeomStructs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VkPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Pass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LightingPass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FinalPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Quad.h">
@@ -131,22 +119,31 @@
     <ClInclude Include="GfxPipeline.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LightingPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryStructs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="compileShaders.bat">
       <Filter>SPIR-V</Filter>
     </None>
     <None Include="shaders\final\shader.frag">
-      <Filter>Source Files\shaders\final</Filter>
+      <Filter>Source Files\shaders\lighting</Filter>
     </None>
     <None Include="shaders\final\shader.vert">
-      <Filter>Source Files\shaders\final</Filter>
+      <Filter>Source Files\shaders\lighting</Filter>
     </None>
     <None Include="shaders\geom\shader.frag">
-      <Filter>Source Files\shaders\geom</Filter>
+      <Filter>Source Files\shaders\geometry</Filter>
     </None>
     <None Include="shaders\geom\shader.vert">
-      <Filter>Source Files\shaders\geom</Filter>
+      <Filter>Source Files\shaders\geometry</Filter>
     </None>
   </ItemGroup>
 </Project>

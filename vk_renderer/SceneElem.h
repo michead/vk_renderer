@@ -1,7 +1,7 @@
 #pragma once
 
 #include "VkEngine.h"
-#include "GeomStructs.h"
+#include "GeometryStructs.h"
 
 
 class SceneElem {
