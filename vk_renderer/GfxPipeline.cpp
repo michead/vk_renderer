@@ -20,7 +20,9 @@ void GfxPipeline::init()
 void GfxPipeline::run()
 {
 	uint32_t swapchainImgIndex = VkEngine::getEngine().getSwapchainImageIndex();
-	VkSemaphore imgAvailableSemaphore = VkEngine::getEngine().getImageAvailableSemaphore();
+
+	VkSemaphore imageAvailableSemaphore = VkEngine::getEngine().getImageAvailableSemaphore();
+	VkSemaphore renderCompleteSemaphore = VkEngine::getEngine().getRenderCompleteSemaphore();
 	
 	VkCommandBuffer geomPassCmdBuffer = geomPass->getCurrentCommandBuffer();
 	VkCommandBuffer finalPassCmdBuffer = finalPass->getCurrentCommandBuffer();
@@ -30,7 +32,7 @@ void GfxPipeline::run()
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = &imgAvailableSemaphore;
+	submitInfo.pWaitSemaphores = &imageAvailableSemaphore;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &geomPassCmdBuffer;
@@ -40,7 +42,7 @@ void GfxPipeline::run()
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	submitInfo.pWaitSemaphores = &geomPassCompleteSemaphore;
-	submitInfo.pSignalSemaphores = &finalPassCompleteSemaphore;
+	submitInfo.pSignalSemaphores = &renderCompleteSemaphore;
 	submitInfo.pCommandBuffers = &finalPassCmdBuffer;
 
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));

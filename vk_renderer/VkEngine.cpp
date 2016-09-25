@@ -283,12 +283,10 @@ void VkEngine::draw()
 	
 	gfxPipeline->run();
 
-	VkSemaphore presentSemaphore = gfxPipeline->getPresentationSemaphore();
-
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &presentSemaphore;
+	presentInfo.pWaitSemaphores = &renderCompleteSemaphore;
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = &swapchain;
 	presentInfo.pImageIndices = &swapchainImageIndex;
@@ -305,6 +303,7 @@ void VkEngine::draw()
 void VkEngine::initSemaphores()
 {
 	imageAvailableSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	renderCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
 void VkEngine::recreateSwapchain()

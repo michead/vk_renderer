@@ -47,6 +47,7 @@ public:
 	std::vector<VkFramebuffer>& getSwapchainFramebuffers() { return framebuffers; }
 	VkSwapchainKHR getSwapchain() { return swapchain; }
 	VkSemaphore getImageAvailableSemaphore() { return imageAvailableSemaphore; }
+	VkSemaphore getRenderCompleteSemaphore() { return renderCompleteSemaphore; }
 	VkDescriptorPool getDescriptorPool() { return descriptorPool; }
 	VkDescriptorSetLayout getOneStageDescriptorSetLayout() { return oneStageDescriptorSetLayout; }
 	VkDescriptorSetLayout getTwoStageDescriptorSetLayout() { return twoStageDescriptorSetLayout; }
@@ -85,6 +86,7 @@ private:
 	VkQueue graphicsQueue;
 	VkQueue presentationQueue;
 	VkSemaphore imageAvailableSemaphore;
+	VkSemaphore renderCompleteSemaphore;
 
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;
