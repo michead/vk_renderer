@@ -99,11 +99,6 @@ void FinalPass::initCommandBuffers()
 	}
 }
 
-void FinalPass::initFramebuffers()
-{
-	
-}
-
 void FinalPass::initDescriptorSet()
 {
 	VkDescriptorSetLayout descriptorSetLayout = VkEngine::getEngine().getTwoStageDescriptorSetLayout();
@@ -123,8 +118,8 @@ void FinalPass::initDescriptorSet()
 
 	VkDescriptorImageInfo imageInfo = {};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = VkEngine::getEngine().getCurrentGBuffer()->colorAttachment.imageView;
-	imageInfo.sampler = VkEngine::getEngine().getCurrentGBuffer()->colorAttachment.imageSampler;
+	imageInfo.imageView = prevPassGBuffer->colorAttachment.imageView;
+	imageInfo.sampler = prevPassGBuffer->colorAttachment.imageSampler;
 
 	std::vector<VkWriteDescriptorSet> descriptorWrites(2);
 

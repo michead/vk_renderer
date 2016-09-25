@@ -5,6 +5,7 @@
 #include "vulkan\vulkan.h"
 #include "Vertex.h"
 #include "Config.h"
+#include "GBuffer.h"
 
 
 struct BufferData {

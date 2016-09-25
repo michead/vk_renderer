@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VkEngine.h"
+#include "GBuffer.h"
 
 
 #define OPAQUE_BLACK_CLEAR	{ 0, 0, 0, 1 }
@@ -28,17 +29,16 @@ public:
 	virtual void init();
 	virtual void updateData() { /*NOP*/ }
 	
-	virtual VkCommandBuffer getCurrentCommandBuffer() = 0;
+	virtual VkCommandBuffer getCurrentCommandBuffer() const = 0;
+	virtual GBuffer* getGBuffer() { return nullptr; }
 
 protected:
 	std::string vsPath;
 	std::string gsPath;
 	std::string fsPath;
 
-	VkRenderPass renderPass;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline pipeline;
-	std::vector<VkCommandBuffer> commandBuffers;
 	VkImage depthImage;
 	VkImageView depthImageView;
 	VkDeviceMemory depthImageMemory;
@@ -60,5 +60,7 @@ protected:
 	virtual void initGraphicsPipeline() = 0;
 
 private:
+	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> framebuffers;
+	std::vector<VkCommandBuffer> commandBuffers;
 };

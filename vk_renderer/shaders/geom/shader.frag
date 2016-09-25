@@ -10,5 +10,5 @@ void main()
 {
 	vec4 albedo = texture(samplerAlbedo, inUV);
 
-	 outFragcolor = vec4(albedo.rgb, 1.0);	
+	 outFragcolor = vec4(albedo.rgb, 1);	
 }

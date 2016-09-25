@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Pass.h"
+#include "GBuffer.h"
 
 
 class GeomPass : public Pass {
@@ -9,14 +10,15 @@ class GeomPass : public Pass {
 public:
 	virtual void updateData() override;
 
-	virtual VkCommandBuffer getCurrentCommandBuffer() override { return commandBuffers[0]; }
+	virtual VkCommandBuffer getCurrentCommandBuffer() const override { return commandBuffer; }
+	virtual GBuffer* getGBuffer() override { return &gBuffer; }
 
 private:
-	std::vector<VkFramebuffer> framebuffers;
+	GBuffer gBuffer;
+	VkCommandBuffer commandBuffer;
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;
-	virtual void initFramebuffers() override;
 	virtual void initDescriptorSet() override;
 	virtual void initGraphicsPipeline() override;
 };

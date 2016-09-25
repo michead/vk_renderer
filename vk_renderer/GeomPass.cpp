@@ -7,74 +7,23 @@
 
 void GeomPass::initAttachments()
 {
-	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = VkEngine::getEngine().getSwapchainFormat();
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentDescription depthAttachment = {};
-	depthAttachment.format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
-	depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	depthAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkAttachmentReference depthAttachmentRef = {};
-	depthAttachmentRef.attachment = 1;
-	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subPass = {};
-	subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subPass.colorAttachmentCount = 1;
-	subPass.pColorAttachments = &colorAttachmentRef;
-	subPass.pDepthStencilAttachment = &depthAttachmentRef;
-
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-	VkRenderPassCreateInfo renderPassInfo = {};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = attachments.size();
-	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subPass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
+	gBuffer.init();
 }
 
 void GeomPass::initCommandBuffers()
 {
-	if (commandBuffers.size() > 0)
+	static bool firstTime = true;
+	if (!firstTime)
 	{
 		vkFreeCommandBuffers(
 			VkEngine::getEngine().getDevice(),
 			VkEngine::getEngine().getCommandPool(),
-			commandBuffers.size(),
-			commandBuffers.data());
+			1,
+			&commandBuffer);
 	}
 	else
 	{
-		commandBuffers.resize(1);
+		firstTime = false;
 	}
 
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -83,14 +32,14 @@ void GeomPass::initCommandBuffers()
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = 1;
 
-	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, commandBuffers.data()));
+	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, &commandBuffer));
 
 	VkCommandBufferBeginInfo beginInfo = {};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 	beginInfo.pInheritanceInfo = nullptr;
 
-	vkBeginCommandBuffer(commandBuffers.front(), &beginInfo);
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
 	VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
 
@@ -100,8 +49,8 @@ void GeomPass::initCommandBuffers()
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = renderPass;
-	renderPassInfo.framebuffer = framebuffers.front();
+	renderPassInfo.renderPass = gBuffer.renderPass;
+	renderPassInfo.framebuffer = gBuffer.framebuffer;
 	renderPassInfo.renderArea = renderArea;
 
 	std::array<VkClearValue, 2> clearValues = {};
@@ -111,7 +60,7 @@ void GeomPass::initCommandBuffers()
 	renderPassInfo.clearValueCount = clearValues.size();
 	renderPassInfo.pClearValues = clearValues.data();
 
-	vkCmdBeginRenderPass(commandBuffers[0], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport = {};
 	viewport.width = extent.width;
@@ -119,18 +68,18 @@ void GeomPass::initCommandBuffers()
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
-	vkCmdSetViewport(commandBuffers.front(), 0, 1, &viewport);
-	vkCmdSetScissor(commandBuffers.front(), 0, 1, &renderArea);
-	vkCmdBindPipeline(commandBuffers.front(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &renderArea);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 	for (const auto& elem : VkEngine::getEngine().getScene()->getElems())
 	{
 		VkBuffer vertexBuffers[] = { elem->getVertexBuffer() };
 		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(commandBuffers.front(), 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffers.front(), elem->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+		vkCmdBindIndexBuffer(commandBuffer, elem->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		vkCmdBindDescriptorSets(
-			commandBuffers.front(),
+			commandBuffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			pipelineLayout,
 			0,
@@ -139,25 +88,12 @@ void GeomPass::initCommandBuffers()
 			0,
 			nullptr);
 
-		vkCmdDrawIndexed(commandBuffers.front(), elem->getMesh().indices.size(), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, elem->getMesh().indices.size(), 1, 0, 0, 0);
 	}
 
-	vkCmdEndRenderPass(commandBuffers.front());
+	vkCmdEndRenderPass(commandBuffer);
 
-	VK_CHECK(vkEndCommandBuffer(commandBuffers.front()));
-}
-
-void GeomPass::initFramebuffers()
-{
-	auto gBuffers = VkEngine::getEngine().getGBuffers();
-	size_t numGBuffers = gBuffers.size();
-
-	framebuffers.resize(numGBuffers);
-
-	for (size_t i = 0; i < numGBuffers; i++)
-	{
-		framebuffers[i] = gBuffers[i].framebuffer;
-	}
+	VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
 
 void GeomPass::initDescriptorSet()
@@ -252,7 +188,7 @@ void GeomPass::initGraphicsPipeline()
 	}
 
 	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
-		renderPass,
+		gBuffer.renderPass,
 		VkEngine::getEngine().getTwoStageDescriptorSetLayout(),
 		VkEngine::getEngine().getSwapchainExtent(),
 		vs,

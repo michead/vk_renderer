@@ -20,7 +20,6 @@ struct GBufferAttachment {
 };
 
 
-
 struct GBuffer {
 	void init();
 	void bind();

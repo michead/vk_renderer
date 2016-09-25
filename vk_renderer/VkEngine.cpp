@@ -136,7 +136,6 @@ void VkEngine::initVulkan()
 	initRenderPass();
 	initCommandPool();
 	initDescriptorPool();
-	initGBuffers();
 	initSemaphores();
 	initDescriptorSetLayouts();
 	initFramebuffers();
@@ -237,8 +236,7 @@ void VkEngine::initRenderPass()
 	renderPassInfo.dependencyCount = dependencies.size();
 	renderPassInfo.pDependencies = dependencies.data();
 
-	VK_CHECK(vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass));
-
+	renderPass = pool->createRenderPass(renderPassInfo);
 }
 
 void VkEngine::initFramebuffers()
@@ -324,14 +322,6 @@ void VkEngine::initDescriptorPool()
 {
 	uint16_t numPasses = gfxPipeline->getNumPasses();
 	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses, numPasses);
-}
-
-void VkEngine::initGBuffers()
-{
-	for (size_t i = 0; i < gBuffers.size(); i++)
-	{ 
-		gBuffers[i].init();
-	}
 }
 
 void VkEngine::initDescriptorSetLayouts()

@@ -3,7 +3,6 @@
 #include <array>
 #include <vector>
 
-#include "GBuffer.h"
 #include "VkUtils.h"
 
 #define GLM_FORCE_RADIANS
@@ -15,7 +14,6 @@
 #define ENGINE_NAME APPLICATION_NAME
 #define SHADER_MAIN "main"
 #define SHADER_PATH	"shaders/"
-#define NUM_GBUFFERS	3
 
 struct Config;
 struct Scene;
@@ -55,9 +53,6 @@ public:
 	Config* getConfig() const { return config; }
 	Scene* getScene() const { return scene; }
 	VkPool* getPool() const { return pool; }
-	GBuffer* getCurrentGBuffer() { return &gBuffers[gBufferIndex]; }
-	GBuffer* getNextGBuffer() { gBufferIndex++; gBufferIndex %= gBuffers.size(); return &gBuffers[gBufferIndex]; }
-	std::array<GBuffer, NUM_GBUFFERS>& getGBuffers() { return gBuffers; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
@@ -90,7 +85,6 @@ private:
 
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;
-	std::array<GBuffer, NUM_GBUFFERS> gBuffers;
 	GfxPipeline* gfxPipeline;
 
 	int oldX;
@@ -108,7 +102,6 @@ private:
 	void initFramebuffers();
 	void initCommandPool();
 	void initDescriptorPool();
-	void initGBuffers();
 	void initSemaphores();
 	void loadScene();
 	void initCamera();

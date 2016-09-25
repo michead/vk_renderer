@@ -8,7 +8,7 @@
 void GfxPipeline::init()
 {
 	geomPass = new GeomPass(SHADER_PATH"geom/vert.spv", SHADER_PATH"geom/frag.spv");
-	finalPass = new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv");
+	finalPass = new FinalPass(SHADER_PATH"final/vert.spv", SHADER_PATH"final/frag.spv", geomPass->getGBuffer());
 
 	geomPass->init();
 	finalPass->init();
