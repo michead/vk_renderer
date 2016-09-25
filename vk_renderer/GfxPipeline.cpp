@@ -51,7 +51,12 @@ void GfxPipeline::run()
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 }
 
-void GfxPipeline::updateData()
+void GfxPipeline::initBufferData()
+{
+	lightingPass->initBufferData();
+}
+
+void GfxPipeline::updateBufferData()
 {
 	geometryPass->updateBufferData();
 	lightingPass->updateBufferData();

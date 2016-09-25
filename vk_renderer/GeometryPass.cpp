@@ -5,13 +5,6 @@
 #include "VkPool.h"
 
 
-struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
-};
-
-
 void GeometryPass::initAttachments()
 {
 	gBuffer.init();
@@ -135,7 +128,7 @@ void GeometryPass::initDescriptorSet()
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = uniformBuffer;
 	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(UniformBufferObject);
+	bufferInfo.range = sizeof(GeometryPassUniformBufferObject);
 
 	std::vector<VkWriteDescriptorSet> descriptorWrites(textureMap.size() + 1);
 
@@ -166,7 +159,7 @@ void GeometryPass::initDescriptorSet()
 
 void GeometryPass::updateBufferData()
 {
-	UniformBufferObject ubo = {};
+	GeometryPassUniformBufferObject ubo = {};
 	ubo.model = glm::mat4(); // Useless
 	ubo.view = VkEngine::getEngine().getScene()->getCamera()->getViewMatrix();
 	ubo.proj = VkEngine::getEngine().getScene()->getCamera()->getProjMatrix();
@@ -210,7 +203,7 @@ void GeometryPass::initGraphicsPipeline()
 
 void GeometryPass::initUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+	VkDeviceSize bufferSize = sizeof(GeometryPassUniformBufferObject);
 
 	std::array<BufferData, 2> bufferDataArray = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize);
 	uniformStagingBuffer = bufferDataArray[0].buffer;

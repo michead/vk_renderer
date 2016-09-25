@@ -141,6 +141,8 @@ void VkEngine::initVulkan()
 
 void VkEngine::mainLoop()
 {
+	initBufferData();
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
@@ -308,11 +310,16 @@ void VkEngine::recreateSwapchain()
 	// TODO
 }
 
+void VkEngine::initBufferData()
+{
+	gfxPipeline->initBufferData();
+}
+
 void VkEngine::updateBufferData()
 {
 	scene->getCamera()->updateMatrices();
 
-	gfxPipeline->updateData();
+	gfxPipeline->updateBufferData();
 }
 
 void VkEngine::initDescriptorPool()

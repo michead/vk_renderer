@@ -104,6 +104,7 @@ private:
 
 	void draw();
 	void recreateSwapchain();
+	void initBufferData();
 	void updateBufferData();
 	void setupInputCallbacks();
 

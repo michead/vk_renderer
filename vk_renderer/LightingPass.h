@@ -2,6 +2,14 @@
 
 #include "Pass.h"
 #include "Quad.h"
+#include "Scene.h"
+
+
+struct LightingPassUniformBufferObject {
+	Light lights[MAX_NUM_LIGHTS];
+	uint16_t numLights;
+	glm::vec3 cameraPos;
+};
 
 
 class LightingPass : public Pass {
@@ -15,6 +23,7 @@ public:
 		return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; 
 	}
 
+	virtual void initBufferData() override;
 	virtual void updateBufferData() override;
 
 private:
@@ -24,6 +33,7 @@ private:
 	Quad* quad;
 	GBuffer* prevPassGBuffer;
 	VkAttachmentDescription colorAttachment;
+	LightingPassUniformBufferObject ubo;
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;

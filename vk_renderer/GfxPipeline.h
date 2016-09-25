@@ -14,7 +14,8 @@ public:
 
 	void init();
 	void run();
-	void updateData();
+	void initBufferData();
+	void updateBufferData();
 
 	uint16_t getNumPasses() const { return 2; }
 

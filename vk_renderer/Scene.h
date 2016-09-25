@@ -7,7 +7,7 @@
 #include "GeometryStructs.h"
 #include "Texture.h"
 
-#define MAX_NUM_LIGHTS	16
+#define MAX_NUM_LIGHTS	8
 #define PATH_SEPARATOR	'/'
 
 

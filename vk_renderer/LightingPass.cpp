@@ -2,14 +2,8 @@
 
 #include <array>
 
-#include "Scene.h"
+#include "Camera.h"
 #include "VkPool.h"
-
-
-struct UniformBufferObject {
-	Light lights[MAX_NUM_LIGHTS];
-	glm::vec3 cameraPos;
-};
 
 
 void LightingPass::initAttachments()
@@ -130,7 +124,7 @@ void LightingPass::initDescriptorSet()
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = uniformBuffer;
 	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(UniformBufferObject);
+	bufferInfo.range = sizeof(LightingPassUniformBufferObject);
 
 	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[0].dstSet = descriptorSet;
@@ -221,7 +215,7 @@ void LightingPass::initGraphicsPipeline()
 
 void LightingPass::initUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+	VkDeviceSize bufferSize = sizeof(LightingPassUniformBufferObject);
 
 	std::array<BufferData, 2> bufferDataArray = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize);
 	uniformStagingBuffer = bufferDataArray[0].buffer;
@@ -282,7 +276,19 @@ void LightingPass::initDescriptorSetLayout()
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }
 
+void LightingPass::initBufferData()
+{
+	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
+
+	ubo.numLights = static_cast<uint16_t>(lights.size());
+
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		ubo.lights[i] = *lights[i];
+	}
+}
+
 void LightingPass::updateBufferData()
 {
-
+	ubo.cameraPos = VkEngine::getEngine().getScene()->getCamera()->frame.origin;
 }

@@ -7,7 +7,8 @@
 
 
 enum LightType {
-	POINT
+	POINT,
+	NUM_LIGHT_TYPES
 };
 
 struct Light {
