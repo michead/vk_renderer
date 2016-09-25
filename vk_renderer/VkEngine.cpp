@@ -255,7 +255,7 @@ void VkEngine::initFramebuffers()
 
 	for (size_t i = 0; i < swapchainImageViews.size(); i++)
 	{
-		framebufferInfo.pAttachments = &swapchainImageViews[swapchainImageIndex];
+		framebufferInfo.pAttachments = &swapchainImageViews[i];
 		framebuffers[i] = VkEngine::getEngine().getPool()->createFramebuffer(framebufferInfo);
 	}
 }

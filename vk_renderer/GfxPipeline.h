@@ -17,7 +17,6 @@ public:
 	void updateData();
 
 	uint16_t getNumPasses() const { return 2; }
-	VkSemaphore const getPresentationSemaphore() { return finalPassCompleteSemaphore; }
 
 private:
 	GeomPass* geomPass;
