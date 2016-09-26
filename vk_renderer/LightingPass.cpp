@@ -280,11 +280,12 @@ void LightingPass::initBufferData()
 {
 	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
 
-	ubo.numLights = static_cast<uint16_t>(lights.size());
+	ubo.numLights = lights.size();
 
 	for (size_t i = 0; i < lights.size(); i++)
 	{
-		ubo.lights[i] = *lights[i];
+		ubo.lightPositions[i] = lights[i]->pos;
+		ubo.lightIntensities[i] = lights[i]->intensity;
 	}
 }
 

@@ -14,7 +14,7 @@ enum LightType {
 struct Light {
 	LightType type = POINT;
 	glm::vec3 pos;
-	glm::vec3 color = glm::vec3(1);
+	glm::vec3 intensity;
 };
 
 struct Material {

@@ -6,8 +6,9 @@
 
 
 struct LightingPassUniformBufferObject {
-	Light lights[MAX_NUM_LIGHTS];
-	uint16_t numLights;
+	glm::vec3 lightPositions[MAX_NUM_LIGHTS];
+	glm::vec3 lightIntensities[MAX_NUM_LIGHTS];
+	int numLights;
 	glm::vec3 cameraPos;
 };
 

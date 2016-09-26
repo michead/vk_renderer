@@ -1,21 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-#define POINT_LIGHT_TYPE	0
-#define MAX_NUM_LIGHTS		8
-
-struct Light {
-	uint type;
-	vec3 pos;
-	vec3 color;
-};
-
-layout(binding = 0) uniform UniformBuffer {
-	Light lights[MAX_NUM_LIGHTS];
-	uint numLights;
-	vec3 cameraPos;
-} uniformBuffer;
-
 layout (binding = 1) uniform sampler2D samplerAlbedo;
 
 layout (location = 0) in vec3 inPosition;

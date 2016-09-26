@@ -180,7 +180,7 @@ void Scene::loadLights()
 				if (jsonLight.has_member("ke"))
 				{
 					std::vector<json11::Json> jsonColorArray = jsonLight["ke"].array_items();
-					light->color = {
+					light->intensity = {
 						jsonColorArray[0].number_value(),
 						jsonColorArray[1].number_value(),
 						jsonColorArray[2].number_value() };
