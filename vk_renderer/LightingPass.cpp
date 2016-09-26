@@ -284,8 +284,7 @@ void LightingPass::initBufferData()
 
 	for (size_t i = 0; i < lights.size(); i++)
 	{
-		ubo.lightPositions[i] = lights[i]->pos;
-		ubo.lightIntensities[i] = lights[i]->intensity;
+		ubo.lights[i] = *lights[i];
 	}
 }
 

@@ -6,9 +6,14 @@
 #define POINT_LIGHT_TYPE	0
 #define MAX_NUM_LIGHTS		8
 
+struct Light {
+	int type;
+	vec3 position;
+	vec3 intensity;
+};
+
 layout(binding = 0) uniform UniformBuffer {
-	vec3 lightPositions[MAX_NUM_LIGHTS];
-	vec3 lightIntensities[MAX_NUM_LIGHTS];
+	Light lights[MAX_NUM_LIGHTS];
 	int numLights;
 	vec3 cameraPos;
 } uniformBuffer;
@@ -34,8 +39,8 @@ void main() {
 	vec3 kd = color;
 
     for(int i = 0; i < uniformBuffer.numLights; i++) {
-		vec3 lightPosition = uniformBuffer.lightPositions[i];
-		vec3 lightIntensity = uniformBuffer.lightIntensities[i];
+		vec3 lightPosition = uniformBuffer.lights[i].position;
+		vec3 lightIntensity = uniformBuffer.lights[i].intensity;
         vec3 cl = lightIntensity / pow(length(lightPosition - position), 2);
         vec3 l = normalize(lightPosition - position);
         vec3 v = normalize(uniformBuffer.cameraPos - position);
