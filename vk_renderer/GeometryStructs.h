@@ -13,7 +13,7 @@ enum LightType {
 
 struct Light {
 	LightType type = POINT;
-	glm::vec3 pos;
+	glm::vec3 position;
 	glm::vec3 intensity;
 };
 

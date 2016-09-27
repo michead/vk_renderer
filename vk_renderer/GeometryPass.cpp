@@ -125,22 +125,9 @@ void GeometryPass::initDescriptorSet()
 		i++;
 	}
 
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = uniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(GeometryPassUniformBufferObject);
+	std::vector<VkWriteDescriptorSet> descriptorWrites(textureMap.size() + 2);
 
-	std::vector<VkWriteDescriptorSet> descriptorWrites(textureMap.size() + 1);
-
-	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[0].dstSet = descriptorSet;
-	descriptorWrites[0].dstBinding = 0;
-	descriptorWrites[0].dstArrayElement = 0;
-	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[0].descriptorCount = 1;
-	descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-	i = 1;
+	i = 0;
 	for (it = textureMap.begin(); it != textureMap.end(); it++)
 	{
 		descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -154,27 +141,55 @@ void GeometryPass::initDescriptorSet()
 		i++;
 	}
 
+	VkDescriptorBufferInfo cameraBufferInfo = {};
+	cameraBufferInfo.buffer = cameraUniformBuffer;
+	cameraBufferInfo.offset = 0;
+	cameraBufferInfo.range = sizeof(GPCameraUniformBufferObject);
+
+	descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[i].dstSet = descriptorSet;
+	descriptorWrites[i].dstBinding = 0;
+	descriptorWrites[i].dstArrayElement = 0;
+	descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[i].descriptorCount = 1;
+	descriptorWrites[i].pBufferInfo = &cameraBufferInfo;
+
+	i++;
+
+	VkDescriptorBufferInfo materialBufferInfo = {};
+	materialBufferInfo.buffer = cameraUniformBuffer;
+	materialBufferInfo.offset = 0;
+	materialBufferInfo.range = sizeof(GPMaterialUniformBufferObject);
+
+	descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[i].dstSet = descriptorSet;
+	descriptorWrites[i].dstBinding = 0;
+	descriptorWrites[i].dstArrayElement = 0;
+	descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[i].descriptorCount = 1;
+	descriptorWrites[i].pBufferInfo = &materialBufferInfo;
+
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
 void GeometryPass::updateBufferData()
 {
-	GeometryPassUniformBufferObject ubo = {};
+	GPCameraUniformBufferObject ubo = {};
 	ubo.model = glm::mat4(); // Useless
 	ubo.view = VkEngine::getEngine().getScene()->getCamera()->getViewMatrix();
 	ubo.proj = VkEngine::getEngine().getScene()->getCamera()->getProjMatrix();
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), uniformStagingBufferMemory, 0, sizeof(ubo), 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), cameraUniformStagingBufferMemory, 0, sizeof(ubo), 0, &data));
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(VkEngine::getEngine().getDevice(), uniformStagingBufferMemory);
+	vkUnmapMemory(VkEngine::getEngine().getDevice(), cameraUniformStagingBufferMemory);
 
 	copyBuffer(
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		uniformStagingBuffer,
-		uniformBuffer,
+		cameraUniformStagingBuffer,
+		cameraUniformBuffer,
 		sizeof(ubo));
 }
 
@@ -203,36 +218,62 @@ void GeometryPass::initGraphicsPipeline()
 
 void GeometryPass::initUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(GeometryPassUniformBufferObject);
+	VkDeviceSize bufferSize = sizeof(GPCameraUniformBufferObject);
 
-	std::array<BufferData, 2> bufferDataArray = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize);
-	uniformStagingBuffer = bufferDataArray[0].buffer;
-	uniformStagingBufferMemory = bufferDataArray[0].bufferMemory;
-	uniformBuffer = bufferDataArray[1].buffer;
-	uniformBufferMemory = bufferDataArray[1].bufferMemory;
+	std::vector<BufferData> bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
+	cameraUniformStagingBuffer = bufferDataVec[0].buffer;
+	cameraUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
+	cameraUniformBuffer = bufferDataVec[1].buffer;
+	cameraUniformBufferMemory = bufferDataVec[1].bufferMemory;
+
+	bufferSize = sizeof(GPMaterialUniformBufferObject);
+
+	bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
+	materialUniformStagingBuffer = bufferDataVec[0].buffer;
+	materialUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
+	materialUniformBuffer = bufferDataVec[1].buffer;
+	materialUniformBufferMemory = bufferDataVec[1].bufferMemory;
 }
 
 void GeometryPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(2);
+	std::vector<VkDescriptorSetLayoutBinding> bindings(4);
 
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	VkDescriptorSetLayoutBinding samplerAlbedoLayoutBinding = {};
+	samplerAlbedoLayoutBinding.binding = 0;
+	samplerAlbedoLayoutBinding.descriptorCount = 1;
+	samplerAlbedoLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerAlbedoLayoutBinding.pImmutableSamplers = nullptr;
+	samplerAlbedoLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[0] = uboLayoutBinding;
+	bindings[0] = samplerAlbedoLayoutBinding;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	VkDescriptorSetLayoutBinding samplerNormalLayoutBinding = {};
+	samplerNormalLayoutBinding.binding = 1;
+	samplerNormalLayoutBinding.descriptorCount = 1;
+	samplerNormalLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerNormalLayoutBinding.pImmutableSamplers = nullptr;
+	samplerNormalLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[1] = samplerLayoutBinding;
+	bindings[1] = samplerNormalLayoutBinding;
+
+	VkDescriptorSetLayoutBinding cameraUBOLayoutBinding = {};
+	cameraUBOLayoutBinding.binding = 2;
+	cameraUBOLayoutBinding.descriptorCount = 1;
+	cameraUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	cameraUBOLayoutBinding.pImmutableSamplers = nullptr;
+	cameraUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	bindings[2] = cameraUBOLayoutBinding;
+
+	VkDescriptorSetLayoutBinding materialUBOLayoutBinding = {};
+	materialUBOLayoutBinding.binding = 3;
+	materialUBOLayoutBinding.descriptorCount = 1;
+	materialUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	materialUBOLayoutBinding.pImmutableSamplers = nullptr;
+	materialUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	bindings[3] = materialUBOLayoutBinding;
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }

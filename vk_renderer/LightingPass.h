@@ -5,10 +5,14 @@
 #include "Scene.h"
 
 
-struct LightingPassUniformBufferObject {
-	Light lights[MAX_NUM_LIGHTS];
-	int numLights;
-	glm::vec3 cameraPos;
+struct LPLightsUniformBufferObject {
+	int count;
+	glm::vec3 positions[MAX_NUM_LIGHTS];
+	glm::vec3 intensities[MAX_NUM_LIGHTS];
+};
+
+struct LPCameraUniformBufferObject {
+	glm::vec3 position;
 };
 
 
@@ -33,7 +37,16 @@ private:
 	Quad* quad;
 	GBuffer* prevPassGBuffer;
 	VkAttachmentDescription colorAttachment;
-	LightingPassUniformBufferObject ubo;
+	LPLightsUniformBufferObject lightsUBO;
+	LPCameraUniformBufferObject cameraUBO;
+	VkBuffer lightsUniformStagingBuffer;
+	VkDeviceMemory lightsUniformStagingBufferMemory;
+	VkBuffer lightsUniformBuffer;
+	VkDeviceMemory lightsUniformBufferMemory;
+	VkBuffer cameraUniformStagingBuffer;
+	VkDeviceMemory cameraUniformStagingBufferMemory;
+	VkBuffer cameraUniformBuffer;
+	VkDeviceMemory cameraUniformBufferMemory;
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;

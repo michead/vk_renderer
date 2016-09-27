@@ -43,36 +43,44 @@ VkDescriptorPool VkPool::createDescriptorPool(
 	return descriptorPools.back();
 }
 
-std::array<BufferData, 2> VkPool::createUniformBuffer(size_t bufferSize)
+std::vector<BufferData> VkPool::createUniformBuffer(size_t bufferSize, bool createStaging)
 {
-	buffers.push_back(VK_NULL_HANDLE);
+	std::vector<BufferData> bufferDataVec;
+
 	buffers.push_back(VK_NULL_HANDLE);
 	deviceMemoryList.push_back(VK_NULL_HANDLE);
-	deviceMemoryList.push_back(VK_NULL_HANDLE);
+
+	VkBufferUsageFlags usageFlags = createStaging ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 
 	createBuffer(
 		physicalDevice,
 		device,
 		bufferSize,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		usageFlags,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		buffers[buffers.size() - 2],
-		deviceMemoryList[deviceMemoryList.size() - 2]);
-
-	createBuffer(
-		physicalDevice,
-		device,
-		bufferSize,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		buffers.back(),
 		deviceMemoryList.back());
 
-	std::array<BufferData, 2> bufferDataArray;
-	bufferDataArray[0] = { buffers[buffers.size() - 2], deviceMemoryList[deviceMemoryList.size() - 2] };
-	bufferDataArray[1] = { buffers.back(), deviceMemoryList.back() };
+	bufferDataVec.push_back({ buffers.back(), deviceMemoryList.back() });
 
-	return bufferDataArray;
+	if (createStaging)
+	{
+		buffers.push_back(VK_NULL_HANDLE);
+		deviceMemoryList.push_back(VK_NULL_HANDLE);
+
+		createBuffer(
+			physicalDevice,
+			device,
+			bufferSize,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			buffers.back(),
+			deviceMemoryList.back());
+
+		bufferDataVec.push_back({ buffers.back(), deviceMemoryList.back() });
+	}
+
+	return bufferDataVec;
 }
 
 BufferData VkPool::createVertexBuffer(std::vector<Vertex> vertices)

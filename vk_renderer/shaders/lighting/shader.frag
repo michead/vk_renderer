@@ -1,27 +1,26 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
 
 #define PI 3.14159265359
 
 #define POINT_LIGHT_TYPE	0
 #define MAX_NUM_LIGHTS		8
 
-struct Light {
-	int type;
+layout(binding = 0) uniform sampler2D samplerColor;
+layout(binding = 1) uniform sampler2D samplerPosition;
+layout(binding = 2) uniform sampler2D samplerNormal;
+layout(binding = 3) uniform sampler2D samplerDepth;
+
+layout(binding = 4) uniform Lights {
+	int count;
+	vec3 positions[MAX_NUM_LIGHTS];
+	vec3 intensities[MAX_NUM_LIGHTS];
+} lights;
+
+layout(binding = 5) uniform Camera {
 	vec3 position;
-	vec3 intensity;
-};
-
-layout(binding = 0) uniform UniformBuffer {
-	Light lights[MAX_NUM_LIGHTS];
-	int numLights;
-	vec3 cameraPos;
-} uniformBuffer;
-
-layout(binding = 1) uniform sampler2D samplerColor;
-layout(binding = 2) uniform sampler2D samplerPosition;
-layout(binding = 3) uniform sampler2D samplerNormal;
-layout(binding = 4) uniform sampler2D samplerDepth;
+} camera;
 
 layout(location = 0) in vec2 inTexCoord;
 
@@ -31,19 +30,19 @@ float beckmanToPhong(float alpha) { return 2 / (alpha * alpha) - 2; }
 
 void main() {
     vec2 texCoord = inTexCoord;
+	vec3 color = texture(samplerColor, texCoord).rgb;
     vec3 position = texture(samplerPosition, texCoord).xyz;
-    vec3 color = texture(samplerColor, texCoord).rgb;
     vec3 normal = normalize(texture(samplerNormal, texCoord).rgb);
 
 	// Hack, review this
 	vec3 kd = color;
 
-    for(int i = 0; i < uniformBuffer.numLights; i++) {
-		vec3 lightPosition = uniformBuffer.lights[i].position;
-		vec3 lightIntensity = uniformBuffer.lights[i].intensity;
+    for(int i = 0; i < lights.count; i++) {
+		vec3 lightPosition = lights.positions[i];
+		vec3 lightIntensity = lights.intensities[i];
         vec3 cl = lightIntensity / pow(length(lightPosition - position), 2);
         vec3 l = normalize(lightPosition - position);
-        vec3 v = normalize(uniformBuffer.cameraPos - position);
+        vec3 v = normalize(camera.position - position);
         vec3 h = normalize(v + l);
         color += cl * max(0.0, dot(l, normal)) * (kd / PI);
 

@@ -70,6 +70,15 @@ void Scene::load()
 				1.f - attrib_.texcoords[2 * index.texcoord_index + 1]
 			};
 
+			if (!attrib_.normals.empty())
+			{
+				vertex.normal = {
+					attrib_.normals[3 * index.vertex_index + 0],
+					attrib_.normals[3 * index.vertex_index + 1],
+					attrib_.normals[3 * index.vertex_index + 2]
+				};
+			}
+
 			if (uniqueVertices.count(vertex) == 0)
 			{
 				uniqueVertices[vertex] = elems[i]->mesh.vertices.size();
@@ -171,7 +180,7 @@ void Scene::loadLights()
 				if (jsonLight.has_member("position"))
 				{
 					std::vector<json11::Json> jsonPosArray = jsonLight["position"].array_items();
-					light->pos = {
+					light->position = {
 						jsonPosArray[0].number_value(),
 						jsonPosArray[1].number_value(),
 						jsonPosArray[2].number_value() };
