@@ -1,11 +1,11 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0) uniform UniformBuffer {
+layout(binding = 0) uniform Camera {
 	mat4 model;
 	mat4 view;
 	mat4 proj;
-} uniformBuffer;
+} camera;
 
 layout(location = 0) in vec4 inColor;
 layout(location = 1) in vec3 inPosition;
@@ -27,5 +27,5 @@ void main() {
 	outTexCoord = inTexCoord;
 	outNormal = inNormal;
 
-    gl_Position = uniformBuffer.proj * uniformBuffer.view * uniformBuffer.model * vec4(inPosition, 1);
+    gl_Position = camera.proj * camera.view * camera.model * vec4(inPosition, 1);
 }

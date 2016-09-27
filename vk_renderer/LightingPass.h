@@ -50,7 +50,7 @@ private:
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;
-	virtual void initDescriptorSet() override;
+	virtual void initDescriptorSets() override;
 	virtual void initDescriptorSetLayout() override;
 	virtual void initGraphicsPipeline() override;
 	virtual void initUniformBuffer() override;

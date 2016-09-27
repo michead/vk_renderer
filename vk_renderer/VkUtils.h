@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm\glm.hpp>
 
 #include "VkWrap.h"
@@ -684,4 +686,28 @@ inline VkFormat findDepthFormat(VkPhysicalDevice physicalDevice)
 		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT }, 
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+}
+
+inline void updateBuffer(
+	VkDevice device, 
+	VkCommandPool commandPool, 
+	VkQueue queue, 
+	void* bufferObject, 
+	size_t bufferSize,
+	VkDeviceMemory stagingMemory, 
+	VkBuffer buffer,
+	VkBuffer stagingBuffer)
+{
+	void* data;
+	VK_CHECK(vkMapMemory(device, stagingMemory, 0, bufferSize, 0, &data));
+	memcpy(data, bufferObject, bufferSize);
+	vkUnmapMemory(device, stagingMemory);
+
+	copyBuffer(
+		device,
+		commandPool,
+		queue,
+		stagingBuffer,
+		buffer,
+		bufferSize);
 }

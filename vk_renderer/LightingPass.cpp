@@ -97,7 +97,7 @@ void LightingPass::initCommandBuffers()
 			pipelineLayout,
 			0,
 			1,
-			&descriptorSet,
+			&descriptorSets[0],
 			0,
 			nullptr);
 
@@ -109,15 +109,17 @@ void LightingPass::initCommandBuffers()
 	}
 }
 
-void LightingPass::initDescriptorSet()
+void LightingPass::initDescriptorSets()
 {
+	descriptorSets.resize(1);
+
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &descriptorSetLayout;
 
-	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
+	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[0]));
 
 	std::array<VkWriteDescriptorSet, 6> descriptorWrites = {};
 
@@ -127,7 +129,7 @@ void LightingPass::initDescriptorSet()
 	colorImageInfo.sampler = prevPassGBuffer->colorAttachment.imageSampler;
 
 	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[0].dstSet = descriptorSet;
+	descriptorWrites[0].dstSet = descriptorSets[0];
 	descriptorWrites[0].dstBinding = 0;
 	descriptorWrites[0].dstArrayElement = 0;
 	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -140,7 +142,7 @@ void LightingPass::initDescriptorSet()
 	positionImageInfo.sampler = prevPassGBuffer->positionAttachment.imageSampler;
 
 	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[1].dstSet = descriptorSet;
+	descriptorWrites[1].dstSet = descriptorSets[0];
 	descriptorWrites[1].dstBinding = 1;
 	descriptorWrites[1].dstArrayElement = 0;
 	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -153,7 +155,7 @@ void LightingPass::initDescriptorSet()
 	normalImageInfo.sampler = prevPassGBuffer->normalAttachment.imageSampler;
 
 	descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[2].dstSet = descriptorSet;
+	descriptorWrites[2].dstSet = descriptorSets[0];
 	descriptorWrites[2].dstBinding = 2;
 	descriptorWrites[2].dstArrayElement = 0;
 	descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -166,38 +168,38 @@ void LightingPass::initDescriptorSet()
 	depthImageInfo.sampler = prevPassGBuffer->depthAttachment.imageSampler;
 
 	descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[3].dstSet = descriptorSet;
+	descriptorWrites[3].dstSet = descriptorSets[0];
 	descriptorWrites[3].dstBinding = 3;
 	descriptorWrites[3].dstArrayElement = 0;
 	descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites[3].descriptorCount = 1;
 	descriptorWrites[3].pImageInfo = &depthImageInfo;
 
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = lightsUniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(LPLightsUniformBufferObject);
+	VkDescriptorBufferInfo cameraBufferInfo = {};
+	cameraBufferInfo.buffer = cameraUniformBuffer;
+	cameraBufferInfo.offset = 0;
+	cameraBufferInfo.range = sizeof(LPCameraUniformBufferObject);
 
 	descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[4].dstSet = descriptorSet;
+	descriptorWrites[4].dstSet = descriptorSets[0];
 	descriptorWrites[4].dstBinding = 4;
 	descriptorWrites[4].dstArrayElement = 0;
 	descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrites[4].descriptorCount = 1;
-	descriptorWrites[4].pBufferInfo = &bufferInfo;
+	descriptorWrites[4].pBufferInfo = &cameraBufferInfo;
 
-	bufferInfo = {};
-	bufferInfo.buffer = cameraUniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(LPCameraUniformBufferObject);
+	VkDescriptorBufferInfo lightsBufferInfo = {};
+	lightsBufferInfo.buffer = lightsUniformBuffer;
+	lightsBufferInfo.offset = 0;
+	lightsBufferInfo.range = sizeof(LPLightsUniformBufferObject);
 
 	descriptorWrites[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[5].dstSet = descriptorSet;
+	descriptorWrites[5].dstSet = descriptorSets[0];
 	descriptorWrites[5].dstBinding = 5;
 	descriptorWrites[5].dstArrayElement = 0;
 	descriptorWrites[5].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrites[5].descriptorCount = 1;
-	descriptorWrites[5].pBufferInfo = &bufferInfo;
+	descriptorWrites[5].pBufferInfo = &lightsBufferInfo;
 
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
@@ -247,52 +249,61 @@ void LightingPass::initUniformBuffer()
 
 void LightingPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(5);
-
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	bindings[0] = uboLayoutBinding;
+	std::vector<VkDescriptorSetLayoutBinding> bindings(6);
 
 	VkDescriptorSetLayoutBinding colorSamplerLayoutBinding = {};
-	colorSamplerLayoutBinding.binding = 1;
+	colorSamplerLayoutBinding.binding = 0;
 	colorSamplerLayoutBinding.descriptorCount = 1;
 	colorSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	colorSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	colorSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[1] = colorSamplerLayoutBinding;
+	bindings[0] = colorSamplerLayoutBinding;
 
 	VkDescriptorSetLayoutBinding positionSamplerLayoutBinding = {};
-	positionSamplerLayoutBinding.binding = 2;
+	positionSamplerLayoutBinding.binding = 1;
 	positionSamplerLayoutBinding.descriptorCount = 1;
 	positionSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	positionSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	positionSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[2] = positionSamplerLayoutBinding;
+	bindings[1] = positionSamplerLayoutBinding;
 
 	VkDescriptorSetLayoutBinding normalSamplerLayoutBinding = {};
-	normalSamplerLayoutBinding.binding = 3;
+	normalSamplerLayoutBinding.binding = 2;
 	normalSamplerLayoutBinding.descriptorCount = 1;
 	normalSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	normalSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	normalSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[3] = normalSamplerLayoutBinding;
+	bindings[2] = normalSamplerLayoutBinding;
 
 	VkDescriptorSetLayoutBinding depthLayoutBinding = {};
-	depthLayoutBinding.binding = 4;
+	depthLayoutBinding.binding = 3;
 	depthLayoutBinding.descriptorCount = 1;
 	depthLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	depthLayoutBinding.pImmutableSamplers = nullptr;
 	depthLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[4] = depthLayoutBinding;
+	bindings[3] = depthLayoutBinding;
+
+	VkDescriptorSetLayoutBinding cameraLayoutBinding = {};
+	cameraLayoutBinding.binding = 4;
+	cameraLayoutBinding.descriptorCount = 1;
+	cameraLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	cameraLayoutBinding.pImmutableSamplers = nullptr;
+	cameraLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[4] = cameraLayoutBinding;
+
+	VkDescriptorSetLayoutBinding lightsLayoutBinding = {};
+	lightsLayoutBinding.binding = 5;
+	lightsLayoutBinding.descriptorCount = 1;
+	lightsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lightsLayoutBinding.pImmutableSamplers = nullptr;
+	lightsLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[5] = lightsLayoutBinding;
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }
@@ -309,34 +320,28 @@ void LightingPass::initBufferData()
 		lightsUBO.intensities[i] = lights[i]->intensity;
 	}
 
-	uint8_t* data;
-	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), lightsUniformStagingBufferMemory, 0, sizeof(lightsUBO), 0, (void**)&data));
-	memcpy(data, &lightsUBO, sizeof(lightsUBO));
-	vkUnmapMemory(VkEngine::getEngine().getDevice(), lightsUniformStagingBufferMemory);
-
-	copyBuffer(
+	updateBuffer(
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		lightsUniformStagingBuffer,
+		&lightsUBO,
+		sizeof(lightsUBO),
+		lightsUniformStagingBufferMemory,
 		lightsUniformBuffer,
-		sizeof(lightsUBO));
+		lightsUniformStagingBuffer);
 }
 
 void LightingPass::updateBufferData()
 {
 	cameraUBO.position = VkEngine::getEngine().getScene()->getCamera()->frame.origin;
 
-	uint8_t* data;
-	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), cameraUniformStagingBufferMemory, 0, sizeof(cameraUBO), 0, (void**)&data));
-	memcpy(data, &cameraUBO, sizeof(cameraUBO));
-	vkUnmapMemory(VkEngine::getEngine().getDevice(), cameraUniformStagingBufferMemory);
-
-	copyBuffer(
+	updateBuffer(
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		cameraUniformStagingBuffer,
+		&cameraUBO,
+		sizeof(cameraUBO),
+		cameraUniformStagingBufferMemory,
 		cameraUniformBuffer,
-		sizeof(cameraUBO));
+		cameraUniformStagingBuffer);
 }

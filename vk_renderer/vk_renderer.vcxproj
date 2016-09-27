@@ -163,15 +163,16 @@
     <ClCompile Include="Pass.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Scene.cpp" />
-    <ClCompile Include="SceneElem.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ShadowPass.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VkEngine.cpp" />
     <ClCompile Include="VkPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Light.h" />
     <ClInclude Include="LightingPass.h" />
-    <ClInclude Include="GeometryStructs.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="GfxPipeline.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Camera.h" />
@@ -182,7 +183,7 @@
     <ClInclude Include="GeometryPass.h" />
     <ClInclude Include="Pass.h" />
     <ClInclude Include="Scene.h" />
-    <ClInclude Include="SceneElem.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="ShadowPass.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VkEngine.h" />

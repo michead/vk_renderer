@@ -12,15 +12,15 @@ layout(binding = 1) uniform sampler2D samplerPosition;
 layout(binding = 2) uniform sampler2D samplerNormal;
 layout(binding = 3) uniform sampler2D samplerDepth;
 
-layout(binding = 4) uniform Lights {
+layout(binding = 4) uniform Camera {
+	vec3 position;
+} camera;
+
+layout(binding = 5) uniform Lights {
 	int count;
 	vec3 positions[MAX_NUM_LIGHTS];
 	vec3 intensities[MAX_NUM_LIGHTS];
 } lights;
-
-layout(binding = 5) uniform Camera {
-	vec3 position;
-} camera;
 
 layout(location = 0) in vec2 inTexCoord;
 

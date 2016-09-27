@@ -25,6 +25,11 @@ void Scene::load()
 	for (const tinyobj::material_t material : materials_)
 	{
 		textureMap[material.diffuse_texname] = new Texture(path + material.diffuse_texname);
+		
+		if (!material.normal_texname.empty())
+		{
+			textureMap[material.normal_texname] = new Texture(path + material.normal_texname);
+		}
 	}
 
 	i = 0;
@@ -32,17 +37,18 @@ void Scene::load()
 	for (const tinyobj::material_t material : materials_)
 	{
 		materials[i] = new Material();
+		materials[i]->id = i;
 
 		materials[i]->kd = { material.diffuse[0], material.diffuse[1], material.diffuse[2] };
 		materials[i]->ks = { material.specular[0], material.specular[1], material.specular[2] };
-		materials[i]->ke = { material.emission[0], material.emission[1], material.emission[2] };
+		materials[i]->ns = material.shininess;
 
 		if (textureMap.find(material.diffuse_texname) != textureMap.end()) 
-			materials[i]->kdTxt = textureMap[material.diffuse_texname];
+			materials[i]->kdMap = textureMap[material.diffuse_texname];
 		if (textureMap.find(material.specular_texname) != textureMap.end()) 
-			materials[i]->ksTxt = textureMap[material.specular_texname];
-		if (textureMap.find(material.emissive_texname) != textureMap.end()) 
-			materials[i]->keTxt = textureMap[material.emissive_texname];
+			materials[i]->ksMap = textureMap[material.specular_texname];
+		if (textureMap.find(material.normal_texname) != textureMap.end())
+			materials[i]->normalMap = textureMap[material.normal_texname];
 	}
 
 	elems.resize(shapes_.size());
@@ -52,8 +58,9 @@ void Scene::load()
 	{
 		std::unordered_map<Vertex, int> uniqueVertices = {};
 
-		elems[i] = new SceneElem();
+		elems[i] = new Mesh();
 		elems[i]->name = shape.name;
+		elems[i]->material = materials[shape.mesh.material_ids.front()];
 
 		for (const auto& index : shape.mesh.indices)
 		{
@@ -81,11 +88,11 @@ void Scene::load()
 
 			if (uniqueVertices.count(vertex) == 0)
 			{
-				uniqueVertices[vertex] = elems[i]->mesh.vertices.size();
-				elems[i]->mesh.vertices.push_back(vertex);
+				uniqueVertices[vertex] = elems[i]->vertices.size();
+				elems[i]->vertices.push_back(vertex);
 			}
 
-			elems[i]->mesh.indices.push_back(uniqueVertices[vertex]);
+			elems[i]->indices.push_back(uniqueVertices[vertex]);
 		}
 
 		i++;
@@ -203,7 +210,7 @@ void Scene::loadLights()
 
 void Scene::cleanup()
 {
-	std::vector<SceneElem*>::iterator it3;
+	std::vector<Mesh*>::iterator it3;
 	for (it3 = elems.begin(); it3 != elems.end(); it3++)
 	{
 		delete *it3;

@@ -3,8 +3,9 @@
 #include <map>
 
 #include "VkEngine.h"
-#include "SceneElem.h"
-#include "GeometryStructs.h"
+#include "Light.h"
+#include "Material.h"
+#include "Mesh.h"
 #include "Texture.h"
 
 #define MAX_NUM_LIGHTS	8
@@ -21,16 +22,16 @@ public:
 		filename(path.substr(path.rfind(PATH_SEPARATOR) + 1)) { load(); initCamera(); }
 	~Scene() { cleanup(); }
 
-	std::vector<SceneElem*>& getElems() { return elems; }
+	std::vector<Mesh*>& getMeshes() { return elems; }
 	std::vector<Material*>& getMaterials() { return materials; }
 	std::vector<Light*>& getLights() { return lights; }
-	Camera* getCamera() { return camera; }
+	Camera* getCamera() const { return camera; }
 	std::map<std::string, Texture*>& getTextureMap() { return textureMap; }
 
 private:
 	std::string filename;
 	std::string path;
-	std::vector<SceneElem*> elems;
+	std::vector<Mesh*> elems;
 	std::vector<Material*> materials;
 	std::map<std::string, Texture*> textureMap;
 	std::vector<Light*> lights;

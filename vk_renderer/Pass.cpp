@@ -3,9 +3,8 @@
 #include <map>
 
 #include "Camera.h"
-#include "GeometryStructs.h"
 #include "Scene.h"
-#include "SceneElem.h"
+#include "Mesh.h"
 #include "Texture.h"
 #include "VkUtils.h"
 #include "VkPool.h"
@@ -21,7 +20,7 @@ void Pass::init()
 	initTextures();
 	initMeshBuffers();
 	initUniformBuffer();
-	initDescriptorSet();
+	initDescriptorSets();
 	initCommandBuffers();
 }
 
@@ -92,7 +91,7 @@ void Pass::initDepthResources()
 
 void Pass::initMeshBuffers()
 {
-	std::vector<SceneElem*> elems = VkEngine::getEngine().getScene()->getElems();
+	std::vector<Mesh*> elems = VkEngine::getEngine().getScene()->getMeshes();
 	for (const auto& elem : elems)
 	{
 		elem->initBuffers();

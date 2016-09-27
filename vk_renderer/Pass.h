@@ -36,7 +36,7 @@ protected:
 	VkImage depthImage;
 	VkImageView depthImageView;
 	VkDeviceMemory depthImageMemory;
-	VkDescriptorSet descriptorSet;
+	std::vector<VkDescriptorSet> descriptorSets;
 	VkDescriptorSetLayout descriptorSetLayout;
 
 	virtual void initMeshBuffers();
@@ -46,7 +46,7 @@ protected:
 
 	virtual void initAttachments() = 0;
 	virtual void initCommandBuffers() = 0;
-	virtual void initDescriptorSet() = 0;
+	virtual void initDescriptorSets() = 0;
 	virtual void initDescriptorSetLayout() = 0;
 	virtual void initGraphicsPipeline() = 0;
 	virtual void initUniformBuffer() = 0;
