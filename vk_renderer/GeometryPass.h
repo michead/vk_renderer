@@ -35,6 +35,7 @@ class GeometryPass : public Pass {
 	using Pass::Pass;
 
 public:
+	virtual void initBufferData() override;
 	virtual void updateBufferData() override;
 
 	virtual VkCommandBuffer getCurrentCommandBuffer() const override { return commandBuffer; }

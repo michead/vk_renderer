@@ -53,6 +53,7 @@ void GfxPipeline::run()
 
 void GfxPipeline::initBufferData()
 {
+	geometryPass->initBufferData();
 	lightingPass->initBufferData();
 }
 

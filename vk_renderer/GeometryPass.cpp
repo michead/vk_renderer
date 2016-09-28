@@ -76,12 +76,6 @@ void GeometryPass::initCommandBuffers()
 
 	for (const auto& mesh : VkEngine::getEngine().getScene()->getMeshes())
 	{
-		if (mesh->material->id != lastMaterialId)
-		{
-			updateMaterial(mesh->material);
-			lastMaterialId = mesh->material->id;
-		}
-
 		VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
@@ -224,6 +218,14 @@ void GeometryPass::initDescriptorSets()
 		vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 
 		m++;
+	}
+}
+
+void GeometryPass::initBufferData()
+{
+	for (const auto& material : VkEngine::getEngine().getScene()->getMaterials())
+	{
+		updateMaterial(material);
 	}
 }
 

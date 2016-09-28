@@ -6,8 +6,8 @@ layout (binding = 2) uniform sampler2D samplerNormal;
 layout (binding = 3) uniform sampler2D samplerSpecular;
 
 layout (binding = 4) uniform Material {
-	vec3	kd;
-	vec3	ks;
+	vec3		kd;
+	vec3		ks;
 	bool		kdMap;
 	bool		ksMap;
 	bool		normalMap;
