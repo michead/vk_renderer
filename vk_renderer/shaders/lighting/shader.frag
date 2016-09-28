@@ -37,6 +37,7 @@ void main() {
 	// Hack, review this
 	vec3 kd = color;
 
+	/*
     for(int i = 0; i < lights.count; i++) {
 		vec3 lightPosition = lights.positions[i];
 		vec3 lightIntensity = lights.intensities[i];
@@ -51,6 +52,7 @@ void main() {
 		// if(ks == 0) color += cl * max(0, dot(l, norm)) * (kd / pi);
         // else color += cl * max(0, dot(l, norm)) * (kd / pi + ks * (materialN+8)/(8*pi) * pow(max(0, dot(h, normal)), materialN));
     }
+	*/
 
-    outColor = vec4(color, 1);
+    outColor = vec4(normal, 1);
 }

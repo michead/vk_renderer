@@ -1,6 +1,15 @@
 #pragma once
 
+#include <array>
+
 #include "VkUtils.h"
+
+
+#define GBUFFER_COLOR_ATTACH_ID		0
+#define GBUFFER_POSITION_ATTACH_ID	1
+#define GBUFFER_NORMAL_ATTACH_ID	2
+#define GBUFFER_DEPTH_ATTACH_ID		3
+#define GBUFFER_NUM_ATTACHMENTS		4
 
 
 enum GBufferAttachmentType {
@@ -13,6 +22,7 @@ enum GBufferAttachmentType {
 
 
 struct GBufferAttachment {
+	GBufferAttachmentType type;
 	VkImage image;
 	VkImageView imageView;
 	VkDeviceMemory imageMemory;
@@ -27,8 +37,5 @@ struct GBuffer {
 	VkFramebuffer framebuffer;
 	VkRenderPass renderPass;
 
-	GBufferAttachment colorAttachment;
-	GBufferAttachment positionAttachment;
-	GBufferAttachment normalAttachment;
-	GBufferAttachment depthAttachment;
+	std::array<GBufferAttachment, GBUFFER_NUM_ATTACHMENTS> attachments;
 };

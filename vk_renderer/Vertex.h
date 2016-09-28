@@ -14,9 +14,9 @@ struct Vertex {
 	Vertex(glm::vec3 position, glm::vec2 texCoord) : position(position), texCoord(texCoord) { }
 	~Vertex() { }
 
+	glm::vec4 color;
 	glm::vec3 position;
 	glm::vec2 texCoord;
-	glm::vec4 color; // Unused
 	glm::vec3 normal;
 
 	bool operator==(const Vertex& other) const
@@ -34,9 +34,9 @@ struct Vertex {
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 5> getAttributeDescriptions()
+	static std::array<VkVertexInputAttributeDescription, 4> getAttributeDescriptions()
 	{
-		std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions = {};
+		std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions = {};
 
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
@@ -55,13 +55,8 @@ struct Vertex {
 
 		attributeDescriptions[3].binding = 0;
 		attributeDescriptions[3].location = 3;
-		attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[3].offset = offsetof(Vertex, normal);
-
-		attributeDescriptions[4].binding = 0;
-		attributeDescriptions[4].location = 4;
-		attributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[4].offset = offsetof(Vertex, normal);
 
 		return attributeDescriptions;
 	}

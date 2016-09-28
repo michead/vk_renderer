@@ -634,6 +634,16 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		imageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 		imageViewFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		break;
+	case NORMAL:
+		format = VK_FORMAT_R16G16B16A16_SFLOAT;
+		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		imageViewFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+		break;
+	case POSITION:
+		format = VK_FORMAT_R16G16B16A16_SFLOAT;
+		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		imageViewFlags = VK_IMAGE_ASPECT_COLOR_BIT;
+		break;
 	case COLOR:
 	default:
 		format = VK_FORMAT_R8G8B8A8_UNORM;
@@ -693,6 +703,7 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 	VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenImageSamplers.back()));
 
 	GBufferAttachment attachment = {
+		type,
 		offscreenImages.back(),
 		offscreenImageViews.back(),
 		offscreenImageMemoryList.back(),

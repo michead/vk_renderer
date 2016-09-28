@@ -13,14 +13,14 @@ void GBuffer::init()
 
 	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, &commandBuffer));
 
-	colorAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR);
-	positionAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::POSITION);
-	normalAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::NORMAL);
-	depthAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH);
+	attachments = {
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR),
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::POSITION),
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::NORMAL),
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH)
+	};
 
 	std::array<VkAttachmentDescription, 4> attachmentDescs = {};
-
-	// Assumes depth is the last attachment
 	for (size_t i = 0; i < attachmentDescs.size(); i++)
 	{
 		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -29,17 +29,29 @@ void GBuffer::init()
 		attachmentDescs[i].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachmentDescs[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		
-		if (i == (attachmentDescs.size() - 1))
+		switch (attachments[i].type)
 		{
+		case DEPTH:
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 			attachmentDescs[i].format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
-		}
-		else
-		{
+			break;
+		case NORMAL:
+			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			attachmentDescs[i].format = VK_FORMAT_R16G16B16A16_SFLOAT;
+			break;
+		case POSITION:
+			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			attachmentDescs[i].format = VK_FORMAT_R16G16B16A16_SFLOAT;
+			break;
+		case COLOR:
+		default:
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			attachmentDescs[i].format = VK_FORMAT_R8G8B8A8_UNORM;
+			break;
 		}
 	}
 
@@ -86,11 +98,11 @@ void GBuffer::init()
 
 	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
 
-	std::array<VkImageView, 4> attachments = {
-		colorAttachment.imageView,
-		positionAttachment.imageView,
-		normalAttachment.imageView,
-		depthAttachment.imageView
+	std::array<VkImageView, 4> attachImageViews = {
+		attachments[GBUFFER_COLOR_ATTACH_ID].imageView,
+		attachments[GBUFFER_POSITION_ATTACH_ID].imageView,
+		attachments[GBUFFER_NORMAL_ATTACH_ID].imageView,
+		attachments[GBUFFER_DEPTH_ATTACH_ID].imageView
 	};
 
 	VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
@@ -99,8 +111,8 @@ void GBuffer::init()
 	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebufferCreateInfo.pNext = NULL;
 	framebufferCreateInfo.renderPass = renderPass;
-	framebufferCreateInfo.pAttachments = attachments.data();
-	framebufferCreateInfo.attachmentCount = attachments.size();
+	framebufferCreateInfo.pAttachments = attachImageViews.data();
+	framebufferCreateInfo.attachmentCount = attachImageViews.size();
 	framebufferCreateInfo.width = extent.width;
 	framebufferCreateInfo.height = extent.height;
 	framebufferCreateInfo.layers = 1;

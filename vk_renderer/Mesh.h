@@ -15,7 +15,7 @@ public:
 	VkBuffer getIndexBuffer() { return indexBuffer; }
 	Material* getMaterial() const { return material; }
 
-	virtual void initBuffers() { initVertexBuffer(); initIndexBuffer(); }
+	void initBuffers() { initVertexBuffer(); initIndexBuffer(); }
 
 private:
 	std::string name;
@@ -28,6 +28,8 @@ private:
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
 
-	virtual void initVertexBuffer();
-	virtual void initIndexBuffer();
+	void initVertexBuffer();
+	void initIndexBuffer();
+
+	void generateTangentSpace();
 };

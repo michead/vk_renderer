@@ -125,8 +125,8 @@ void LightingPass::initDescriptorSets()
 
 	VkDescriptorImageInfo colorImageInfo = {};
 	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	colorImageInfo.imageView = prevPassGBuffer->colorAttachment.imageView;
-	colorImageInfo.sampler = prevPassGBuffer->colorAttachment.imageSampler;
+	colorImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageView;
+	colorImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageSampler;
 
 	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[0].dstSet = descriptorSets[0];
@@ -138,8 +138,8 @@ void LightingPass::initDescriptorSets()
 
 	VkDescriptorImageInfo positionImageInfo = {};
 	positionImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	positionImageInfo.imageView = prevPassGBuffer->positionAttachment.imageView;
-	positionImageInfo.sampler = prevPassGBuffer->positionAttachment.imageSampler;
+	positionImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_POSITION_ATTACH_ID].imageView;
+	positionImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_POSITION_ATTACH_ID].imageSampler;
 
 	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[1].dstSet = descriptorSets[0];
@@ -151,8 +151,8 @@ void LightingPass::initDescriptorSets()
 
 	VkDescriptorImageInfo normalImageInfo = {};
 	normalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	normalImageInfo.imageView = prevPassGBuffer->normalAttachment.imageView;
-	normalImageInfo.sampler = prevPassGBuffer->normalAttachment.imageSampler;
+	normalImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_NORMAL_ATTACH_ID].imageView;
+	normalImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_NORMAL_ATTACH_ID].imageSampler;
 
 	descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[2].dstSet = descriptorSets[0];
@@ -164,8 +164,8 @@ void LightingPass::initDescriptorSets()
 
 	VkDescriptorImageInfo depthImageInfo = {};
 	depthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	depthImageInfo.imageView = prevPassGBuffer->depthAttachment.imageView;
-	depthImageInfo.sampler = prevPassGBuffer->depthAttachment.imageSampler;
+	depthImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageView;
+	depthImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageSampler;
 
 	descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[3].dstSet = descriptorSets[0];

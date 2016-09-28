@@ -21,9 +21,9 @@ struct GPCameraUniformBufferObject {
 struct GPMaterialUniformBufferObject {
 	glm::vec3	kd;
 	glm::vec3	ks;
-	bool		kdMap;
-	bool		ksMap;
-	bool		normalMap;
+	VkBool32	kdMap;
+	VkBool32	ksMap;
+	VkBool32	normalMap;
 	float		ns;
 	float		opacity;
 	float		translucency;
@@ -53,8 +53,6 @@ private:
 	VkBuffer materialUniformBuffer;
 	VkDeviceMemory materialUniformBufferMemory;
 
-	int16_t lastMaterialId = -1;
-
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;
 	virtual void initDescriptorSets() override;
@@ -62,5 +60,7 @@ private:
 	virtual void initGraphicsPipeline() override;
 	virtual void initUniformBuffer() override;
 
-	void updateMaterial(Material* material);
+	void loadMaterial(Material* material);
+
+	int16_t loadedMaterial = -1;
 };

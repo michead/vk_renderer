@@ -76,6 +76,12 @@ void GeometryPass::initCommandBuffers()
 
 	for (const auto& mesh : VkEngine::getEngine().getScene()->getMeshes())
 	{
+		if (loadedMaterial != mesh->material->id)
+		{ 
+			loadMaterial(mesh->material);
+			loadedMaterial = mesh->material->id;
+		}
+
 		VkBuffer vertexBuffers[] = { mesh->getVertexBuffer() };
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
@@ -89,7 +95,7 @@ void GeometryPass::initCommandBuffers()
 			&descriptorSets[mesh->material->id],
 			0,
 			nullptr);
-
+		
 		vkCmdDrawIndexed(commandBuffer, mesh->indices.size(), 1, 0, 0, 0);
 	}
 
@@ -98,7 +104,7 @@ void GeometryPass::initCommandBuffers()
 	VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
 
-void GeometryPass::updateMaterial(Material* material)
+void GeometryPass::loadMaterial(Material* material)
 {
 	GPMaterialUniformBufferObject ubo = {};
 	ubo.kd = material->kd;
@@ -223,14 +229,13 @@ void GeometryPass::initDescriptorSets()
 
 void GeometryPass::initBufferData()
 {
-	for (const auto& material : VkEngine::getEngine().getScene()->getMaterials())
-	{
-		updateMaterial(material);
-	}
+
 }
 
 void GeometryPass::updateBufferData()
 {
+	loadMaterial(VkEngine::getEngine().getScene()->getMaterials()[0]);
+
 	GPCameraUniformBufferObject ubo = {};
 	ubo.model = glm::mat4(); // Useless
 	ubo.view = VkEngine::getEngine().getScene()->getCamera()->getViewMatrix();
@@ -272,21 +277,21 @@ void GeometryPass::initGraphicsPipeline()
 
 void GeometryPass::initUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(GPCameraUniformBufferObject);
+	VkDeviceSize cameraBufferSize = sizeof(GPCameraUniformBufferObject);
 
-	std::vector<BufferData> bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
-	cameraUniformStagingBuffer = bufferDataVec[0].buffer;
-	cameraUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
-	cameraUniformBuffer = bufferDataVec[1].buffer;
-	cameraUniformBufferMemory = bufferDataVec[1].bufferMemory;
+	std::vector<BufferData> cameraBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(cameraBufferSize, true);
+	cameraUniformStagingBuffer = cameraBufferDataVec[0].buffer;
+	cameraUniformStagingBufferMemory = cameraBufferDataVec[0].bufferMemory;
+	cameraUniformBuffer = cameraBufferDataVec[1].buffer;
+	cameraUniformBufferMemory = cameraBufferDataVec[1].bufferMemory;
 
-	bufferSize = sizeof(GPMaterialUniformBufferObject);
+	VkDeviceSize materialBufferSize = sizeof(GPMaterialUniformBufferObject);
 
-	bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
-	materialUniformStagingBuffer = bufferDataVec[0].buffer;
-	materialUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
-	materialUniformBuffer = bufferDataVec[1].buffer;
-	materialUniformBufferMemory = bufferDataVec[1].bufferMemory;
+	std::vector<BufferData> materialBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(materialBufferSize, true);
+	materialUniformStagingBuffer = materialBufferDataVec[0].buffer;
+	materialUniformStagingBufferMemory = materialBufferDataVec[0].bufferMemory;
+	materialUniformBuffer = materialBufferDataVec[1].buffer;
+	materialUniformBufferMemory = materialBufferDataVec[1].bufferMemory;
 }
 
 void GeometryPass::initDescriptorSetLayout()
