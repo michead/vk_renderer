@@ -159,7 +159,7 @@ void GeometryPass::initDescriptorSets()
 			normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			normalInfo.imageView = material->normalMap->getImageView();
 			normalInfo.sampler = material->normalMap->getSampler();
-
+			
 			imageInfos.push_back(normalInfo);
 		}
 

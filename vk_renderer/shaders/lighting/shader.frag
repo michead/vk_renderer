@@ -29,10 +29,9 @@ layout(location = 0) out vec4 outColor;
 float beckmanToPhong(float alpha) { return 2 / (alpha * alpha) - 2; }
 
 void main() {
-    vec2 texCoord = inTexCoord;
-	vec3 color = texture(samplerColor, texCoord).rgb;
-    vec3 position = texture(samplerPosition, texCoord).xyz;
-    vec3 normal = normalize(texture(samplerNormal, texCoord).rgb);
+	vec3 color = texture(samplerColor, inTexCoord).rgb;
+    vec3 position = texture(samplerPosition, inTexCoord).xyz;
+    vec3 normal = normalize(texture(samplerNormal, inTexCoord).rgb);
 
 	// Hack, review this
 	vec3 kd = color;
@@ -54,5 +53,5 @@ void main() {
     }
 	*/
 
-    outColor = vec4(normal, 1);
+    outColor = vec4(color, 1);
 }

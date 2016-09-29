@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+#include <algorithm>
+#include <string>
 #include <unordered_map>
 
 #include "Camera.h"
@@ -10,6 +12,18 @@
 
 
 void Scene::load()
+{
+	std::string fileExtension = filename.substr(filename.find('.') + 1);
+	std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), ::tolower);
+
+	if (fileExtension == "obj") loadObjMesh();
+	else if (fileExtension == "mesh") loadBinMesh();
+	else throw std::runtime_error("Unsupported mesh format.");
+
+	loadLights();
+}
+
+void Scene::loadObjMesh()
 {
 	tinyobj::attrib_t attrib_;
 	std::vector<tinyobj::shape_t> shapes_;
@@ -25,7 +39,7 @@ void Scene::load()
 	for (const tinyobj::material_t material : materials_)
 	{
 		textureMap[material.diffuse_texname] = new Texture(path + material.diffuse_texname);
-		
+
 		if (!material.normal_texname.empty())
 		{
 			textureMap[material.normal_texname] = new Texture(path + material.normal_texname);
@@ -43,9 +57,9 @@ void Scene::load()
 		materials[i]->ks = { material.specular[0], material.specular[1], material.specular[2] };
 		materials[i]->ns = material.shininess;
 
-		if (textureMap.find(material.diffuse_texname) != textureMap.end()) 
+		if (textureMap.find(material.diffuse_texname) != textureMap.end())
 			materials[i]->kdMap = textureMap[material.diffuse_texname];
-		if (textureMap.find(material.specular_texname) != textureMap.end()) 
+		if (textureMap.find(material.specular_texname) != textureMap.end())
 			materials[i]->ksMap = textureMap[material.specular_texname];
 		if (textureMap.find(material.normal_texname) != textureMap.end())
 			materials[i]->normalMap = textureMap[material.normal_texname];
@@ -97,8 +111,11 @@ void Scene::load()
 
 		i++;
 	}
+}
 
-	loadLights();
+void Scene::loadBinMesh()
+{
+	// TODO
 }
 
 void Scene::initCamera()

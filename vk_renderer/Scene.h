@@ -41,4 +41,7 @@ private:
 	void initCamera();
 	void loadLights();
 	void cleanup();
+
+	void loadObjMesh();
+	void loadBinMesh();
 };
