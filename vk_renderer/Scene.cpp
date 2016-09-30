@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "Camera.h"
+#include "MathUtils.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tinyobjloader\tiny_obj_loader.h"
@@ -23,14 +24,21 @@ void Scene::load()
 	loadLights();
 }
 
-void Scene::loadObjMesh()
+void Scene::loadObjMesh(bool onlyMtl)
 {
 	tinyobj::attrib_t attrib_;
 	std::vector<tinyobj::shape_t> shapes_;
 	std::vector<tinyobj::material_t> materials_;
 	std::string err_;
 
-	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + filename).c_str(), path.c_str()))
+	std::string filename_ = filename;
+	if (onlyMtl)
+	{
+		int fileExtStart = filename.find('.');
+		filename_ = filename.substr(0, fileExtStart) + ".OBJ";
+	}
+
+	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + filename_).c_str(), path.c_str()))
 	{
 		throw std::runtime_error(err_);
 	}
@@ -65,6 +73,9 @@ void Scene::loadObjMesh()
 			materials[i]->normalMap = textureMap[material.normal_texname];
 	}
 
+	if (onlyMtl)
+		return;
+
 	elems.resize(shapes_.size());
 
 	i = 0;
@@ -75,6 +86,27 @@ void Scene::loadObjMesh()
 		elems[i] = new Mesh();
 		elems[i]->name = shape.name;
 		elems[i]->material = materials[shape.mesh.material_ids.front()];
+
+		std::vector<float> tangents;
+		std::vector<float> normals;
+
+		if (attrib_.normals.empty())
+		{
+			normals = fComputeVertexNormals(
+				attrib_.vertices.size(), 
+				attrib_.vertices.data(), 
+				(int*)shape.mesh.indices.data());
+			tangents = fComputeTangents(
+				attrib_.vertices.size(), 
+				attrib_.vertices.data(), 
+				attrib_.normals.data(), 
+				attrib_.texcoords.data(), 
+				(int*)shape.mesh.indices.data());
+		}
+		else
+		{
+			normals = attrib_.normals;
+		}
 
 		for (const auto& index : shape.mesh.indices)
 		{
@@ -115,7 +147,101 @@ void Scene::loadObjMesh()
 
 void Scene::loadBinMesh()
 {
-	// TODO
+	FILE *f;
+	if (fopen_s(&f, (path + filename).c_str(), "rb"))
+	{
+		std::cerr << "File could not be opened." << std::endl;
+	}
+
+	std::vector<glm::vec3> positions;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> texCoords;
+	std::vector<float> radiuses;
+	std::vector<glm::vec3> colors;
+	std::vector<glm::vec3> velocities;
+	std::vector<glm::ivec3> triangles;
+	std::vector<glm::ivec2> lines;
+	std::vector<int> points;
+	std::vector<glm::ivec4> quads;
+	std::vector<glm::ivec4> splines;
+
+	loadVec(f, positions);
+	loadVec(f, normals);
+	loadVec(f, texCoords);
+	loadVec(f, radiuses);
+	loadVec(f, colors);
+	loadVec(f, velocities);
+	loadVec(f, triangles);
+	loadVec(f, lines);
+	loadVec(f, points);
+	loadVec(f, quads);
+	loadVec(f, splines);
+
+	if (normals.empty()) normals = computeVertexNormals(positions, triangles);
+	std::vector<glm::vec3> tangents = computeTangents(positions, normals, texCoords, triangles);
+
+	elems.push_back(new Mesh());
+	loadObjMesh(true);
+	elems[0]->material = materials[0];
+
+	std::unordered_map<Vertex, int> uniqueVertices = {};
+
+	for (const auto& face : triangles)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			Vertex vertex = {};
+
+			vertex.position = {
+				positions[face[i]].x,
+				positions[face[i]].y,
+				positions[face[i]].z
+			};
+
+			vertex.texCoord = {
+				texCoords[face[i]].x,
+				1.f - texCoords[face[i]].y
+			};
+
+			if (!normals.empty())
+			{
+				vertex.normal = {
+					normals[face[i]].x,
+					normals[face[i]].y,
+					normals[face[i]].z
+				};
+			}
+
+			if (!colors.empty())
+			{
+				vertex.color = {
+					colors[face[i]].x,
+					colors[face[i]].y,
+					colors[face[i]].z,
+					1.f
+				};
+			}
+
+			if (!tangents.empty())
+			{
+				vertex.tangent = {
+					tangents[face[i]].x,
+					tangents[face[i]].y,
+					tangents[face[i]].z
+				};
+			}
+
+			if (uniqueVertices.count(vertex) == 0)
+			{
+				uniqueVertices[vertex] = elems[0]->vertices.size();
+				elems[0]->vertices.push_back(vertex);
+			}
+
+			elems[0]->indices.push_back(uniqueVertices[vertex]);
+		}
+	}
+
+	fclose(f);
 }
 
 void Scene::initCamera()

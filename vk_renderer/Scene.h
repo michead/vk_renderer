@@ -42,6 +42,6 @@ private:
 	void loadLights();
 	void cleanup();
 
-	void loadObjMesh();
+	void loadObjMesh(bool onlyMtl = false);
 	void loadBinMesh();
 };

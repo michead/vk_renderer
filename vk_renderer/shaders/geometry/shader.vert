@@ -25,7 +25,7 @@ void main() {
 	outColor = inColor;
 	outPosition = inPosition;
 	outTexCoord = inTexCoord;
-	outNormal = inNormal;
+	outNormal = 2 * inNormal - 1;
 
     gl_Position = camera.proj * camera.view * camera.model * vec4(inPosition, 1);
 }

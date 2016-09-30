@@ -50,6 +50,6 @@ void main()
 
 
 	outPosition = vec4(inPosition, 1);
-	outNormal = vec4(2 * normal - vec3(1), 1);
+	outNormal = vec4(normal, 1);
 	outColor = vec4(normal.rgb, 1);
 }
