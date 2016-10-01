@@ -11,7 +11,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm\glm.hpp>
 
-#include "VkWrap.h"
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
 
 #ifdef NDEBUG
 const bool ENABLE_VALIDATION_LAYERS = false;

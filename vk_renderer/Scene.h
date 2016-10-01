@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 
 #include "VkEngine.h"
 #include "Light.h"
@@ -8,9 +9,11 @@
 #include "Mesh.h"
 #include "Texture.h"
 
+#include "json11\json11.hpp"
+
 #define MAX_NUM_LIGHTS	8
 #define PATH_SEPARATOR	'/'
-#define LIGHTS_FILENAME	"lights.json"
+#define SCENE_FILENAME	"scene.json"
 
 
 struct Camera;
@@ -19,12 +22,13 @@ struct Camera;
 struct Scene {
 public:
 	Scene(std::string path) : path(path.substr(0, path.rfind(PATH_SEPARATOR) + 1)), 
-		filename(path.substr(path.rfind(PATH_SEPARATOR) + 1)) { load(); initCamera(); }
+		filename(path.substr(path.rfind(PATH_SEPARATOR) + 1)) { load(); }
 	~Scene() { cleanup(); }
 
 	std::vector<Mesh*>& getMeshes() { return elems; }
 	std::vector<Material*>& getMaterials() { return materials; }
 	std::vector<Light*>& getLights() { return lights; }
+	glm::vec3& getAmbient() { return ambient; }
 	Camera* getCamera() const { return camera; }
 	std::map<std::string, Texture*>& getTextureMap() { return textureMap; }
 
@@ -35,13 +39,14 @@ private:
 	std::vector<Material*> materials;
 	std::map<std::string, Texture*> textureMap;
 	std::vector<Light*> lights;
+	glm::vec3 ambient;
 	Camera* camera;
 	
 	void load();
-	void initCamera();
-	void loadLights();
 	void cleanup();
 
-	void loadObjMesh(bool onlyMtl = false);
-	void loadBinMesh();
+	void initCamera(json11::Json);
+	void loadLights(std::vector<json11::Json>);
+	void loadObjMesh(std::string);
+	void loadBinMesh(std::string);
 };

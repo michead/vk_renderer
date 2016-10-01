@@ -17,11 +17,12 @@ void GBuffer::init()
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR),
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::POSITION),
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::NORMAL),
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::TANGENT),
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH)
 	};
 
-	std::array<VkAttachmentDescription, 4> attachmentDescs = {};
-	for (size_t i = 0; i < attachmentDescs.size(); i++)
+	std::array<VkAttachmentDescription, GBUFFER_NUM_ATTACHMENTS> attachmentDescs = {};
+	for (size_t i = 0; i < GBUFFER_NUM_ATTACHMENTS; i++)
 	{
 		attachmentDescs[i].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachmentDescs[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -37,6 +38,7 @@ void GBuffer::init()
 			attachmentDescs[i].format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
 			break;
 		case NORMAL:
+		case TANGENT:
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			attachmentDescs[i].format = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -55,13 +57,16 @@ void GBuffer::init()
 		}
 	}
 
-	std::array<VkAttachmentReference, 3> colorReferences = {};
-	colorReferences[0] = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-	colorReferences[1] = { 1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-	colorReferences[2] = { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	std::array<VkAttachmentReference, GBUFFER_NUM_ATTACHMENTS - 1> colorReferences = {};
+	
+	uint32_t r = 0;
+	for (VkAttachmentReference& ref : colorReferences)
+	{ 
+		ref = { r++, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }; 
+	}
 
 	VkAttachmentReference depthReference = {};
-	depthReference.attachment = 3;
+	depthReference.attachment = GBUFFER_NUM_ATTACHMENTS - 1;
 	depthReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkSubpassDescription subpass = {};
@@ -98,10 +103,11 @@ void GBuffer::init()
 
 	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
 
-	std::array<VkImageView, 4> attachImageViews = {
+	std::array<VkImageView, GBUFFER_NUM_ATTACHMENTS> attachImageViews = {
 		attachments[GBUFFER_COLOR_ATTACH_ID].imageView,
 		attachments[GBUFFER_POSITION_ATTACH_ID].imageView,
 		attachments[GBUFFER_NORMAL_ATTACH_ID].imageView,
+		attachments[GBUFFER_TANGENT_ATTACH_ID].imageView,
 		attachments[GBUFFER_DEPTH_ATTACH_ID].imageView
 	};
 

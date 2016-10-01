@@ -53,11 +53,12 @@ void GeometryPass::initCommandBuffers()
 	renderPassInfo.framebuffer = gBuffer.framebuffer;
 	renderPassInfo.renderArea = renderArea;
 
-	std::array<VkClearValue, 4> clearValues = {};
+	std::array<VkClearValue, GBUFFER_NUM_ATTACHMENTS> clearValues = {};
 	clearValues[0].color = OPAQUE_BLACK_CLEAR;
 	clearValues[1].color = OPAQUE_BLACK_CLEAR;
 	clearValues[2].color = OPAQUE_BLACK_CLEAR;
-	clearValues[3].depthStencil = DEPTH_STENCIL_CLEAR;
+	clearValues[3].color = OPAQUE_BLACK_CLEAR;
+	clearValues[4].depthStencil = DEPTH_STENCIL_CLEAR;
 
 	renderPassInfo.clearValueCount = clearValues.size();
 	renderPassInfo.pClearValues = clearValues.data();
@@ -65,8 +66,8 @@ void GeometryPass::initCommandBuffers()
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport = {};
-	viewport.width = extent.width;
-	viewport.height = extent.height;
+	viewport.width = (float)extent.width;
+	viewport.height = (float)extent.height;
 	viewport.minDepth = 0;
 	viewport.maxDepth = 1;
 
@@ -109,9 +110,6 @@ void GeometryPass::loadMaterial(Material* material)
 	GPMaterialUniformBufferObject ubo = {};
 	ubo.kd = material->kd;
 	ubo.ks = material->ks;
-	ubo.kdMap = material->kdMap != nullptr;
-	ubo.ksMap = material->ksMap != nullptr;
-	ubo.normalMap = material->normalMap != nullptr;
 	ubo.ns = material->ns;
 	ubo.opacity = material->opacity;
 	ubo.translucency = material->translucency;
@@ -153,25 +151,12 @@ void GeometryPass::initDescriptorSets()
 
 		imageInfos.push_back(albedoInfo);
 
-		if (material->normalMap)
-		{
-			VkDescriptorImageInfo normalInfo = {};
-			normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			normalInfo.imageView = material->normalMap->getImageView();
-			normalInfo.sampler = material->normalMap->getSampler();
+		VkDescriptorImageInfo normalInfo = {};
+		normalInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		normalInfo.imageView = material->normalMap->getImageView();
+		normalInfo.sampler = material->normalMap->getSampler();
 			
-			imageInfos.push_back(normalInfo);
-		}
-
-		if (material->ksMap)
-		{
-			VkDescriptorImageInfo specularInfo = {};
-			specularInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			specularInfo.imageView = material->ksMap->getImageView();
-			specularInfo.sampler = material->ksMap->getSampler();
-
-			imageInfos.push_back(specularInfo);
-		}
+		imageInfos.push_back(normalInfo);
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites;
 
@@ -213,7 +198,7 @@ void GeometryPass::initDescriptorSets()
 		VkWriteDescriptorSet materialDescriptorSet = {};
 		materialDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		materialDescriptorSet.dstSet = descriptorSets[m];
-		materialDescriptorSet.dstBinding = 4;
+		materialDescriptorSet.dstBinding = 3;
 		materialDescriptorSet.dstArrayElement = 0;
 		materialDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		materialDescriptorSet.descriptorCount = 1;
@@ -296,7 +281,7 @@ void GeometryPass::initUniformBuffer()
 
 void GeometryPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(5);
+	std::vector<VkDescriptorSetLayoutBinding> bindings(4);
 
 	VkDescriptorSetLayoutBinding cameraUBOLayoutBinding = {};
 	cameraUBOLayoutBinding.binding = 0;
@@ -325,23 +310,14 @@ void GeometryPass::initDescriptorSetLayout()
 
 	bindings[2] = samplerNormalLayoutBinding;
 
-	VkDescriptorSetLayoutBinding samplerSpecularLayoutBinding = {};
-	samplerSpecularLayoutBinding.binding = 3;
-	samplerSpecularLayoutBinding.descriptorCount = 1;
-	samplerSpecularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerSpecularLayoutBinding.pImmutableSamplers = nullptr;
-	samplerSpecularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	bindings[3] = samplerSpecularLayoutBinding;
-
 	VkDescriptorSetLayoutBinding materialUBOLayoutBinding = {};
-	materialUBOLayoutBinding.binding = 4;
+	materialUBOLayoutBinding.binding = 3;
 	materialUBOLayoutBinding.descriptorCount = 1;
 	materialUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	materialUBOLayoutBinding.pImmutableSamplers = nullptr;
 	materialUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[4] = materialUBOLayoutBinding;
+	bindings[3] = materialUBOLayoutBinding;
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }

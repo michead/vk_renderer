@@ -57,7 +57,7 @@ public:
 		uint32_t bufferDescriptorCount,
 		uint32_t imageSamplerDescriptorCount,
 		uint32_t maxSets = 3);
-	std::vector<BufferData> createUniformBuffer(size_t bufferSize, bool createStaging);
+	std::vector<BufferData> createUniformBuffer(VkDeviceSize bufferSize, bool createStaging);
 	BufferData createVertexBuffer(std::vector<Vertex> vertices);
 	BufferData createIndexBuffer(std::vector<uint32_t> indices);
 	ImageData createDepthResources();
@@ -112,6 +112,7 @@ private:
 	std::vector<VkImageView> offscreenImageViews;
 	std::vector<VkDeviceMemory> offscreenImageMemoryList;
 	std::vector<VkSampler> offscreenImageSamplers;
+	std::vector<VkShaderModule> shaderModules;
 
 	VkSwapchainKHR swapchain;
 	VkDevice device;

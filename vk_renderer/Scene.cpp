@@ -9,7 +9,6 @@
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tinyobjloader\tiny_obj_loader.h"
-#include "json11\json11.hpp"
 
 
 void Scene::load()
@@ -17,28 +16,48 @@ void Scene::load()
 	std::string fileExtension = filename.substr(filename.find('.') + 1);
 	std::transform(fileExtension.begin(), fileExtension.end(), fileExtension.begin(), ::tolower);
 
-	if (fileExtension == "obj") loadObjMesh();
-	else if (fileExtension == "mesh") loadBinMesh();
-	else throw std::runtime_error("Unsupported mesh format.");
+	std::ifstream f(path + SCENE_FILENAME);
 
-	loadLights();
+	if (f.good())
+	{
+		std::stringstream buffer;
+		buffer << f.rdbuf();
+
+		std::string s = buffer.str();
+		std::string err;
+
+		json11::Json json = json11::Json::parse(s, err);
+
+		if (!err.empty())
+		{
+			throw std::runtime_error(err);
+		}
+
+		json11::Json scene = json["scene"];
+
+		json11::Json cameraNode = scene["camera"];
+		initCamera(cameraNode);
+
+		std::string meshesFilename = scene["meshes"].string_value();
+		loadObjMesh(meshesFilename);
+
+		std::vector<json11::Json> lightsNode = scene["lights"].array_items();
+		loadLights(lightsNode);
+	}
+	else
+	{
+		throw std::runtime_error("Scene could not be parsed.");
+	}
 }
 
-void Scene::loadObjMesh(bool onlyMtl)
+void Scene::loadObjMesh(std::string meshesFilename)
 {
 	tinyobj::attrib_t attrib_;
 	std::vector<tinyobj::shape_t> shapes_;
 	std::vector<tinyobj::material_t> materials_;
 	std::string err_;
 
-	std::string filename_ = filename;
-	if (onlyMtl)
-	{
-		int fileExtStart = filename.find('.');
-		filename_ = filename.substr(0, fileExtStart) + ".OBJ";
-	}
-
-	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + filename_).c_str(), path.c_str()))
+	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + meshesFilename).c_str(), path.c_str()))
 	{
 		throw std::runtime_error(err_);
 	}
@@ -73,9 +92,6 @@ void Scene::loadObjMesh(bool onlyMtl)
 			materials[i]->normalMap = textureMap[material.normal_texname];
 	}
 
-	if (onlyMtl)
-		return;
-
 	elems.resize(shapes_.size());
 
 	i = 0;
@@ -89,19 +105,27 @@ void Scene::loadObjMesh(bool onlyMtl)
 
 		std::vector<float> tangents;
 		std::vector<float> normals;
+		std::vector<int> indices;
+
+		for (const auto& index : shape.mesh.indices)
+		{
+			indices.push_back(index.vertex_index);
+		}
 
 		if (attrib_.normals.empty())
 		{
 			normals = fComputeVertexNormals(
-				attrib_.vertices.size(), 
+				attrib_.vertices.size(),
+				indices.size(),
 				attrib_.vertices.data(), 
-				(int*)shape.mesh.indices.data());
+				indices.data());
 			tangents = fComputeTangents(
-				attrib_.vertices.size(), 
+				attrib_.vertices.size(),
+				indices.size(),
 				attrib_.vertices.data(), 
-				attrib_.normals.data(), 
+				normals.data(), 
 				attrib_.texcoords.data(), 
-				(int*)shape.mesh.indices.data());
+				indices.data());
 		}
 		else
 		{
@@ -130,6 +154,12 @@ void Scene::loadObjMesh(bool onlyMtl)
 					attrib_.normals[3 * index.vertex_index + 1],
 					attrib_.normals[3 * index.vertex_index + 2]
 				};
+
+				vertex.tangent = {
+					tangents[3 * index.vertex_index + 0],
+					tangents[3 * index.vertex_index + 1],
+					tangents[3 * index.vertex_index + 2]
+				};
 			}
 
 			if (uniqueVertices.count(vertex) == 0)
@@ -145,10 +175,13 @@ void Scene::loadObjMesh(bool onlyMtl)
 	}
 }
 
-void Scene::loadBinMesh()
+/**
+ * No support for materials yet
+ */
+void Scene::loadBinMesh(std::string meshesFilename)
 {
 	FILE *f;
-	if (fopen_s(&f, (path + filename).c_str(), "rb"))
+	if (fopen_s(&f, (path + meshesFilename).c_str(), "rb"))
 	{
 		std::cerr << "File could not be opened." << std::endl;
 	}
@@ -179,10 +212,6 @@ void Scene::loadBinMesh()
 
 	if (normals.empty()) normals = computeVertexNormals(positions, triangles);
 	std::vector<glm::vec3> tangents = computeTangents(positions, normals, texCoords, triangles);
-
-	elems.push_back(new Mesh());
-	loadObjMesh(true);
-	elems[0]->material = materials[0];
 
 	std::unordered_map<Vertex, int> uniqueVertices = {};
 
@@ -244,55 +273,38 @@ void Scene::loadBinMesh()
 	fclose(f);
 }
 
-void Scene::initCamera()
+void Scene::initCamera(json11::Json cameraNode)
 {
 	camera = new Camera();
 
 	glm::vec3 position;
 	glm::vec3 target;
 
-	std::ifstream f(path + CAMERA_FILENAME);
-
-	if (f.good())
+	
+	if (cameraNode.has_member("position"))
 	{
-		std::stringstream buffer;
-		buffer << f.rdbuf();
+		std::vector<json11::Json> jsonPosArray = cameraNode["position"].array_items();
+		position = { 
+			jsonPosArray[0].number_value(), 
+			jsonPosArray[1].number_value(), 
+			jsonPosArray[2].number_value() };
+	}
+	else
+	{
+		camera->frame.origin = CAMERA_POSITION;
+	}
 
-		std::string s = buffer.str();
-		std::string err;
-
-		json11::Json json = json11::Json::parse(s, err);
-
-		if (!err.empty())
-		{
-			throw std::runtime_error(err);
-		}
-
-		if (json.has_member("position"))
-		{
-			std::vector<json11::Json> jsonPosArray = json["position"].array_items();
-			position = { 
-				jsonPosArray[0].number_value(), 
-				jsonPosArray[1].number_value(), 
-				jsonPosArray[2].number_value() };
-		}
-		else
-		{
-			camera->frame.origin = CAMERA_POSITION;
-		}
-
-		if (json.has_member("center"))
-		{
-			std::vector<json11::Json> jsonPosArray = json["center"].array_items();
-			target = {
-				jsonPosArray[0].number_value(),
-				jsonPosArray[1].number_value(),
-				jsonPosArray[2].number_value() };
-		}
-		else
-		{
-			camera->target = CAMERA_TARGET;
-		}
+	if (cameraNode.has_member("center"))
+	{
+		std::vector<json11::Json> jsonPosArray = cameraNode["center"].array_items();
+		target = {
+			jsonPosArray[0].number_value(),
+			jsonPosArray[1].number_value(),
+			jsonPosArray[2].number_value() };
+	}
+	else
+	{
+		camera->target = CAMERA_TARGET;
 	}
 
 	camera->frame = Frame::lookAtFrame(position, target, CAMERA_UP);
@@ -300,54 +312,31 @@ void Scene::initCamera()
 	camera->fovy = CAMERA_FOVY;
 }
 
-void Scene::loadLights()
+void Scene::loadLights(std::vector<json11::Json> lightsNode)
 {
-	std::ifstream f(path + LIGHTS_FILENAME);
-
-	if (f.good())
+	for (const json11::Json jsonLight : lightsNode)
 	{
-		std::stringstream buffer;
-		buffer << f.rdbuf();
+		Light* light = new Light();
 
-		std::string s = buffer.str();
-		std::string err;
-
-		json11::Json json = json11::Json::parse(s, err);
-
-		if (!err.empty())
+		if (jsonLight.has_member("position"))
 		{
-			throw std::runtime_error(err);
+			std::vector<json11::Json> jsonPosArray = jsonLight["position"].array_items();
+			light->position = {
+				jsonPosArray[0].number_value(),
+				jsonPosArray[1].number_value(),
+				jsonPosArray[2].number_value() };
 		}
 
-		if (json.has_member("lights"))
+		if (jsonLight.has_member("ke"))
 		{
-			const std::vector<json11::Json> jsonLights = json["lights"].array_items();
-
-			for (const json11::Json jsonLight : jsonLights)
-			{
-				Light* light = new Light();
-
-				if (jsonLight.has_member("position"))
-				{
-					std::vector<json11::Json> jsonPosArray = jsonLight["position"].array_items();
-					light->position = {
-						jsonPosArray[0].number_value(),
-						jsonPosArray[1].number_value(),
-						jsonPosArray[2].number_value() };
-				}
-
-				if (jsonLight.has_member("ke"))
-				{
-					std::vector<json11::Json> jsonColorArray = jsonLight["ke"].array_items();
-					light->intensity = {
-						jsonColorArray[0].number_value(),
-						jsonColorArray[1].number_value(),
-						jsonColorArray[2].number_value() };
-				}
-
-				lights.push_back(light);
-			}
+			std::vector<json11::Json> jsonColorArray = jsonLight["ke"].array_items();
+			light->intensity = {
+				jsonColorArray[0].number_value(),
+				jsonColorArray[1].number_value(),
+				jsonColorArray[2].number_value() };
 		}
+
+		lights.push_back(light);
 	}
 }
 

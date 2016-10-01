@@ -57,19 +57,19 @@ inline glm::vec3 computeTangentsFromUVs(const glm::vec3& v0, const glm::vec3& v1
 	else return glm::vec3(1, 0, 0);
 }
 
-inline std::vector<float> fComputeVertexNormals(size_t size, const float* positions, const int* triangles)
+inline std::vector<float> fComputeVertexNormals(size_t size, size_t fSize, const float* positions, const int* triangles)
 {
-	std::vector<glm::vec3> normals;
+	std::vector<glm::vec3> normals(size);
 
-	for (size_t f = 0; f < size; f += 3)
+	for (size_t f = 0; f < fSize; f += 3)
 	{
-		int i1 = triangles[3 * f];
-		int i2 = triangles[3 * (f + 1)];
-		int i3 = triangles[3 * (f + 2)];
+		int i1 = triangles[f];
+		int i2 = triangles[f + 1];
+		int i3 = triangles[f + 2];
 
-		auto a = glm::vec3(positions[i1], positions[i1 + 1], positions[i1 + 2]);
-		auto b = glm::vec3(positions[i2], positions[i2 + 1], positions[i2 + 2]);
-		auto c = glm::vec3(positions[i3], positions[i3 + 1], positions[i3 + 2]);
+		auto a = glm::vec3(positions[3 * i1], positions[3 * i1 + 1], positions[3 * i1 + 2]);
+		auto b = glm::vec3(positions[3 * i2], positions[3 * i2 + 1], positions[3 * i2 + 2]);
+		auto c = glm::vec3(positions[3 * i3], positions[3 * i3 + 1], positions[3 * i3 + 2]);
 		auto fn = computeTriangleNormal(a, b, c);
 		auto area = computeTriangleArea(a, b, c);
 
@@ -97,6 +97,7 @@ inline std::vector<float> fComputeVertexNormals(size_t size, const float* positi
 
 inline std::vector<float> fComputeTangents(
 	size_t size,
+	size_t fSize,
 	const float* positions,
 	const float* normals,
 	const float* texCoords,
@@ -104,19 +105,19 @@ inline std::vector<float> fComputeTangents(
 {
 	std::vector<glm::vec3> tangents(size);
 
-	for (size_t f = 0; f < size; f += 3)
+	for (size_t f = 0; f < fSize; f += 3)
 	{
-		int i1 = triangles[3 * f];
-		int i2 = triangles[3 * (f + 1)];
-		int i3 = triangles[3 * (f + 2)];
+		int i1 = triangles[f];
+		int i2 = triangles[f + 1];
+		int i3 = triangles[f + 2];
 
-		auto a = glm::vec3(positions[i1], positions[i1 + 1], positions[i1 + 2]);
-		auto b = glm::vec3(positions[i2], positions[i2 + 1], positions[i2 + 2]);
-		auto c = glm::vec3(positions[i3], positions[i3 + 1], positions[i3 + 2]);
+		auto a = glm::vec3(positions[3 * i1], positions[3 * i1 + 1], positions[3 * i1 + 2]);
+		auto b = glm::vec3(positions[3 * i2], positions[3 * i2 + 1], positions[3 * i2 + 2]);
+		auto c = glm::vec3(positions[3 * i3], positions[3 * i3 + 1], positions[3 * i3 + 2]);
 
-		auto ta = glm::vec2(texCoords[i1], texCoords[i1 + 1]);
-		auto tb = glm::vec2(texCoords[i1], texCoords[i1 + 1]);
-		auto tc = glm::vec2(texCoords[i2], texCoords[i2 + 1]);
+		auto ta = glm::vec2(texCoords[2 * i1], texCoords[2 * i1 + 1]);
+		auto tb = glm::vec2(texCoords[2 * i1], texCoords[2 * i1 + 1]);
+		auto tc = glm::vec2(texCoords[2 * i2], texCoords[2 * i2 + 1]);
 
 		auto ft = computeTangentsFromUVs(a, b, c, ta, tb, tc);
 		auto area = computeTriangleArea(a, b, c);
@@ -129,7 +130,7 @@ inline std::vector<float> fComputeTangents(
 	std::vector<glm::vec3> fNormals;
 	for (size_t i = 0; i < 3 * size; i += 3)
 	{
-		fNormals.push_back(glm::vec3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]));
+		fNormals.push_back(glm::vec3(normals[i], normals[i + 1], normals[i + 2]));
 	}
 
 	for (size_t i = 0; i < tangents.size(); i++)

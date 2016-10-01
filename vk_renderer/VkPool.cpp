@@ -7,6 +7,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb\stb_image.h>
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 
 VkSemaphore VkPool::createSemaphore()
 {
@@ -43,7 +46,7 @@ VkDescriptorPool VkPool::createDescriptorPool(
 	return descriptorPools.back();
 }
 
-std::vector<BufferData> VkPool::createUniformBuffer(size_t bufferSize, bool createStaging)
+std::vector<BufferData> VkPool::createUniformBuffer(VkDeviceSize bufferSize, bool createStaging)
 {
 	std::vector<BufferData> bufferDataVec;
 
@@ -87,11 +90,11 @@ BufferData VkPool::createVertexBuffer(std::vector<Vertex> vertices)
 {
 	VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
 
-	VkWrap<VkBuffer> stagingBuffer { device, vkDestroyBuffer };
-	VkWrap<VkDeviceMemory> stagingBufferMemory { device, vkFreeMemory };
-
 	vertexBuffers.push_back(VK_NULL_HANDLE);
 	vertexDeviceMemoryList.push_back(VK_NULL_HANDLE);
+
+	VkBuffer stagingVertexBuffer;
+	VkDeviceMemory stagingVertexMemory;
 
 	createBuffer(
 		physicalDevice,
@@ -99,13 +102,13 @@ BufferData VkPool::createVertexBuffer(std::vector<Vertex> vertices)
 		bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer.get(),
-		stagingBufferMemory.get());
+		stagingVertexBuffer,
+		stagingVertexMemory);
 
 	void* data;
-	VK_CHECK(vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data));
+	VK_CHECK(vkMapMemory(device, stagingVertexMemory, 0, bufferSize, 0, &data));
 	memcpy(data, vertices.data(), (size_t) bufferSize);
-	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingBufferMemory);
+	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingVertexMemory);
 
 	createBuffer(
 		VkEngine::getEngine().getPhysicalDevice(),
@@ -120,9 +123,12 @@ BufferData VkPool::createVertexBuffer(std::vector<Vertex> vertices)
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		stagingBuffer,
+		stagingVertexBuffer,
 		vertexBuffers.back(),
 		bufferSize);
+
+	vkDestroyBuffer(VkEngine::getEngine().getDevice(), stagingVertexBuffer, nullptr);
+	vkFreeMemory(VkEngine::getEngine().getDevice(), stagingVertexMemory, nullptr);
 
 	BufferData bufferData = {
 		vertexBuffers.back(),
@@ -139,21 +145,22 @@ BufferData VkPool::createIndexBuffer(std::vector<uint32_t> indices)
 	indexBuffers.push_back(VK_NULL_HANDLE);
 	indexDeviceMemoryList.push_back(VK_NULL_HANDLE);
 
-	VkWrap<VkBuffer> stagingBuffer{ VkEngine::getEngine().getDevice(), vkDestroyBuffer };
-	VkWrap<VkDeviceMemory> stagingBufferMemory{ VkEngine::getEngine().getDevice(), vkFreeMemory };
+	VkBuffer stagingIndexBuffer;
+	VkDeviceMemory stagingIndexMemory;
+
 	createBuffer(
 		VkEngine::getEngine().getPhysicalDevice(),
 		VkEngine::getEngine().getDevice(),
 		bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer.get(),
-		stagingBufferMemory.get());
+		stagingIndexBuffer,
+		stagingIndexMemory);
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingBufferMemory, 0, bufferSize, 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingIndexMemory, 0, bufferSize, 0, &data));
 	memcpy(data, indices.data(), (size_t) bufferSize);
-	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingBufferMemory);
+	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingIndexMemory);
 
 	createBuffer(
 		VkEngine::getEngine().getPhysicalDevice(),
@@ -168,9 +175,12 @@ BufferData VkPool::createIndexBuffer(std::vector<uint32_t> indices)
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		stagingBuffer,
+		stagingIndexBuffer,
 		indexBuffers.back(),
 		bufferSize);
+
+	vkDestroyBuffer(VkEngine::getEngine().getDevice(), stagingIndexBuffer, nullptr);
+	vkFreeMemory(VkEngine::getEngine().getDevice(), stagingIndexMemory, nullptr);
 
 	BufferData bufferData = {
 		indexBuffers.back(),
@@ -272,37 +282,40 @@ PipelineData VkPool::createPipeline(
 {
 	pipelines.push_back(VK_NULL_HANDLE);
 	pipelineLayouts.push_back(VK_NULL_HANDLE);
+	
+	shaderModules.push_back(VK_NULL_HANDLE);
+	shaderModules.push_back(VK_NULL_HANDLE);
 
-	VkWrap<VkShaderModule> vsModule { VkEngine::getEngine().getDevice(), vkDestroyShaderModule };
-	VkWrap<VkShaderModule> fsModule { VkEngine::getEngine().getDevice(), vkDestroyShaderModule };
+	size_t vsIndex = shaderModules.size() - 2;
+	size_t fsIndex = shaderModules.size() - 1;
 
-	createShaderModule(VkEngine::getEngine().getDevice(), vs, vsModule.get());
-	createShaderModule(VkEngine::getEngine().getDevice(), fs, fsModule.get());
+	createShaderModule(VkEngine::getEngine().getDevice(), vs, shaderModules[vsIndex]);
+	createShaderModule(VkEngine::getEngine().getDevice(), fs, shaderModules[fsIndex]);
 
 	VkPipelineShaderStageCreateInfo vsStageInfo = {};
 	vsStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vsStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vsStageInfo.module = vsModule;
+	vsStageInfo.module = shaderModules[vsIndex];
 	vsStageInfo.pName = SHADER_MAIN;
 
 	VkPipelineShaderStageCreateInfo fsStageInfo = {};
 	fsStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fsStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fsStageInfo.module = fsModule;
+	fsStageInfo.module = shaderModules[fsIndex];
 	fsStageInfo.pName = SHADER_MAIN;
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
 
 	if (!gs.empty())
 	{
-		VkWrap<VkShaderModule> gsModule { device, vkDestroyShaderModule };
+		shaderModules.push_back(VK_NULL_HANDLE);
 
-		createShaderModule(device, gs, gsModule.get());
+		createShaderModule(device, gs, shaderModules.back());
 
 		VkPipelineShaderStageCreateInfo gsStageInfo = {};
 		gsStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		gsStageInfo.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
-		gsStageInfo.module = gsModule;
+		gsStageInfo.module = shaderModules.back();
 		gsStageInfo.pName = SHADER_MAIN;
 
 		shaderStages = { vsStageInfo, gsStageInfo, fsStageInfo };
@@ -503,6 +516,9 @@ ImageData VkPool::createTextureResources(std::string path)
 	textureImageViews.push_back(VK_NULL_HANDLE);
 	textureImageMemoryList.push_back(VK_NULL_HANDLE);
 	textureSamplers.push_back(VK_NULL_HANDLE);
+	
+	VkImage stagingTextureImage;
+	VkDeviceMemory stagingTextureImageMemory;
 
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
@@ -512,9 +528,7 @@ ImageData VkPool::createTextureResources(std::string path)
 	{
 		throw std::runtime_error("Failed to load texture image!");
 	}
-
-	VkWrap<VkImage> stagingImage{ VkEngine::getEngine().getDevice(), vkDestroyImage };
-	VkWrap<VkDeviceMemory> stagingImageMemory{ VkEngine::getEngine().getDevice(), vkFreeMemory };
+	
 	createImage(
 		VkEngine::getEngine().getPhysicalDevice(),
 		VkEngine::getEngine().getDevice(),
@@ -524,13 +538,13 @@ ImageData VkPool::createTextureResources(std::string path)
 		VK_IMAGE_TILING_LINEAR,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingImage.get(),
-		stagingImageMemory.get());
+		stagingTextureImage,
+		stagingTextureImageMemory);
 
 	void* data;
-	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingImageMemory, 0, imageSize, 0, &data));
+	VK_CHECK(vkMapMemory(VkEngine::getEngine().getDevice(), stagingTextureImageMemory, 0, imageSize, 0, &data));
 	memcpy(data, pixels, (size_t) imageSize);
-	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingImageMemory);
+	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingTextureImageMemory);
 
 	stbi_image_free(pixels);
 
@@ -550,7 +564,7 @@ ImageData VkPool::createTextureResources(std::string path)
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		stagingImage,
+		stagingTextureImage,
 		VK_IMAGE_LAYOUT_PREINITIALIZED,
 		VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
@@ -566,7 +580,7 @@ ImageData VkPool::createTextureResources(std::string path)
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
 		VkEngine::getEngine().getGraphicsQueue(),
-		stagingImage,
+		stagingTextureImage,
 		textureImages.back(),
 		texWidth,
 		texHeight);
@@ -606,6 +620,9 @@ ImageData VkPool::createTextureResources(std::string path)
 
 	VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &textureSamplers.back()));
 
+	vkDestroyImage(VkEngine::getEngine().getDevice(), stagingTextureImage, nullptr);
+	vkFreeMemory(VkEngine::getEngine().getDevice(), stagingTextureImageMemory, nullptr);
+
 	ImageData imageData = {
 		textureImages.back(),
 		textureImageViews.back(),
@@ -635,6 +652,7 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		imageViewFlags = VK_IMAGE_ASPECT_DEPTH_BIT;
 		break;
 	case NORMAL:
+	case TANGENT:
 		format = VK_FORMAT_R16G16B16A16_SFLOAT;
 		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		imageViewFlags = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -882,6 +900,7 @@ void VkPool::createInstance()
 
 void VkPool::freeResources()
 {
+	for (VkShaderModule shader : shaderModules) { vkDestroyShaderModule(device, shader, nullptr); }
 	for (VkSemaphore semaphore : semaphores) { vkDestroySemaphore(device, semaphore, nullptr); }
 	for (VkDescriptorPool descriptorPool : descriptorPools) { vkDestroyDescriptorPool(device, descriptorPool, nullptr); }
 	for (VkDeviceMemory deviceMemory : deviceMemoryList) { vkFreeMemory(device, deviceMemory, nullptr); }

@@ -21,9 +21,6 @@ struct GPCameraUniformBufferObject {
 struct GPMaterialUniformBufferObject {
 	glm::vec3	kd;
 	glm::vec3	ks;
-	VkBool32	kdMap;
-	VkBool32	ksMap;
-	VkBool32	normalMap;
 	float		ns;
 	float		opacity;
 	float		translucency;
