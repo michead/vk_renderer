@@ -4,8 +4,7 @@
 
 #define PI 3.14159265359
 
-#define POINT_LIGHT_TYPE	0
-#define MAX_NUM_LIGHTS		8
+#define MAX_NUM_LIGHTS		4
 
 layout(binding = 0) uniform sampler2D samplerColor;
 layout(binding = 1) uniform sampler2D samplerPosition;
@@ -25,6 +24,7 @@ layout(binding = 8) uniform Lights {
 layout(binding = 9) uniform Scene {
 	vec4 ambient;
 } scene;
+layout(binding = 10) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -57,5 +57,6 @@ void main() {
         color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (n + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), n));
     }
 
-    outColor = vec4(color, 1);
+	float depth = texture(shadowMaps[0], inTexCoord).r;
+    outColor = vec4(vec3(depth), 1);
 }

@@ -15,8 +15,6 @@ void Camera::rotate(glm::vec2 rot)
 	
 	frame = Frame::lookAtFrame(frame.origin, newTarget, CAMERA_UP);
 	target = newTarget;
-
-	isDirty = true;
 }
 
 void Camera::rotateAroundTarget(glm::vec2 rot)
@@ -28,30 +26,21 @@ void Camera::rotateAroundTarget(glm::vec2 rot)
 	glm::vec3 newOrigin = target - newZ * getFocus();
 
 	frame = Frame::lookAtFrame(newOrigin, target, CAMERA_UP);
-
-	isDirty = true;
 }
 
 void Camera::pan(glm::vec2 pan)
 {
 	frame.origin += frame.xAxis * pan.x + frame.yAxis * pan.y;
-
-	isDirty = true;
 }
 
 void Camera::zoom(float zoom)
 {
 	frame.origin += frame.zAxis * zoom * CAMERA_DOLLY_SCALE;
-
-	isDirty = true;
 }
 
 void Camera::updateMatrices()
 {
-	if (!isDirty)
-		return;
-
-	glm::vec3 target = frame.origin + getFocus() * frame.zAxis;
+	target = frame.origin + getFocus() * frame.zAxis;
 
 	viewMatrix = glm::lookAt(frame.origin, target, CAMERA_UP);
 	projMatrix = glm::perspective(fovy, aspectRatio, CAMERA_NEAR, CAMERA_FAR);

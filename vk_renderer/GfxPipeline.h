@@ -9,7 +9,7 @@ class LightingPass;
 
 class GfxPipeline {
 public:
-	GfxPipeline(size_t numLights) : numLights(numLights) { init(); }
+	GfxPipeline() { init(); }
 	~GfxPipeline() { cleanup(); }
 
 	void init();
@@ -20,8 +20,6 @@ public:
 	uint16_t getNumPasses() const { return 3; }
 
 private:
-	size_t numLights;
-
 	ShadowPass* shadowPass;
 	GeometryPass* geometryPass;
 	LightingPass* lightingPass;

@@ -1,13 +1,12 @@
 #include "ShadowPass.h"
 
 #include "Camera.h"
-#include "Scene.h"
 #include "VkPool.h"
 
 
 void ShadowPass::initAttachments()
 {
-	commandBuffers.resize(numLights);
+	commandBuffers.resize(lights.size());
 
 	VkAttachmentDescription attachmentDesc = {};
 	attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -16,7 +15,7 @@ void ShadowPass::initAttachments()
 	attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	attachmentDesc.format = findDepthFormat(VkEngine::getEngine().getPhysicalDevice());
 
 	VkAttachmentReference depthReference = {};
@@ -35,14 +34,14 @@ void ShadowPass::initAttachments()
 	dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 	dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	dependencies[1].srcSubpass = 0;
 	dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
 	dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -57,7 +56,7 @@ void ShadowPass::initAttachments()
 
 	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
 
-	for (size_t i = 0; i < numLights; i++)
+	for (size_t i = 0; i < lights.size(); i++)
 	{
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -67,7 +66,7 @@ void ShadowPass::initAttachments()
 
 		VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, &commandBuffers[i]));
 
-		attachments.push_back(VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH));
+		attachments[i] = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH);
 
 		VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
 
@@ -75,7 +74,7 @@ void ShadowPass::initAttachments()
 		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferCreateInfo.pNext = NULL;
 		framebufferCreateInfo.renderPass = renderPass;
-		framebufferCreateInfo.pAttachments = &attachments.back().imageView;
+		framebufferCreateInfo.pAttachments = &attachments[i].imageView;
 		framebufferCreateInfo.attachmentCount = 1;
 		framebufferCreateInfo.width = extent.width;
 		framebufferCreateInfo.height = extent.height;
@@ -87,7 +86,7 @@ void ShadowPass::initAttachments()
 
 void ShadowPass::initSemaphores()
 {
-	for (size_t i = 0; i < numLights - 1; i++)
+	for (size_t i = 0; i < lights.size() - 1; i++)
 	{
 		semaphores.push_back(VkEngine::getEngine().getPool()->createSemaphore());
 	}
@@ -101,7 +100,7 @@ void ShadowPass::initCommandBuffers()
 		vkFreeCommandBuffers(
 			VkEngine::getEngine().getDevice(),
 			VkEngine::getEngine().getCommandPool(),
-			numLights,
+			lights.size(),
 			commandBuffers.data());
 	}
 	else
@@ -109,7 +108,7 @@ void ShadowPass::initCommandBuffers()
 		firstTime = false;
 	}
 
-	for (size_t i = 0; i < numLights; i++)
+	for (size_t i = 0; i < lights.size(); i++)
 	{
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -154,7 +153,10 @@ void ShadowPass::initCommandBuffers()
 
 		vkCmdSetViewport(commandBuffers[i], 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffers[i], 0, 1, &renderArea);
+		vkCmdSetDepthBias(commandBuffers[i], DEPTH_BIAS_CONSTANT, 0.f, DEPTH_BIAS_SLOPE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+		// loadLightUniforms(i);
 
 		for (const auto& mesh : VkEngine::getEngine().getScene()->getMeshes())
 		{
@@ -194,7 +196,7 @@ void ShadowPass::initDescriptorSets()
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
 
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
-
+	
 	VkDescriptorBufferInfo cameraBufferInfo = {};
 	cameraBufferInfo.buffer = cameraUniformBuffer;
 	cameraBufferInfo.offset = 0;
@@ -314,11 +316,13 @@ void ShadowPass::loadMeshUniforms(const Mesh* mesh)
 		meshUniformStagingBuffer);
 }
 
-void ShadowPass::updateBufferData()
+void ShadowPass::loadLightUniforms(size_t lightIndex)
 {
+	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
+
 	CameraUniformBufferObject ubo = {};
-	ubo.view = VkEngine::getEngine().getScene()->getCamera()->getViewMatrix();
-	ubo.proj = VkEngine::getEngine().getScene()->getCamera()->getProjMatrix();
+	ubo.view = camera->getViewMatrix(); // glm::lookAt(light->position, camera->target, CAMERA_UP);
+	ubo.proj = camera->getProjMatrix();
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),
@@ -329,4 +333,9 @@ void ShadowPass::updateBufferData()
 		cameraUniformStagingBufferMemory,
 		cameraUniformBuffer,
 		cameraUniformStagingBuffer);
+}
+
+void ShadowPass::updateBufferData()
+{
+	loadLightUniforms(0);
 }

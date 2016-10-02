@@ -11,9 +11,9 @@
 
 void GfxPipeline::init()
 {
-	shadowPass = new ShadowPass(SHADER_PATH"shadow/vert.spv", SHADER_PATH"shadow/frag.spv", numLights);
+	shadowPass = new ShadowPass(SHADER_PATH"shadow/vert.spv", SHADER_PATH"shadow/frag.spv");
 	geometryPass = new GeometryPass(SHADER_PATH"geometry/vert.spv", SHADER_PATH"geometry/frag.spv");
-	lightingPass = new LightingPass(SHADER_PATH"lighting/vert.spv", SHADER_PATH"lighting/frag.spv", geometryPass->getGBuffer());
+	lightingPass = new LightingPass(SHADER_PATH"lighting/vert.spv", SHADER_PATH"lighting/frag.spv", geometryPass->getGBuffer(), shadowPass->getMaps());
 
 	shadowPass->init();
 	geometryPass->init();
@@ -76,6 +76,7 @@ void GfxPipeline::run()
 
 void GfxPipeline::initBufferData()
 {
+	shadowPass->initBufferData();
 	geometryPass->initBufferData();
 	lightingPass->initBufferData();
 }

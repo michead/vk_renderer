@@ -12,13 +12,13 @@
 #define CAMERA_TARGET		{ 0, 0, 0 }
 #define CAMERA_UP			{ 0, 1, 0 }
 #define CAMERA_FOVY			45.f
-#define CAMERA_NEAR			0.1f
-#define CAMERA_FAR			10.f
-#define CAMERA_ROT_SCALE	0.001f
-#define CAMERA_DOLLY_SCALE	0.001f
-#define CAMERA_PAN_SCALE	0.001f
-#define MIN_THETA			0.01f
-#define MIN_FOCUS			0.00001f
+#define CAMERA_NEAR			.1f
+#define CAMERA_FAR			1.f
+#define CAMERA_ROT_SCALE	.001f
+#define CAMERA_DOLLY_SCALE	.001f
+#define CAMERA_PAN_SCALE	.001f
+#define MIN_THETA			.01f
+#define MIN_FOCUS			.00001f
 
 
 struct CameraUniformBufferObject {
@@ -37,6 +37,9 @@ enum CameraMovement {
 
 struct Camera {
 public:
+	Camera() { }
+	~Camera() { }
+
 	Frame frame;
 	glm::vec3 target;
 	float aspectRatio;
@@ -58,6 +61,4 @@ public:
 private:
 	glm::mat4 viewMatrix;
 	glm::mat4 projMatrix;
-
-	bool isDirty = true;
 };

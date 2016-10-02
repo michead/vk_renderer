@@ -39,6 +39,18 @@ struct Frame {
 	}
 };
 
+inline static glm::mat4 lookAtMatrix(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
+{
+	glm::vec3 w = normalize(eye - center); 
+	glm::vec3 u = normalize(cross(up, w)); 
+	glm::vec3 v = cross(w, u); 
+	
+	return glm::mat4(
+		u.x, u.y, u.z, -dot(u, eye), 
+		v.x, v.y, v.z, -dot(v, eye), 
+		w.x, w.y, w.z, -dot(w, eye), 
+		0,	   0,	0,			 1); }
+
 inline glm::vec3 orthonormalize(const glm::vec3& a, const glm::vec3& b)
 {
 	return normalize(a - b*dot(a, b));

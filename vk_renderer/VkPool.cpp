@@ -367,7 +367,7 @@ PipelineData VkPool::createPipeline(
 	rasterizer.lineWidth = 1.f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.depthBiasEnable = VK_FALSE;
+	rasterizer.depthBiasEnable = numColorAttachments == 0 ? VK_TRUE : VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.f;
 	rasterizer.depthBiasClamp = 0.f;
 	rasterizer.depthBiasSlopeFactor = 0.f;
@@ -405,14 +405,19 @@ PipelineData VkPool::createPipeline(
 	colorBlending.attachmentCount = colorBlendAttachments.size();
 	colorBlending.pAttachments = colorBlendAttachments.data();
 
-	VkDynamicState dynamicStates[] = {
+	std::vector<VkDynamicState> dynamicStates = {
 		VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_LINE_WIDTH
+		VK_DYNAMIC_STATE_LINE_WIDTH,
 	};
 
+	if (numColorAttachments == 0)
+	{
+		dynamicStates.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+	}
+
 	VkPipelineDynamicStateCreateInfo dynamicState = {};
-	dynamicState.dynamicStateCount = 2;
-	dynamicState.pDynamicStates = dynamicStates;
+	dynamicState.dynamicStateCount = dynamicStates.size();
+	dynamicState.pDynamicStates = dynamicStates.data();
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -621,7 +626,7 @@ ImageData VkPool::createTextureResources(std::string path)
 	return imageData;
 }
 
-GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
+GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type, bool toBeSampled)
 {
 	VkFormat format;
 	VkImageUsageFlagBits imageFlags;
@@ -656,6 +661,8 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		break;
 	}
 
+	if (toBeSampled) imageFlags = (VkImageUsageFlagBits) (imageFlags | VK_IMAGE_USAGE_SAMPLED_BIT);
+
 	createImage(
 		physicalDevice,
 		device,
@@ -663,7 +670,7 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		swapchainExtent.height,
 		format,
 		VK_IMAGE_TILING_OPTIMAL,
-		imageFlags | VK_IMAGE_USAGE_SAMPLED_BIT,
+		imageFlags,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		offscreenImages.back(),
 		offscreenImageMemoryList.back());
@@ -694,8 +701,8 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = 16;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	samplerInfo.maxAnisotropy = type == DEPTH ? 0 : 16;
+	samplerInfo.borderColor = type == DEPTH ? VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE : VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;

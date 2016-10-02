@@ -2,22 +2,30 @@
 
 #include <vector>
 
+#include "Light.h"
 #include "Mesh.h"
 #include "Pass.h"
+#include "Scene.h"
+
+
+#define DEPTH_BIAS_CONSTANT	1.25f
+#define DEPTH_BIAS_SLOPE	1.75f
 
 
 class ShadowPass : public Pass {
 	using Pass::Pass;
 
 public:
-	ShadowPass(std::string vs, std::string fs, size_t numLights) : Pass(vs, fs), numLights(numLights) { }
+	virtual void updateBufferData() override;
+
+	ShadowPass(std::string vs, std::string fs) : Pass(vs, fs) 
+	{ lights = VkEngine::getEngine().getScene()->getLights(); attachments.resize(lights.size()); }
 	~ShadowPass() { }
 
-	size_t getNumLights() const { return numLights; }
+	size_t getNumLights() const { return lights.size(); }
 	VkSemaphore getSemaphoreAt(size_t index) const { return semaphores[index]; }
 	VkCommandBuffer getCmdBufferAt(size_t index) const { return commandBuffers[index]; }
-
-	virtual void updateBufferData() override;
+	GBufferAttachment* getMaps() { return attachments.data(); }
 
 private:
 	VkRenderPass renderPass;
@@ -36,7 +44,7 @@ private:
 	VkBuffer meshUniformBuffer;
 	VkDeviceMemory meshUniformBufferMemory;
 
-	size_t numLights;
+	std::vector<Light*> lights;
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;
@@ -47,4 +55,5 @@ private:
 	virtual void initUniformBuffer() override;
 
 	void loadMeshUniforms(const Mesh* mesh);
+	void loadLightUniforms(size_t lightIndex);
 };

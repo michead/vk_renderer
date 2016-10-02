@@ -11,7 +11,7 @@
 
 #include "json11\json11.hpp"
 
-#define MAX_NUM_LIGHTS	8
+#define MAX_NUM_LIGHTS	4
 #define PATH_SEPARATOR	'/'
 #define SCENE_FILENAME	"scene.json"
 

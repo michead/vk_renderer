@@ -121,7 +121,7 @@ void LightingPass::initDescriptorSets()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[0]));
 
-	std::array<VkWriteDescriptorSet, 10> descriptorWrites = {};
+	std::vector<VkWriteDescriptorSet> descriptorWrites(10);
 
 	VkDescriptorImageInfo colorImageInfo = {};
 	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -253,6 +253,28 @@ void LightingPass::initDescriptorSets()
 	descriptorWrites[9].descriptorCount = 1;
 	descriptorWrites[9].pBufferInfo = &sceneBufferInfo;
 
+	size_t numLights = VkEngine::getEngine().getScene()->getLights().size();
+	for (size_t l = 0; l < numLights; l++)
+	{
+		size_t index = l >= numLights ? (numLights - 1) : l;
+
+		VkDescriptorImageInfo shadowImageInfo = {};
+		shadowImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		shadowImageInfo.imageView = shadowMaps[index].imageView;
+		shadowImageInfo.sampler = shadowMaps[index].imageSampler;
+
+		VkWriteDescriptorSet writeDescriptorSet = {};
+		writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSet.dstSet = descriptorSets[0];
+		writeDescriptorSet.dstBinding = 10;
+		writeDescriptorSet.dstArrayElement = l;
+		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writeDescriptorSet.descriptorCount = 1;
+		writeDescriptorSet.pImageInfo = &shadowImageInfo;
+
+		descriptorWrites.push_back(writeDescriptorSet);
+	}
+
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
@@ -309,7 +331,7 @@ void LightingPass::initUniformBuffer()
 
 void LightingPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(10);
+	std::vector<VkDescriptorSetLayoutBinding> bindings(11);
 
 	VkDescriptorSetLayoutBinding colorSamplerLayoutBinding = {};
 	colorSamplerLayoutBinding.binding = 0;
@@ -401,13 +423,21 @@ void LightingPass::initDescriptorSetLayout()
 
 	bindings[9] = sceneLayoutBinding;
 
+	VkDescriptorSetLayoutBinding shadowLayoutBinding = {};
+	shadowLayoutBinding.binding = 10;
+	shadowLayoutBinding.descriptorCount = VkEngine::getEngine().getScene()->getLights().size();
+	shadowLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	shadowLayoutBinding.pImmutableSamplers = nullptr;
+	shadowLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[10] = shadowLayoutBinding;
+
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }
 
 void LightingPass::initBufferData()
 {
 	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
-
 	lightsUBO.count = lights.size();
 
 	for (int i = 0; i < lightsUBO.count; i++)

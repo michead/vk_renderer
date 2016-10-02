@@ -75,7 +75,7 @@ public:
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
 	VkImageView createSwapchainImageView(VkImage swapchainImage);
 	ImageData createTextureResources(std::string path);
-	GBufferAttachment createGBufferAttachment(GBufferAttachmentType type);
+	GBufferAttachment createGBufferAttachment(GBufferAttachmentType type, bool toBeSampled = true);
 
 	void createSwapchain(glm::ivec2 resolution);
 	void createDebugCallback();
