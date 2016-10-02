@@ -5,9 +5,14 @@
 #include "MathUtils.h"
 
 
+struct MeshUniformBufferObject {
+	glm::mat4 model;
+};
+
 class Mesh {
 	friend class VkEngine;
 	friend struct Scene;
+	friend class ShadowPass;
 	friend class GeometryPass;
 
 public:

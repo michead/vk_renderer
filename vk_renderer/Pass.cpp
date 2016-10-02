@@ -22,6 +22,7 @@ void Pass::init()
 	initUniformBuffer();
 	initDescriptorSets();
 	initCommandBuffers();
+	initSemaphores();
 }
 
 void Pass::initAttachments()

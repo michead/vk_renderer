@@ -51,11 +51,11 @@ void main() {
         vec3 l = normalize(lightPosition - position);
         vec3 v = normalize(camera.position.xyz - position);
         vec3 h = normalize(v + l);
-		color += cl * max(0.0, dot(l, normal));
+		
 		// Add support for speculars
-		// float n = beckmanToPhong(rs);
-        // color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (n + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), n));
+		float n = beckmanToPhong(rs);
+        color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (n + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), n));
     }
 
-    outColor = vec4(kd, 1);
+    outColor = vec4(color, 1);
 }

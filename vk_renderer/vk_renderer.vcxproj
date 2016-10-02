@@ -92,7 +92,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
+      <Command>call "$(SolutionDir)vk_renderer\compile_shaders.bat"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,7 +121,8 @@
       <AdditionalIncludeDirectories>inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/D "_CRT_SECURE_NO_WARNINGS" %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DisableSpecificWarnings> </DisableSpecificWarnings>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -132,7 +133,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>call "$(SolutionDir)vk_renderer\compileShaders.bat"</Command>
+      <Command>call "$(SolutionDir)vk_renderer\compile_shaders.bat"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -193,11 +194,13 @@
     <ClInclude Include="VkUtils.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="compileShaders.bat" />
+    <None Include="compile_shaders.bat" />
     <None Include="shaders\geometry\shader.frag" />
     <None Include="shaders\geometry\shader.vert" />
     <None Include="shaders\lighting\shader.frag" />
     <None Include="shaders\lighting\shader.vert" />
+    <None Include="shaders\shadow\shader.frag" />
+    <None Include="shaders\shadow\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

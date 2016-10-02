@@ -11,15 +11,6 @@
 class Mesh;
 struct Material;
 
-struct GPMeshUniformBufferObject {
-	glm::mat4 model;
-};
-
-struct GPCameraUniformBufferObject {
-	glm::mat4 view;
-	glm::mat4 proj;
-};
-
 struct GPMaterialUniformBufferObject {
 	// Foruth component is useless, but padding would have been added anyway, so...
 	glm::vec4	kd;
@@ -38,7 +29,7 @@ public:
 	virtual void initBufferData() override;
 	virtual void updateBufferData() override;
 
-	virtual VkCommandBuffer getCurrentCommandBuffer() const override { return commandBuffer; }
+	VkCommandBuffer getCurrentCmdBuffer() { return commandBuffer; }
 	virtual GBuffer* getGBuffer() override { return &gBuffer; }
 
 private:

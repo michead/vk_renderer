@@ -24,7 +24,6 @@ public:
 	virtual void initBufferData() { /*NOP*/ }
 	virtual void updateBufferData() { /*NOP*/ }
 	
-	virtual VkCommandBuffer getCurrentCommandBuffer() const = 0;
 	virtual GBuffer* getGBuffer() { return nullptr; }
 
 protected:
@@ -44,13 +43,14 @@ protected:
 	virtual void initTextures();
 	virtual void initDepthResources();
 	virtual void initFramebuffers() { }
+	virtual void initUniformBuffer() { }
+	virtual void initSemaphores() { }
 
 	virtual void initAttachments() = 0;
 	virtual void initCommandBuffers() = 0;
 	virtual void initDescriptorSets() = 0;
 	virtual void initDescriptorSetLayout() = 0;
 	virtual void initGraphicsPipeline() = 0;
-	virtual void initUniformBuffer() = 0;
 
 private:
 	VkRenderPass renderPass;

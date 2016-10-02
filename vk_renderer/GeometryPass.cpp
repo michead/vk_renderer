@@ -132,7 +132,7 @@ void GeometryPass::loadMaterial(const Material* material)
 
 void GeometryPass::loadMeshUniforms(const Mesh* mesh)
 {
-	GPMeshUniformBufferObject ubo = {};
+	MeshUniformBufferObject ubo = {};
 	ubo.model = mesh->getModelMatrix();
 
 	updateBuffer(
@@ -183,7 +183,7 @@ void GeometryPass::initDescriptorSets()
 		VkDescriptorBufferInfo cameraBufferInfo = {};
 		cameraBufferInfo.buffer = cameraUniformBuffer;
 		cameraBufferInfo.offset = 0;
-		cameraBufferInfo.range = sizeof(GPCameraUniformBufferObject);
+		cameraBufferInfo.range = sizeof(CameraUniformBufferObject);
 
 		VkWriteDescriptorSet cameraDescriptorSet = {};
 		cameraDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -199,7 +199,7 @@ void GeometryPass::initDescriptorSets()
 		VkDescriptorBufferInfo meshBufferInfo = {};
 		meshBufferInfo.buffer = meshUniformBuffer;
 		meshBufferInfo.offset = 0;
-		meshBufferInfo.range = sizeof(GPMeshUniformBufferObject);
+		meshBufferInfo.range = sizeof(MeshUniformBufferObject);
 
 		VkWriteDescriptorSet meshDescriptorSet = {};
 		meshDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -257,7 +257,7 @@ void GeometryPass::updateBufferData()
 {
 	loadMaterial(VkEngine::getEngine().getScene()->getMaterials()[0]);
 
-	GPCameraUniformBufferObject ubo = {};
+	CameraUniformBufferObject ubo = {};
 	ubo.view = VkEngine::getEngine().getScene()->getCamera()->getViewMatrix();
 	ubo.proj = VkEngine::getEngine().getScene()->getCamera()->getProjMatrix();
 
@@ -297,7 +297,7 @@ void GeometryPass::initGraphicsPipeline()
 
 void GeometryPass::initUniformBuffer()
 {
-	VkDeviceSize cameraBufferSize = sizeof(GPCameraUniformBufferObject);
+	VkDeviceSize cameraBufferSize = sizeof(CameraUniformBufferObject);
 
 	std::vector<BufferData> cameraBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(cameraBufferSize, true);
 	cameraUniformStagingBuffer = cameraBufferDataVec[0].buffer;
@@ -305,7 +305,7 @@ void GeometryPass::initUniformBuffer()
 	cameraUniformBuffer = cameraBufferDataVec[1].buffer;
 	cameraUniformBufferMemory = cameraBufferDataVec[1].bufferMemory;
 
-	VkDeviceSize meshBufferSize = sizeof(GPMeshUniformBufferObject);
+	VkDeviceSize meshBufferSize = sizeof(MeshUniformBufferObject);
 
 	std::vector<BufferData> meshBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(meshBufferSize, true);
 	meshUniformStagingBuffer = meshBufferDataVec[0].buffer;

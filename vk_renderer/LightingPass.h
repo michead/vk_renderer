@@ -26,10 +26,7 @@ public:
 		Pass(vsPath, fsPath), prevPassGBuffer(prevPassGBuffer) { quad = new Quad(); }
 	~LightingPass() { delete quad; }
 
-	virtual VkCommandBuffer getCurrentCommandBuffer() const override
-	{ 
-		return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; 
-	}
+	VkCommandBuffer getCurrentCmdBuffer() const { return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; }
 
 	virtual void initBufferData() override;
 	virtual void updateBufferData() override;

@@ -20,7 +20,11 @@
 #define MIN_THETA			0.01f
 #define MIN_FOCUS			0.00001f
 
-#define CAMERA_FILENAME		"camera.json"
+
+struct CameraUniformBufferObject {
+	glm::mat4 view;
+	glm::mat4 proj;
+};
 
 enum CameraMovement {
 	STILL,
@@ -29,6 +33,7 @@ enum CameraMovement {
 	PAN,
 	ZOOM
 };
+
 
 struct Camera {
 public:

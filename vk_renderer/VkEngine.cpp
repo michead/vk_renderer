@@ -337,7 +337,7 @@ void VkEngine::initDescriptorPool()
 
 void VkEngine::initOffscreenRenderPasses()
 {
-	gfxPipeline = new GfxPipeline();
+	gfxPipeline = new GfxPipeline(VkEngine::getEngine().getScene()->getLights().size());
 }
 
 void VkEngine::cleanup()

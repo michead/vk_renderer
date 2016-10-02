@@ -2,14 +2,14 @@
 
 #include "vulkan\vulkan.h"
 
-
+class ShadowPass;
 class GeometryPass;
 class LightingPass;
 
 
 class GfxPipeline {
 public:
-	GfxPipeline() { init(); }
+	GfxPipeline(size_t numLights) : numLights(numLights) { init(); }
 	~GfxPipeline() { cleanup(); }
 
 	void init();
@@ -17,12 +17,16 @@ public:
 	void initBufferData();
 	void updateBufferData();
 
-	uint16_t getNumPasses() const { return 2; }
+	uint16_t getNumPasses() const { return 3; }
 
 private:
+	size_t numLights;
+
+	ShadowPass* shadowPass;
 	GeometryPass* geometryPass;
 	LightingPass* lightingPass;
 
+	VkSemaphore shadowPassCompleteSemaphore;
 	VkSemaphore geomPassCompleteSemaphore;
 	VkSemaphore finalPassCompleteSemaphore;
 

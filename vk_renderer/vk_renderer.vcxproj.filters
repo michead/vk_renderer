@@ -16,14 +16,17 @@
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{8eefbb60-ce65-4647-a442-d7fe29b066a0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SPIR-V">
-      <UniqueIdentifier>{c4ea512d-24bf-41a7-a79a-312de14f9356}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\shaders\lighting">
       <UniqueIdentifier>{dc012836-8dbb-43e7-a065-8b3804146cdd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\shaders\geometry">
       <UniqueIdentifier>{2c32b6a3-b3c8-47bc-b2c0-dae020595c4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\spir-v">
+      <UniqueIdentifier>{5f07ff33-773e-4092-8c43-50798c84c78f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\shadow">
+      <UniqueIdentifier>{39c2f932-79bd-4900-be3b-3b8fe9c2722b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -130,9 +133,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="compileShaders.bat">
-      <Filter>SPIR-V</Filter>
-    </None>
     <None Include="shaders\lighting\shader.frag">
       <Filter>Source Files\shaders\lighting</Filter>
     </None>
@@ -144,6 +144,15 @@
     </None>
     <None Include="shaders\geometry\shader.vert">
       <Filter>Source Files\shaders\geometry</Filter>
+    </None>
+    <None Include="compile_shaders.bat">
+      <Filter>Source Files\shaders\spir-v</Filter>
+    </None>
+    <None Include="shaders\shadow\shader.frag">
+      <Filter>Source Files\shaders\shadow</Filter>
+    </None>
+    <None Include="shaders\shadow\shader.vert">
+      <Filter>Source Files\shaders\shadow</Filter>
     </None>
   </ItemGroup>
 </Project>
