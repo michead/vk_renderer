@@ -396,26 +396,14 @@ PipelineData VkPool::createPipeline(
 	std::vector<VkPipelineColorBlendAttachmentState> colorBlendAttachments(numColorAttachments);
 	for (VkPipelineColorBlendAttachmentState& colorBlendAttachment : colorBlendAttachments)
 	{
-		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_TRUE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.colorWriteMask = 0xf;
+		colorBlendAttachment.blendEnable = VK_FALSE;
 	}
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlending.logicOpEnable = VK_FALSE;
-	colorBlending.logicOp = VK_LOGIC_OP_COPY;
 	colorBlending.attachmentCount = colorBlendAttachments.size();
 	colorBlending.pAttachments = colorBlendAttachments.data();
-	colorBlending.blendConstants[0] = 0.f;
-	colorBlending.blendConstants[1] = 0.f;
-	colorBlending.blendConstants[2] = 0.f;
-	colorBlending.blendConstants[3] = 0.f;
 
 	VkDynamicState dynamicStates[] = {
 		VK_DYNAMIC_STATE_VIEWPORT,
@@ -437,7 +425,7 @@ PipelineData VkPool::createPipeline(
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
+	pipelineInfo.stageCount = shaderStages.size();
 	pipelineInfo.pStages = shaderStages.data();
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -653,16 +641,14 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type)
 		break;
 	case NORMAL:
 	case TANGENT:
-		format = VK_FORMAT_R16G16B16A16_SFLOAT;
-		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		imageViewFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-		break;
 	case POSITION:
+	case MATERIAL:
 		format = VK_FORMAT_R16G16B16A16_SFLOAT;
 		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		imageViewFlags = VK_IMAGE_ASPECT_COLOR_BIT;
 		break;
 	case COLOR:
+	case SPECULAR:
 	default:
 		format = VK_FORMAT_R8G8B8A8_UNORM;
 		imageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;

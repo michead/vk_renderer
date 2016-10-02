@@ -87,7 +87,14 @@ void VkEngine::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods
 	}
 	else if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
-		camera->movement = PAN;
+		if (mods & GLFW_MOD_ALT)
+		{
+			camera->movement = PAN;
+		}
+		else
+		{
+			// TODO: Other camera movement mode?
+		}
 	}
 }
 
@@ -325,7 +332,7 @@ void VkEngine::updateBufferData()
 void VkEngine::initDescriptorPool()
 {
 	uint16_t numPasses = gfxPipeline->getNumPasses();
-	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses * 4, numPasses * 4); // Rough estimate
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses * 5, numPasses * 5); // Rough estimate
 }
 
 void VkEngine::initOffscreenRenderPasses()

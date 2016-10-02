@@ -83,7 +83,7 @@ inline std::vector<float> fComputeVertexNormals(size_t size, size_t fSize, const
 		n = normalize(n);
 	}
 
-	std::vector<float> fNormals(3 * normals.size());
+	std::vector<float> fNormals;
 
 	for (const auto& n : normals)
 	{
@@ -138,7 +138,7 @@ inline std::vector<float> fComputeTangents(
 		tangents[i] = orthonormalize(tangents[i], fNormals[i]);
 	}
 
-	std::vector<float> fTangents(3 * tangents.size());
+	std::vector<float> fTangents;
 
 	for (const auto& t : tangents)
 	{
@@ -181,7 +181,6 @@ inline std::vector<glm::vec3> computeTangents(
 	auto tangents = std::vector<glm::vec3>(positions.size());
 	for (auto f : triangles)
 	{
-		// compute face normal
 		auto ft = computeTangentsFromUVs(positions[f.x], positions[f.y], positions[f.z], texCoords[f.x], texCoords[f.y], texCoords[f.z]);
 		auto area = computeTriangleArea(positions[f.x], positions[f.y], positions[f.z]);
 		for (int v = 0; v < 3; v++)
@@ -191,7 +190,6 @@ inline std::vector<glm::vec3> computeTangents(
 	}
 	for (size_t i = 0; i < positions.size(); i++)
 	{
-		// orthonormalize
 		tangents[i] = orthonormalize(tangents[i], normals[i]);
 	}
 

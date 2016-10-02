@@ -4,8 +4,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm\glm.hpp"
 
-#define DEFAULT_WINDOW_WIDTH	1280
-#define DEFAULT_WINDOW_HEIGHT	720
+#define DEFAULT_WINDOW_WIDTH	1920
+#define DEFAULT_WINDOW_HEIGHT	1080
 #define DEFAULT_SCENE_PATH		"data/head/head.OBJ"
 
 struct Config {

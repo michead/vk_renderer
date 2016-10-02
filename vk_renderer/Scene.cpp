@@ -38,11 +38,17 @@ void Scene::load()
 		json11::Json cameraNode = scene["camera"];
 		initCamera(cameraNode);
 
-		std::string meshesFilename = scene["meshes"].string_value();
-		loadObjMesh(meshesFilename);
+		std::vector<json11::Json> jsonMeshes = scene["meshes"].array_items();
+		for (const auto& jsonMesh : jsonMeshes) loadObjMesh(jsonMesh);
 
 		std::vector<json11::Json> lightsNode = scene["lights"].array_items();
 		loadLights(lightsNode);
+
+		std::vector<json11::Json> ambientNode = scene["ka"].array_items();
+		ambient = { 
+			ambientNode[0].number_value(), 
+			ambientNode[1].number_value(), 
+			ambientNode[2].number_value() };
 	}
 	else
 	{
@@ -50,14 +56,27 @@ void Scene::load()
 	}
 }
 
-void Scene::loadObjMesh(std::string meshesFilename)
+void Scene::loadObjMesh(json11::Json jsonMesh)
 {
 	tinyobj::attrib_t attrib_;
 	std::vector<tinyobj::shape_t> shapes_;
 	std::vector<tinyobj::material_t> materials_;
 	std::string err_;
 
-	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + meshesFilename).c_str(), path.c_str()))
+	std::string meshFilename = jsonMesh["filename"].string_value();
+	
+	json11::Json jsonMaterial = jsonMesh["material"];
+	float rs = jsonMaterial["rs"].number_value();
+	float translucency = jsonMaterial["translucency"].number_value();
+	float sswidth = jsonMaterial["sswidth"].number_value();
+	std::vector<json11::Json> ksNode = jsonMaterial["ks"].array_items();
+	glm::vec3 ks = { 
+		ksNode[0].number_value(), 
+		ksNode[1].number_value(), 
+		ksNode[2].number_value() };
+
+
+	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + meshFilename).c_str(), path.c_str()))
 	{
 		throw std::runtime_error(err_);
 	}
@@ -84,6 +103,11 @@ void Scene::loadObjMesh(std::string meshesFilename)
 		materials[i]->ks = { material.specular[0], material.specular[1], material.specular[2] };
 		materials[i]->ns = material.shininess;
 
+		if (materials[i]->ks == glm::vec3(0)) materials[i]->ks = ks;
+		if (materials[i]->rs == 0) materials[i]->rs = rs;
+		materials[i]->translucency = translucency;
+		materials[i]->subsurfWidth = sswidth;
+
 		if (textureMap.find(material.diffuse_texname) != textureMap.end())
 			materials[i]->kdMap = textureMap[material.diffuse_texname];
 		if (textureMap.find(material.specular_texname) != textureMap.end())
@@ -92,16 +116,14 @@ void Scene::loadObjMesh(std::string meshesFilename)
 			materials[i]->normalMap = textureMap[material.normal_texname];
 	}
 
-	elems.resize(shapes_.size());
-
 	i = 0;
 	for (const tinyobj::shape_t& shape : shapes_)
 	{
 		std::unordered_map<Vertex, int> uniqueVertices = {};
 
-		elems[i] = new Mesh();
-		elems[i]->name = shape.name;
-		elems[i]->material = materials[shape.mesh.material_ids.front()];
+		elems.push_back(new Mesh());
+		elems.back()->name = shape.name;
+		elems.back()->material = materials[shape.mesh.material_ids.front()];
 
 		std::vector<float> tangents;
 		std::vector<float> normals;
@@ -137,38 +159,35 @@ void Scene::loadObjMesh(std::string meshesFilename)
 			Vertex vertex = {};
 
 			vertex.position = {
-				attrib_.vertices[3 * index.vertex_index + 0],
+				attrib_.vertices[3 * index.vertex_index],
 				attrib_.vertices[3 * index.vertex_index + 1],
 				attrib_.vertices[3 * index.vertex_index + 2]
 			};
 
 			vertex.texCoord = {
-				attrib_.texcoords[2 * index.texcoord_index + 0],
+				attrib_.texcoords[2 * index.texcoord_index],
 				1.f - attrib_.texcoords[2 * index.texcoord_index + 1]
 			};
 
-			if (!attrib_.normals.empty())
-			{
-				vertex.normal = {
-					attrib_.normals[3 * index.vertex_index + 0],
-					attrib_.normals[3 * index.vertex_index + 1],
-					attrib_.normals[3 * index.vertex_index + 2]
-				};
+			vertex.normal = {
+				normals[3 * index.vertex_index],
+				normals[3 * index.vertex_index + 1],
+				normals[3 * index.vertex_index + 2]
+			};
 
-				vertex.tangent = {
-					tangents[3 * index.vertex_index + 0],
-					tangents[3 * index.vertex_index + 1],
-					tangents[3 * index.vertex_index + 2]
-				};
-			}
+			vertex.tangent = {
+				tangents[3 * index.vertex_index],
+				tangents[3 * index.vertex_index + 1],
+				tangents[3 * index.vertex_index + 2]
+			};
 
 			if (uniqueVertices.count(vertex) == 0)
 			{
-				uniqueVertices[vertex] = elems[i]->vertices.size();
-				elems[i]->vertices.push_back(vertex);
+				uniqueVertices[vertex] = elems.back()->vertices.size();
+				elems.back()->vertices.push_back(vertex);
 			}
 
-			elems[i]->indices.push_back(uniqueVertices[vertex]);
+			elems.back()->indices.push_back(uniqueVertices[vertex]);
 		}
 
 		i++;

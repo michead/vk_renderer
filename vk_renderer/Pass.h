@@ -4,8 +4,9 @@
 #include "GBuffer.h"
 
 
-#define OPAQUE_BLACK_CLEAR	{ 0, 0, 0, 1 }
-#define DEPTH_STENCIL_CLEAR	{ 1, 0 }
+#define TRANSPARENT_BLACK_CLEAR	{ 0, 0, 0, 0 }
+#define OPAQUE_BLACK_CLEAR		{ 0, 0, 0, 1 }
+#define DEPTH_STENCIL_CLEAR		{ 1, 0 }
 
 
 struct Texture;

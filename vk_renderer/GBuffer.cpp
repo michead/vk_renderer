@@ -18,6 +18,8 @@ void GBuffer::init()
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::POSITION),
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::NORMAL),
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::TANGENT),
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::SPECULAR),
+		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::MATERIAL),
 		VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::DEPTH)
 	};
 
@@ -39,15 +41,13 @@ void GBuffer::init()
 			break;
 		case NORMAL:
 		case TANGENT:
-			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			attachmentDescs[i].format = VK_FORMAT_R16G16B16A16_SFLOAT;
-			break;
 		case POSITION:
+		case MATERIAL:
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 			attachmentDescs[i].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			attachmentDescs[i].format = VK_FORMAT_R16G16B16A16_SFLOAT;
 			break;
+		case SPECULAR:
 		case COLOR:
 		default:
 			attachmentDescs[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -108,6 +108,8 @@ void GBuffer::init()
 		attachments[GBUFFER_POSITION_ATTACH_ID].imageView,
 		attachments[GBUFFER_NORMAL_ATTACH_ID].imageView,
 		attachments[GBUFFER_TANGENT_ATTACH_ID].imageView,
+		attachments[GBUFFER_SPECULAR_ATTACH_ID].imageView,
+		attachments[GBUFFER_MATERIAL_ATTACH_ID].imageView,
 		attachments[GBUFFER_DEPTH_ATTACH_ID].imageView
 	};
 

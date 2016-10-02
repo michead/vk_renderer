@@ -65,7 +65,7 @@ void LightingPass::initCommandBuffers()
 	beginInfo.pInheritanceInfo = nullptr;
 
 	std::array<VkClearValue, 2> clearValues = {};
-	clearValues[0].color = OPAQUE_BLACK_CLEAR;
+	clearValues[0].color = TRANSPARENT_BLACK_CLEAR;
 	clearValues[1].depthStencil = DEPTH_STENCIL_CLEAR;
 
 	VkRenderPassBeginInfo renderPassInfo = {};
@@ -121,7 +121,7 @@ void LightingPass::initDescriptorSets()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[0]));
 
-	std::array<VkWriteDescriptorSet, 7> descriptorWrites = {};
+	std::array<VkWriteDescriptorSet, 10> descriptorWrites = {};
 
 	VkDescriptorImageInfo colorImageInfo = {};
 	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -175,10 +175,10 @@ void LightingPass::initDescriptorSets()
 	descriptorWrites[3].descriptorCount = 1;
 	descriptorWrites[3].pImageInfo = &tangentImageInfo;
 
-	VkDescriptorImageInfo depthImageInfo = {};
-	depthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	depthImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageView;
-	depthImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageSampler;
+	VkDescriptorImageInfo specularImageInfo = {};
+	specularImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	specularImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_SPECULAR_ATTACH_ID].imageView;
+	specularImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_SPECULAR_ATTACH_ID].imageSampler;
 
 	descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[4].dstSet = descriptorSets[0];
@@ -186,33 +186,72 @@ void LightingPass::initDescriptorSets()
 	descriptorWrites[4].dstArrayElement = 0;
 	descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrites[4].descriptorCount = 1;
-	descriptorWrites[4].pImageInfo = &depthImageInfo;
+	descriptorWrites[4].pImageInfo = &specularImageInfo;
+
+	VkDescriptorImageInfo materialImageInfo = {};
+	materialImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	materialImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_MATERIAL_ATTACH_ID].imageView;
+	materialImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_MATERIAL_ATTACH_ID].imageSampler;
+
+	descriptorWrites[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[5].dstSet = descriptorSets[0];
+	descriptorWrites[5].dstBinding = 5;
+	descriptorWrites[5].dstArrayElement = 0;
+	descriptorWrites[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites[5].descriptorCount = 1;
+	descriptorWrites[5].pImageInfo = &materialImageInfo;
+
+	VkDescriptorImageInfo depthImageInfo = {};
+	depthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	depthImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageView;
+	depthImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageSampler;
+
+	descriptorWrites[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[6].dstSet = descriptorSets[0];
+	descriptorWrites[6].dstBinding = 6;
+	descriptorWrites[6].dstArrayElement = 0;
+	descriptorWrites[6].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites[6].descriptorCount = 1;
+	descriptorWrites[6].pImageInfo = &depthImageInfo;
 
 	VkDescriptorBufferInfo cameraBufferInfo = {};
 	cameraBufferInfo.buffer = cameraUniformBuffer;
 	cameraBufferInfo.offset = 0;
 	cameraBufferInfo.range = sizeof(LPCameraUniformBufferObject);
 
-	descriptorWrites[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[5].dstSet = descriptorSets[0];
-	descriptorWrites[5].dstBinding = 5;
-	descriptorWrites[5].dstArrayElement = 0;
-	descriptorWrites[5].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[5].descriptorCount = 1;
-	descriptorWrites[5].pBufferInfo = &cameraBufferInfo;
+	descriptorWrites[7].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[7].dstSet = descriptorSets[0];
+	descriptorWrites[7].dstBinding = 7;
+	descriptorWrites[7].dstArrayElement = 0;
+	descriptorWrites[7].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[7].descriptorCount = 1;
+	descriptorWrites[7].pBufferInfo = &cameraBufferInfo;
 
 	VkDescriptorBufferInfo lightsBufferInfo = {};
 	lightsBufferInfo.buffer = lightsUniformBuffer;
 	lightsBufferInfo.offset = 0;
 	lightsBufferInfo.range = sizeof(LPLightsUniformBufferObject);
 
-	descriptorWrites[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[6].dstSet = descriptorSets[0];
-	descriptorWrites[6].dstBinding = 6;
-	descriptorWrites[6].dstArrayElement = 0;
-	descriptorWrites[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[6].descriptorCount = 1;
-	descriptorWrites[6].pBufferInfo = &lightsBufferInfo;
+	descriptorWrites[8].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[8].dstSet = descriptorSets[0];
+	descriptorWrites[8].dstBinding = 8;
+	descriptorWrites[8].dstArrayElement = 0;
+	descriptorWrites[8].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[8].descriptorCount = 1;
+	descriptorWrites[8].pBufferInfo = &lightsBufferInfo;
+
+	VkDescriptorBufferInfo sceneBufferInfo = {};
+	sceneBufferInfo.buffer = sceneUniformBuffer;
+	sceneBufferInfo.offset = 0;
+	sceneBufferInfo.range = sizeof(LPSceneUniformBufferObject);
+
+	descriptorWrites[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[9].dstSet = descriptorSets[0];
+	descriptorWrites[9].dstBinding = 9;
+	descriptorWrites[9].dstArrayElement = 0;
+	descriptorWrites[9].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrites[9].descriptorCount = 1;
+	descriptorWrites[9].pBufferInfo = &sceneBufferInfo;
 
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
@@ -258,11 +297,19 @@ void LightingPass::initUniformBuffer()
 	cameraUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
 	cameraUniformBuffer = bufferDataVec[1].buffer;
 	cameraUniformBufferMemory = bufferDataVec[1].bufferMemory;
+
+	bufferSize = sizeof(LPSceneUniformBufferObject);
+
+	bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
+	sceneUniformStagingBuffer = bufferDataVec[0].buffer;
+	sceneUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
+	sceneUniformBuffer = bufferDataVec[1].buffer;
+	sceneUniformBufferMemory = bufferDataVec[1].bufferMemory;
 }
 
 void LightingPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(7);
+	std::vector<VkDescriptorSetLayoutBinding> bindings(10);
 
 	VkDescriptorSetLayoutBinding colorSamplerLayoutBinding = {};
 	colorSamplerLayoutBinding.binding = 0;
@@ -300,32 +347,59 @@ void LightingPass::initDescriptorSetLayout()
 
 	bindings[3] = tangentLayoutBinding;
 
+	VkDescriptorSetLayoutBinding specularLayoutBinding = {};
+	specularLayoutBinding.binding = 4;
+	specularLayoutBinding.descriptorCount = 1;
+	specularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	specularLayoutBinding.pImmutableSamplers = nullptr;
+	specularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[4] = specularLayoutBinding;
+
+	VkDescriptorSetLayoutBinding materialLayoutBinding = {};
+	materialLayoutBinding.binding = 5;
+	materialLayoutBinding.descriptorCount = 1;
+	materialLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	materialLayoutBinding.pImmutableSamplers = nullptr;
+	materialLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[5] = materialLayoutBinding;
+
 	VkDescriptorSetLayoutBinding depthLayoutBinding = {};
-	depthLayoutBinding.binding = 4;
+	depthLayoutBinding.binding = 6;
 	depthLayoutBinding.descriptorCount = 1;
 	depthLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	depthLayoutBinding.pImmutableSamplers = nullptr;
 	depthLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[4] = depthLayoutBinding;
+	bindings[6] = depthLayoutBinding;
 
 	VkDescriptorSetLayoutBinding cameraLayoutBinding = {};
-	cameraLayoutBinding.binding = 5;
+	cameraLayoutBinding.binding = 7;
 	cameraLayoutBinding.descriptorCount = 1;
 	cameraLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	cameraLayoutBinding.pImmutableSamplers = nullptr;
 	cameraLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[5] = cameraLayoutBinding;
+	bindings[7] = cameraLayoutBinding;
 
 	VkDescriptorSetLayoutBinding lightsLayoutBinding = {};
-	lightsLayoutBinding.binding = 6;
+	lightsLayoutBinding.binding = 8;
 	lightsLayoutBinding.descriptorCount = 1;
 	lightsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	lightsLayoutBinding.pImmutableSamplers = nullptr;
 	lightsLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[6] = lightsLayoutBinding;
+	bindings[8] = lightsLayoutBinding;
+
+	VkDescriptorSetLayoutBinding sceneLayoutBinding = {};
+	sceneLayoutBinding.binding = 9;
+	sceneLayoutBinding.descriptorCount = 1;
+	sceneLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	sceneLayoutBinding.pImmutableSamplers = nullptr;
+	sceneLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings[9] = sceneLayoutBinding;
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }
@@ -351,6 +425,18 @@ void LightingPass::initBufferData()
 		lightsUniformStagingBufferMemory,
 		lightsUniformBuffer,
 		lightsUniformStagingBuffer);
+
+	sceneUBO.ambient = VkEngine::getEngine().getScene()->getAmbient();
+
+	updateBuffer(
+		VkEngine::getEngine().getDevice(),
+		VkEngine::getEngine().getCommandPool(),
+		VkEngine::getEngine().getGraphicsQueue(),
+		&sceneUBO,
+		sizeof(sceneUBO),
+		sceneUniformStagingBufferMemory,
+		sceneUniformBuffer,
+		sceneUniformStagingBuffer);
 }
 
 void LightingPass::updateBufferData()

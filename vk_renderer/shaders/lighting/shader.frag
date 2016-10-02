@@ -11,17 +11,20 @@ layout(binding = 0) uniform sampler2D samplerColor;
 layout(binding = 1) uniform sampler2D samplerPosition;
 layout(binding = 2) uniform sampler2D samplerNormal;
 layout(binding = 3) uniform sampler2D samplerTangent;
-layout(binding = 4) uniform sampler2D samplerDepth;
-
-layout(binding = 5) uniform Camera {
+layout(binding = 4) uniform sampler2D samplerSpecular;
+layout(binding = 5) uniform sampler2D samplerMaterial;
+layout(binding = 6) uniform sampler2D samplerDepth;
+layout(binding = 7) uniform Camera {
 	vec3 position;
 } camera;
-
-layout(binding = 6) uniform Lights {
+layout(binding = 8) uniform Lights {
 	int count;
 	vec3 positions[MAX_NUM_LIGHTS];
 	vec3 intensities[MAX_NUM_LIGHTS];
 } lights;
+layout(binding = 9) uniform Scene {
+	vec3 ambient;
+} scene;
 
 layout(location = 0) in vec2 inTexCoord;
 
@@ -30,14 +33,14 @@ layout(location = 0) out vec4 outColor;
 float beckmanToPhong(float alpha) { return 2 / (alpha * alpha) - 2; }
 
 void main() {
-	vec3 color = texture(samplerColor, inTexCoord).rgb;
+	vec3 kd = texture(samplerColor, inTexCoord).rgb;
     vec3 position = texture(samplerPosition, inTexCoord).xyz;
-    vec3 normal = normalize(texture(samplerNormal, inTexCoord).rgb);
+    vec3 normal = texture(samplerNormal, inTexCoord).rgb;
+	vec3 tangent = texture(samplerTangent, inTexCoord).rgb;
 
 	// Hack, review this
-	vec3 kd = color;
+	vec3 color = kd * scene.ambient;
 
-	/*
     for(int i = 0; i < lights.count; i++) {
 		vec3 lightPosition = lights.positions[i];
 		vec3 lightIntensity = lights.intensities[i];
@@ -45,14 +48,13 @@ void main() {
         vec3 l = normalize(lightPosition - position);
         vec3 v = normalize(camera.position - position);
         vec3 h = normalize(v + l);
-        color += cl * max(0.0, dot(l, normal)) * (kd / PI);
+		color += cl * max(0.0, dot(l, normal)) * (kd / PI);
 
 		// Add support for speculars
-		// float material_n = beckmanToPhong(rs);
-		// if(ks == 0) color += cl * max(0, dot(l, norm)) * (kd / pi);
-        // else color += cl * max(0, dot(l, norm)) * (kd / pi + ks * (materialN+8)/(8*pi) * pow(max(0, dot(h, normal)), materialN));
+		// float materialN = beckmanToPhong(rs);
+		// if(ks == 0) color += cl * max(0, dot(l, normal)) * (kd / PI);
+        // else color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (materialN + 8) / (8 * PI) * pow(max(0, dot(h, normal)), materialN));
     }
-	*/
 
     outColor = vec4(color, 1);
 }

@@ -15,6 +15,10 @@ struct LPCameraUniformBufferObject {
 	glm::vec3 position;
 };
 
+struct LPSceneUniformBufferObject {
+	glm::vec3 ambient;
+};
+
 
 class LightingPass : public Pass {
 public:
@@ -39,6 +43,7 @@ private:
 	VkAttachmentDescription colorAttachment;
 	LPLightsUniformBufferObject lightsUBO;
 	LPCameraUniformBufferObject cameraUBO;
+	LPSceneUniformBufferObject sceneUBO;
 	VkBuffer lightsUniformStagingBuffer;
 	VkDeviceMemory lightsUniformStagingBufferMemory;
 	VkBuffer lightsUniformBuffer;
@@ -47,6 +52,10 @@ private:
 	VkDeviceMemory cameraUniformStagingBufferMemory;
 	VkBuffer cameraUniformBuffer;
 	VkDeviceMemory cameraUniformBufferMemory;
+	VkBuffer sceneUniformStagingBuffer;
+	VkDeviceMemory sceneUniformStagingBufferMemory;
+	VkBuffer sceneUniformBuffer;
+	VkDeviceMemory sceneUniformBufferMemory;
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;

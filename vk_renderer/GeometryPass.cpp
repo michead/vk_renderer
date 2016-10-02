@@ -54,11 +54,13 @@ void GeometryPass::initCommandBuffers()
 	renderPassInfo.renderArea = renderArea;
 
 	std::array<VkClearValue, GBUFFER_NUM_ATTACHMENTS> clearValues = {};
-	clearValues[0].color = OPAQUE_BLACK_CLEAR;
-	clearValues[1].color = OPAQUE_BLACK_CLEAR;
-	clearValues[2].color = OPAQUE_BLACK_CLEAR;
-	clearValues[3].color = OPAQUE_BLACK_CLEAR;
-	clearValues[4].depthStencil = DEPTH_STENCIL_CLEAR;
+	clearValues[0].color = TRANSPARENT_BLACK_CLEAR;
+	clearValues[1].color = TRANSPARENT_BLACK_CLEAR;
+	clearValues[2].color = TRANSPARENT_BLACK_CLEAR;
+	clearValues[3].color = TRANSPARENT_BLACK_CLEAR;
+	clearValues[4].color = TRANSPARENT_BLACK_CLEAR;
+	clearValues[5].color = TRANSPARENT_BLACK_CLEAR;
+	clearValues[6].depthStencil = DEPTH_STENCIL_CLEAR;
 
 	renderPassInfo.clearValueCount = clearValues.size();
 	renderPassInfo.pClearValues = clearValues.data();
@@ -110,7 +112,7 @@ void GeometryPass::loadMaterial(Material* material)
 	GPMaterialUniformBufferObject ubo = {};
 	ubo.kd = material->kd;
 	ubo.ks = material->ks;
-	ubo.ns = material->ns;
+	ubo.rs = material->rs;
 	ubo.opacity = material->opacity;
 	ubo.translucency = material->translucency;
 	ubo.subsurfWidth = material->subsurfWidth;
