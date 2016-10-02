@@ -10,6 +10,8 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define CLAMP(a, min_, max_) MIN((max_),MAX((min_),(a)))
 
+#define IDENTITY_FRAME {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}
+
 struct Frame {
 	glm::vec3 origin;
 	glm::vec3 xAxis;
@@ -26,6 +28,14 @@ struct Frame {
 		frame.xAxis = glm::cross(frame.yAxis, frame.zAxis); 
 		
 		return frame; 
+	}
+
+	glm::mat4 toMatrix() const { 
+		return glm::mat4(
+			xAxis.x, yAxis.x, zAxis.x, origin.x, 
+			xAxis.y, yAxis.y, zAxis.y, origin.y, 
+			xAxis.z, yAxis.z, zAxis.z, origin.z, 
+			0,		 0,		  0,	   1); 
 	}
 };
 

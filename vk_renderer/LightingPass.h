@@ -6,17 +6,17 @@
 
 
 struct LPLightsUniformBufferObject {
+	glm::vec4 positions[MAX_NUM_LIGHTS];
+	glm::vec4 intensities[MAX_NUM_LIGHTS];
 	int count;
-	glm::vec3 positions[MAX_NUM_LIGHTS];
-	glm::vec3 intensities[MAX_NUM_LIGHTS];
 };
 
 struct LPCameraUniformBufferObject {
-	glm::vec3 position;
+	glm::vec4 position;
 };
 
 struct LPSceneUniformBufferObject {
-	glm::vec3 ambient;
+	glm::vec4 ambient;
 };
 
 

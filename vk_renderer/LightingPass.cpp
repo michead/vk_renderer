@@ -412,10 +412,10 @@ void LightingPass::initBufferData()
 
 	for (int i = 0; i < lightsUBO.count; i++)
 	{
-		lightsUBO.positions[i] = lights[i]->position;
-		lightsUBO.intensities[i] = lights[i]->intensity;
+		lightsUBO.positions[i] = glm::vec4(lights[i]->position, 1);
+		lightsUBO.intensities[i] = glm::vec4(lights[i]->intensity, 1);
 	}
-
+	
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),
 		VkEngine::getEngine().getCommandPool(),
@@ -426,7 +426,7 @@ void LightingPass::initBufferData()
 		lightsUniformBuffer,
 		lightsUniformStagingBuffer);
 
-	sceneUBO.ambient = VkEngine::getEngine().getScene()->getAmbient();
+	sceneUBO.ambient = glm::vec4(VkEngine::getEngine().getScene()->getAmbient(), 1);
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),
@@ -441,7 +441,7 @@ void LightingPass::initBufferData()
 
 void LightingPass::updateBufferData()
 {
-	cameraUBO.position = VkEngine::getEngine().getScene()->getCamera()->frame.origin;
+	cameraUBO.position = glm::vec4(VkEngine::getEngine().getScene()->getCamera()->frame.origin, 1);
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),

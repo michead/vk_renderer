@@ -16,8 +16,8 @@ struct Material {
 	glm::vec3	ks = glm::vec3();
 	glm::vec3	kr = glm::vec3();
 	
-	float		rs = 0.15f;
-	float		ns = 1;
+	float		rs;
+	float		ns;
 
 	Texture*    keMap = nullptr;
 	Texture*    kdMap = nullptr;

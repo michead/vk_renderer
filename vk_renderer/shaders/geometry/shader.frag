@@ -2,12 +2,14 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout (binding = 1) uniform sampler2D samplerColor;
-layout (binding = 2) uniform sampler2D samplerNormal;
-
-layout (binding = 3) uniform Material {
-	vec3		kd;
-	vec3		ks;
+layout(binding = 1) uniform Mesh {
+	mat4 model;
+} mesh;
+layout (binding = 2) uniform sampler2D samplerColor;
+layout (binding = 3) uniform sampler2D samplerNormal;
+layout (binding = 4) uniform Material {
+	vec4		kd;
+	vec4		ks;
 	float		rs;
 	float		opacity;
 	float		translucency;
@@ -30,11 +32,14 @@ layout (location = 5) out vec4 outMaterial;
 void main() 
 {
 	vec3 color = texture(samplerColor, inTexCoord).xyz;
+	vec3 position = (mesh.model * vec4(inPosition, 1)).xyz;
+	vec3 normal = (mesh.model * vec4(inNormal, 0)).xyz;
+	vec3 tangent = (mesh.model * vec4(inTangent, 0)).xyz;
 
 	outColor = vec4(color, 1);
-	outPosition = vec4(inPosition, 1);
-	outNormal = vec4(inNormal, 0);
-	outTangent = vec4(inTangent, 0);
-	outSpecular = vec4(material.ks, material.rs);
+	outPosition = vec4(position, 1);
+	outNormal = vec4(normal, 0);
+	outTangent = vec4(tangent, 0);
+	outSpecular = vec4(material.ks.xyz, material.rs);
 	outMaterial = vec4(material.translucency, material.subsurfWidth, 0, 0);
 }

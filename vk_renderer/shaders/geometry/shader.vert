@@ -2,10 +2,12 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(binding = 0) uniform Camera {
-	mat4 model;
 	mat4 view;
 	mat4 proj;
 } camera;
+layout(binding = 1) uniform Mesh {
+	mat4 model;
+} mesh;
 
 layout(location = 0) in vec4 inColor;
 layout(location = 1) in vec3 inPosition;
@@ -30,5 +32,5 @@ void main() {
 	outNormal = inNormal;
 	outTangent = inTangent;
 
-    gl_Position = camera.proj * camera.view * camera.model * vec4(inPosition, 1);
+    gl_Position = camera.proj * camera.view * mesh.model * vec4(inPosition, 1);
 }

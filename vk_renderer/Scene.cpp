@@ -105,6 +105,7 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 
 		if (materials[i]->ks == glm::vec3(0)) materials[i]->ks = ks;
 		if (materials[i]->rs == 0) materials[i]->rs = rs;
+
 		materials[i]->translucency = translucency;
 		materials[i]->subsurfWidth = sswidth;
 

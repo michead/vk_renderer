@@ -4,23 +4,26 @@
 #include "GBuffer.h"
 
 
-#define ALBEDO_BINDING		1
-#define NORMAL_BINDING		2
-#define SPECULAR_BINDING	3
+#define ALBEDO_BINDING		2
+#define NORMAL_BINDING		3
 
 
+class Mesh;
 struct Material;
 
+struct GPMeshUniformBufferObject {
+	glm::mat4 model;
+};
 
 struct GPCameraUniformBufferObject {
-	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 proj;
 };
 
 struct GPMaterialUniformBufferObject {
-	glm::vec3	kd;
-	glm::vec3	ks;
+	// Foruth component is useless, but padding would have been added anyway, so...
+	glm::vec4	kd;
+	glm::vec4	ks;
 	float		rs;
 	float		opacity;
 	float		translucency;
@@ -45,6 +48,10 @@ private:
 	VkDeviceMemory cameraUniformStagingBufferMemory;
 	VkBuffer cameraUniformBuffer;
 	VkDeviceMemory cameraUniformBufferMemory;
+	VkBuffer meshUniformStagingBuffer;
+	VkDeviceMemory meshUniformStagingBufferMemory;
+	VkBuffer meshUniformBuffer;
+	VkDeviceMemory meshUniformBufferMemory;
 	VkBuffer materialUniformStagingBuffer;
 	VkDeviceMemory materialUniformStagingBufferMemory;
 	VkBuffer materialUniformBuffer;
@@ -57,7 +64,8 @@ private:
 	virtual void initGraphicsPipeline() override;
 	virtual void initUniformBuffer() override;
 
-	void loadMaterial(Material* material);
+	void loadMaterial(const Material* material);
+	void loadMeshUniforms(const Mesh* mesh);
 
 	int16_t loadedMaterial = -1;
 };

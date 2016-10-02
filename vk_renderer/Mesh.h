@@ -2,6 +2,7 @@
 
 #include "VkEngine.h"
 #include "Material.h"
+#include "MathUtils.h"
 
 
 class Mesh {
@@ -11,9 +12,10 @@ class Mesh {
 
 public:
 	std::string getName() const { return name; }
-	VkBuffer getVertexBuffer() { return vertexBuffer; }
-	VkBuffer getIndexBuffer() { return indexBuffer; }
+	VkBuffer getVertexBuffer() const { return vertexBuffer; }
+	VkBuffer getIndexBuffer() const { return indexBuffer; }
 	Material* getMaterial() const { return material; }
+	glm::mat4 getModelMatrix() const { return frame.toMatrix(); }
 
 	void initBuffers() { initVertexBuffer(); initIndexBuffer(); }
 
@@ -22,6 +24,7 @@ private:
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	Material* material;
+	Frame frame = { IDENTITY_FRAME };
 
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
@@ -30,6 +33,4 @@ private:
 
 	void initVertexBuffer();
 	void initIndexBuffer();
-
-	void generateTangentSpace();
 };
