@@ -156,8 +156,6 @@ void ShadowPass::initCommandBuffers()
 		vkCmdSetDepthBias(commandBuffers[i], DEPTH_BIAS_CONSTANT, 0.f, DEPTH_BIAS_SLOPE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		// loadLightUniforms(i);
-
 		for (const auto& mesh : VkEngine::getEngine().getScene()->getMeshes())
 		{
 			loadMeshUniforms(mesh);
@@ -329,7 +327,7 @@ void ShadowPass::loadLightUniforms(size_t lightIndex)
 	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 
 	CameraUniformBufferObject ubo = {};
-	ubo.view = camera->getViewMatrix(); // glm::lookAt(light->position, camera->target, CAMERA_UP);
+	ubo.view = glm::lookAt(lights[lightIndex]->position, camera->target, CAMERA_UP);
 	ubo.proj = camera->getProjMatrix();
 
 	updateBuffer(

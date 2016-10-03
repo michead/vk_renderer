@@ -29,15 +29,13 @@ layout(binding = 10) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 
-float beckmanToPhong(float alpha) { return 2 / (alpha * alpha) - 2; }
-
 void main() {
 	vec3 kd = texture(samplerColor, inTexCoord).rgb;
     vec3 position = texture(samplerPosition, inTexCoord).xyz;
     vec3 normal = texture(samplerNormal, inTexCoord).rgb;
 	vec3 tangent = texture(samplerTangent, inTexCoord).rgb;
 	vec3 ks = texture(samplerSpecular, inTexCoord).rgb;
-	float rs = texture(samplerSpecular, inTexCoord).a;
+	float ns = texture(samplerSpecular, inTexCoord).a;
 	float translucency = texture(samplerMaterial, inTexCoord).r;
 	float subsurfWidth = texture(samplerMaterial, inTexCoord).b;
 
@@ -53,10 +51,9 @@ void main() {
         vec3 h = normalize(v + l);
 		
 		// Add support for speculars
-		float n = beckmanToPhong(rs);
-        color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (n + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), n));
+        color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
     }
 
-	float depth = texture(shadowMaps[0], inTexCoord).r;
-    outColor = vec4(vec3(depth), 1);
+	// float depth = texture(shadowMaps[0], inTexCoord).r;
+    outColor = vec4(color, 1);
 }

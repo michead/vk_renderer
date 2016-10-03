@@ -15,7 +15,7 @@ struct GPMaterialUniformBufferObject {
 	// Foruth component is useless, but padding would have been added anyway, so...
 	glm::vec4	kd;
 	glm::vec4	ks;
-	float		rs;
+	float		ns;
 	float		opacity;
 	float		translucency;
 	float		subsurfWidth;

@@ -7,6 +7,7 @@
 #include "Config.h"
 #include "GBuffer.h"
 
+#define MAX_DESCRIPTOR_SETS	32
 
 struct BufferData {
 	VkBuffer buffer;
@@ -56,7 +57,7 @@ public:
 	VkDescriptorPool createDescriptorPool(
 		uint32_t bufferDescriptorCount,
 		uint32_t imageSamplerDescriptorCount,
-		uint32_t maxSets = 32);
+		uint32_t maxSets = MAX_DESCRIPTOR_SETS);
 	std::vector<BufferData> createUniformBuffer(VkDeviceSize bufferSize, bool createStaging);
 	BufferData createVertexBuffer(std::vector<Vertex> vertices);
 	BufferData createIndexBuffer(std::vector<uint32_t> indices);

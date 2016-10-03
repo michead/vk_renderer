@@ -66,15 +66,8 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 	std::string meshFilename = jsonMesh["filename"].string_value();
 	
 	json11::Json jsonMaterial = jsonMesh["material"];
-	float rs = jsonMaterial["rs"].number_value();
 	float translucency = jsonMaterial["translucency"].number_value();
 	float sswidth = jsonMaterial["sswidth"].number_value();
-	std::vector<json11::Json> ksNode = jsonMaterial["ks"].array_items();
-	glm::vec3 ks = { 
-		ksNode[0].number_value(), 
-		ksNode[1].number_value(), 
-		ksNode[2].number_value() };
-
 
 	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + meshFilename).c_str(), path.c_str()))
 	{
@@ -102,9 +95,6 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 		materials[i]->kd = { material.diffuse[0], material.diffuse[1], material.diffuse[2] };
 		materials[i]->ks = { material.specular[0], material.specular[1], material.specular[2] };
 		materials[i]->ns = material.shininess;
-
-		if (materials[i]->ks == glm::vec3(0)) materials[i]->ks = ks;
-		if (materials[i]->rs == 0) materials[i]->rs = rs;
 
 		materials[i]->translucency = translucency;
 		materials[i]->subsurfWidth = sswidth;

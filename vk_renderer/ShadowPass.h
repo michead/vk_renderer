@@ -33,7 +33,6 @@ private:
 	std::vector<VkFramebuffer> framebuffers;
 	std::vector<GBufferAttachment> attachments;
 	std::vector<VkSemaphore> semaphores;
-	std::vector<VkDescriptorSet> descriptorSet;
 
 	std::vector<VkBuffer> cameraUniformStagingBuffers;
 	std::vector<VkDeviceMemory> cameraUniformStagingBufferMemoryList;

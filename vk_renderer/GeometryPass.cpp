@@ -114,7 +114,7 @@ void GeometryPass::loadMaterial(const Material* material)
 	GPMaterialUniformBufferObject ubo = {};
 	ubo.kd = glm::vec4(material->kd, 1);
 	ubo.ks = glm::vec4(material->ks, 1);
-	ubo.rs = material->rs;
+	ubo.ns = material->ns;
 	ubo.opacity = material->opacity;
 	ubo.translucency = material->translucency;
 	ubo.subsurfWidth = material->subsurfWidth;
