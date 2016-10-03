@@ -33,17 +33,19 @@ void main()
 {
 	vec3 color = texture(samplerColor, inTexCoord).xyz;
 	vec3 position = (mesh.model * vec4(inPosition, 1)).xyz;
-
 	vec3 normal = 2 * texture(samplerNormal, inTexCoord).xyz - 1;
-	vec3 tangent = normalize(inTangent - inNormal * dot(inNormal, inTangent));
-	vec3 bitangent = normalize(cross(inNormal, tangent));
-    normal = normalize(normal.x * tangent + normal.y * bitangent + normal.z * inNormal );
-    normal = normalize(mesh.model * vec4(normal, 0)).xyz;
+	
+	vec3 n = normalize(inNormal);
+	vec3 t = normalize(inTangent);
+	vec3 b = normalize(cross(n, t));
+    
+	normal = mat3(t, b, n) * normal;
+	normal = normalize(mesh.model * vec4(normal, 0)).xyz;
 
 	outColor = vec4(color, 1);
 	outPosition = vec4(position, 1);
 	outNormal = vec4(normal, 0);
-	outTangent = vec4(tangent, 0);
+	outTangent = vec4(t, 0);
 	outSpecular = vec4(material.ks.xyz, material.ns);
 	outMaterial = vec4(material.translucency, material.subsurfWidth, 0, 0);
 }

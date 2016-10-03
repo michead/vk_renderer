@@ -5,10 +5,9 @@
 #include "Scene.h"
 
 
-struct LPLightsUniformBufferObject {
-	glm::vec4 positions[MAX_NUM_LIGHTS];
-	glm::vec4 intensities[MAX_NUM_LIGHTS];
-	int count;
+struct LPShaderLight{
+	glm::vec4 pos;
+	glm::vec4 ke;
 };
 
 struct LPCameraUniformBufferObject {
@@ -16,7 +15,9 @@ struct LPCameraUniformBufferObject {
 };
 
 struct LPSceneUniformBufferObject {
-	glm::vec4 ambient;
+	glm::vec4 ka;
+	LPShaderLight lights[MAX_NUM_LIGHTS];
+	int numLights;
 };
 
 
@@ -40,13 +41,8 @@ private:
 	size_t numShadowMaps;
 	GBufferAttachment* shadowMaps;
 	VkAttachmentDescription colorAttachment;
-	LPLightsUniformBufferObject lightsUBO;
 	LPCameraUniformBufferObject cameraUBO;
 	LPSceneUniformBufferObject sceneUBO;
-	VkBuffer lightsUniformStagingBuffer;
-	VkDeviceMemory lightsUniformStagingBufferMemory;
-	VkBuffer lightsUniformBuffer;
-	VkDeviceMemory lightsUniformBufferMemory;
 	VkBuffer cameraUniformStagingBuffer;
 	VkDeviceMemory cameraUniformStagingBufferMemory;
 	VkBuffer cameraUniformBuffer;

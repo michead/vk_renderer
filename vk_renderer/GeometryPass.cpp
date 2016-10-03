@@ -212,16 +212,16 @@ void GeometryPass::initDescriptorSets()
 
 		descriptorWrites.push_back(meshDescriptorSet);
 
-		for (uint16_t i = 2; i <= imageInfos.size(); i++)
+		for (uint16_t i = 0; i < imageInfos.size(); i++)
 		{
 			VkWriteDescriptorSet mapDescriptorSet = {};
 			mapDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			mapDescriptorSet.dstSet = descriptorSets[m];
-			mapDescriptorSet.dstBinding = i;
+			mapDescriptorSet.dstBinding = i + 2;
 			mapDescriptorSet.dstArrayElement = 0;
 			mapDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			mapDescriptorSet.descriptorCount = 1;
-			mapDescriptorSet.pImageInfo = &imageInfos[i - 2];
+			mapDescriptorSet.pImageInfo = &imageInfos[i];
 
 			descriptorWrites.push_back(mapDescriptorSet);
 		}

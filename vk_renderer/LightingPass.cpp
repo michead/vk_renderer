@@ -121,7 +121,7 @@ void LightingPass::initDescriptorSets()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[0]));
 
-	std::vector<VkWriteDescriptorSet> descriptorWrites(11);
+	std::vector<VkWriteDescriptorSet> descriptorWrites(10);
 
 	VkDescriptorImageInfo colorImageInfo = {};
 	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -227,10 +227,10 @@ void LightingPass::initDescriptorSets()
 	descriptorWrites[7].descriptorCount = 1;
 	descriptorWrites[7].pBufferInfo = &cameraBufferInfo;
 
-	VkDescriptorBufferInfo lightsBufferInfo = {};
-	lightsBufferInfo.buffer = lightsUniformBuffer;
-	lightsBufferInfo.offset = 0;
-	lightsBufferInfo.range = sizeof(LPLightsUniformBufferObject);
+	VkDescriptorBufferInfo sceneBufferInfo = {};
+	sceneBufferInfo.buffer = sceneUniformBuffer;
+	sceneBufferInfo.offset = 0;
+	sceneBufferInfo.range = sizeof(LPSceneUniformBufferObject);
 
 	descriptorWrites[8].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[8].dstSet = descriptorSets[0];
@@ -238,20 +238,7 @@ void LightingPass::initDescriptorSets()
 	descriptorWrites[8].dstArrayElement = 0;
 	descriptorWrites[8].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrites[8].descriptorCount = 1;
-	descriptorWrites[8].pBufferInfo = &lightsBufferInfo;
-
-	VkDescriptorBufferInfo sceneBufferInfo = {};
-	sceneBufferInfo.buffer = sceneUniformBuffer;
-	sceneBufferInfo.offset = 0;
-	sceneBufferInfo.range = sizeof(LPSceneUniformBufferObject);
-
-	descriptorWrites[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[9].dstSet = descriptorSets[0];
-	descriptorWrites[9].dstBinding = 9;
-	descriptorWrites[9].dstArrayElement = 0;
-	descriptorWrites[9].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[9].descriptorCount = 1;
-	descriptorWrites[9].pBufferInfo = &sceneBufferInfo;
+	descriptorWrites[8].pBufferInfo = &sceneBufferInfo;
 
 	std::vector<VkDescriptorImageInfo> shadowImageInfos;
 	for (size_t l = 0; l < numShadowMaps; l++)
@@ -264,13 +251,13 @@ void LightingPass::initDescriptorSets()
 		shadowImageInfos.push_back(shadowImageInfo);
 	}
 
-	descriptorWrites[10].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[10].dstSet = descriptorSets[0];
-	descriptorWrites[10].dstBinding = 10;
-	descriptorWrites[10].dstArrayElement = 0;
-	descriptorWrites[10].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[10].descriptorCount = shadowImageInfos.size();
-	descriptorWrites[10].pImageInfo = shadowImageInfos.data();
+	descriptorWrites[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[9].dstSet = descriptorSets[0];
+	descriptorWrites[9].dstBinding = 9;
+	descriptorWrites[9].dstArrayElement = 0;
+	descriptorWrites[9].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites[9].descriptorCount = shadowImageInfos.size();
+	descriptorWrites[9].pImageInfo = shadowImageInfos.data();
 
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
@@ -301,17 +288,9 @@ void LightingPass::initGraphicsPipeline()
 
 void LightingPass::initUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(LPLightsUniformBufferObject);
-	
+	VkDeviceSize bufferSize = sizeof(LPCameraUniformBufferObject);
+
 	std::vector<BufferData> bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
-	lightsUniformStagingBuffer = bufferDataVec[0].buffer;
-	lightsUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
-	lightsUniformBuffer = bufferDataVec[1].buffer;
-	lightsUniformBufferMemory = bufferDataVec[1].bufferMemory;
-
-	bufferSize = sizeof(LPCameraUniformBufferObject);
-
-	bufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(bufferSize, true);
 	cameraUniformStagingBuffer = bufferDataVec[0].buffer;
 	cameraUniformStagingBufferMemory = bufferDataVec[0].bufferMemory;
 	cameraUniformBuffer = bufferDataVec[1].buffer;
@@ -328,7 +307,7 @@ void LightingPass::initUniformBuffer()
 
 void LightingPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(11);
+	std::vector<VkDescriptorSetLayoutBinding> bindings(10);
 
 	VkDescriptorSetLayoutBinding colorSamplerLayoutBinding = {};
 	colorSamplerLayoutBinding.binding = 0;
@@ -402,32 +381,23 @@ void LightingPass::initDescriptorSetLayout()
 
 	bindings[7] = cameraLayoutBinding;
 
-	VkDescriptorSetLayoutBinding lightsLayoutBinding = {};
-	lightsLayoutBinding.binding = 8;
-	lightsLayoutBinding.descriptorCount = 1;
-	lightsLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	lightsLayoutBinding.pImmutableSamplers = nullptr;
-	lightsLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	bindings[8] = lightsLayoutBinding;
-
 	VkDescriptorSetLayoutBinding sceneLayoutBinding = {};
-	sceneLayoutBinding.binding = 9;
+	sceneLayoutBinding.binding = 8;
 	sceneLayoutBinding.descriptorCount = 1;
 	sceneLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	sceneLayoutBinding.pImmutableSamplers = nullptr;
 	sceneLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[9] = sceneLayoutBinding;
+	bindings[8] = sceneLayoutBinding;
 
 	VkDescriptorSetLayoutBinding shadowLayoutBinding = {};
-	shadowLayoutBinding.binding = 10;
+	shadowLayoutBinding.binding = 9;
 	shadowLayoutBinding.descriptorCount = VkEngine::getEngine().getScene()->getLights().size();
 	shadowLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	shadowLayoutBinding.pImmutableSamplers = nullptr;
 	shadowLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[10] = shadowLayoutBinding;
+	bindings[9] = shadowLayoutBinding;
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }
@@ -435,25 +405,15 @@ void LightingPass::initDescriptorSetLayout()
 void LightingPass::initBufferData()
 {
 	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
-	lightsUBO.count = lights.size();
+	sceneUBO.numLights = lights.size();
 
-	for (int i = 0; i < lightsUBO.count; i++)
+	for (int i = 0; i < sceneUBO.numLights; i++)
 	{
-		lightsUBO.positions[i] = glm::vec4(lights[i]->position, 1);
-		lightsUBO.intensities[i] = glm::vec4(lights[i]->intensity, 1);
+		sceneUBO.lights[i].pos = glm::vec4(lights[i]->position, 1);
+		sceneUBO.lights[i].ke = glm::vec4(lights[i]->intensity, 1);
 	}
-	
-	updateBuffer(
-		VkEngine::getEngine().getDevice(),
-		VkEngine::getEngine().getCommandPool(),
-		VkEngine::getEngine().getGraphicsQueue(),
-		&lightsUBO,
-		sizeof(lightsUBO),
-		lightsUniformStagingBufferMemory,
-		lightsUniformBuffer,
-		lightsUniformStagingBuffer);
 
-	sceneUBO.ambient = glm::vec4(VkEngine::getEngine().getScene()->getAmbient(), 1);
+	sceneUBO.ka = glm::vec4(VkEngine::getEngine().getScene()->getAmbient(), 1);
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),

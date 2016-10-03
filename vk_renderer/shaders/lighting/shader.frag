@@ -6,6 +6,11 @@
 
 #define MAX_NUM_LIGHTS		4
 
+struct Light {
+	vec4 pos;
+	vec4 ke;
+};
+
 layout(binding = 0) uniform sampler2D samplerColor;
 layout(binding = 1) uniform sampler2D samplerPosition;
 layout(binding = 2) uniform sampler2D samplerNormal;
@@ -14,17 +19,14 @@ layout(binding = 4) uniform sampler2D samplerSpecular;
 layout(binding = 5) uniform sampler2D samplerMaterial;
 layout(binding = 6) uniform sampler2D samplerDepth;
 layout(binding = 7) uniform Camera {
-	vec4 position;
+	vec4 pos;
 } camera;
-layout(binding = 8) uniform Lights {
-	vec4 positions[MAX_NUM_LIGHTS];
-	vec4 intensities[MAX_NUM_LIGHTS];
-	int count;
-} lights;
-layout(binding = 9) uniform Scene {
-	vec4 ambient;
+layout(binding = 8) uniform Scene {
+	vec4 ka;
+	Light lights[MAX_NUM_LIGHTS];
+	int numLights;
 } scene;
-layout(binding = 10) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
+layout(binding = 9) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -40,20 +42,19 @@ void main() {
 	float subsurfWidth = texture(samplerMaterial, inTexCoord).b;
 
 	// Hack, review this
-	vec3 color = kd * scene.ambient.xyz;
+	vec3 color = kd * scene.ka.rgb;
 
-    for(int i = 0; i < lights.count; i++) {
-		vec3 lightPosition = lights.positions[i].xyz;
-		vec3 lightIntensity = lights.intensities[i].xyz;
-        vec3 cl = lightIntensity / pow(length(lightPosition - position), 2);
-        vec3 l = normalize(lightPosition - position);
-        vec3 v = normalize(camera.position.xyz - position);
+    for(int i = 0; i < scene.numLights; i++) {
+		Light light = scene.lights[i];
+		vec3 lPos = light.pos.xyz;
+		vec3 lKe = light.ke.rgb;
+        vec3 cl = lKe / pow(length(lPos - position), 2);
+        vec3 l = normalize(lPos - position);
+        vec3 v = normalize(camera.pos.xyz - position);
         vec3 h = normalize(v + l);
 		
-		// Add support for speculars
         color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
     }
 
-	// float depth = texture(shadowMaps[0], inTexCoord).r;
     outColor = vec4(color, 1);
 }
