@@ -332,7 +332,7 @@ void VkEngine::updateBufferData()
 void VkEngine::initDescriptorPool()
 {
 	uint16_t numPasses = gfxPipeline->getNumPasses();
-	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses * 12, numPasses * 12); // Rough estimate
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses * 15, numPasses * 15); // Rough estimate
 }
 
 void VkEngine::initOffscreenRenderPasses()

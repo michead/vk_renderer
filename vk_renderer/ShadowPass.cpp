@@ -172,7 +172,7 @@ void ShadowPass::initCommandBuffers()
 				pipelineLayout,
 				0,
 				1,
-				&descriptorSet,
+				&descriptorSets[i],
 				0,
 				nullptr);
 
@@ -187,49 +187,54 @@ void ShadowPass::initCommandBuffers()
 
 void ShadowPass::initDescriptorSets()
 {
+	descriptorSets.resize(lights.size());
+
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &descriptorSetLayout;
 
-	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSet));
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[i]));
 
-	std::vector<VkWriteDescriptorSet> descriptorWrites;
-	
-	VkDescriptorBufferInfo cameraBufferInfo = {};
-	cameraBufferInfo.buffer = cameraUniformBuffer;
-	cameraBufferInfo.offset = 0;
-	cameraBufferInfo.range = sizeof(CameraUniformBufferObject);
+		std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-	VkWriteDescriptorSet cameraDescriptorSet = {};
-	cameraDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	cameraDescriptorSet.dstSet = descriptorSet;
-	cameraDescriptorSet.dstBinding = 0;
-	cameraDescriptorSet.dstArrayElement = 0;
-	cameraDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	cameraDescriptorSet.descriptorCount = 1;
-	cameraDescriptorSet.pBufferInfo = &cameraBufferInfo;
+		VkDescriptorBufferInfo cameraBufferInfo = {};
+		cameraBufferInfo.buffer = cameraUniformBuffers[i];
+		cameraBufferInfo.offset = 0;
+		cameraBufferInfo.range = sizeof(CameraUniformBufferObject);
 
-	descriptorWrites.push_back(cameraDescriptorSet);
+		VkWriteDescriptorSet cameraDescriptorSet = {};
+		cameraDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		cameraDescriptorSet.dstSet = descriptorSets[i];
+		cameraDescriptorSet.dstBinding = 0;
+		cameraDescriptorSet.dstArrayElement = 0;
+		cameraDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		cameraDescriptorSet.descriptorCount = 1;
+		cameraDescriptorSet.pBufferInfo = &cameraBufferInfo;
 
-	VkDescriptorBufferInfo meshBufferInfo = {};
-	meshBufferInfo.buffer = meshUniformBuffer;
-	meshBufferInfo.offset = 0;
-	meshBufferInfo.range = sizeof(MeshUniformBufferObject);
+		descriptorWrites.push_back(cameraDescriptorSet);
 
-	VkWriteDescriptorSet meshDescriptorSet = {};
-	meshDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	meshDescriptorSet.dstSet = descriptorSet;
-	meshDescriptorSet.dstBinding = 1;
-	meshDescriptorSet.dstArrayElement = 0;
-	meshDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	meshDescriptorSet.descriptorCount = 1;
-	meshDescriptorSet.pBufferInfo = &meshBufferInfo;
+		VkDescriptorBufferInfo meshBufferInfo = {};
+		meshBufferInfo.buffer = meshUniformBuffer;
+		meshBufferInfo.offset = 0;
+		meshBufferInfo.range = sizeof(MeshUniformBufferObject);
 
-	descriptorWrites.push_back(meshDescriptorSet);
+		VkWriteDescriptorSet meshDescriptorSet = {};
+		meshDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		meshDescriptorSet.dstSet = descriptorSets[i];
+		meshDescriptorSet.dstBinding = 1;
+		meshDescriptorSet.dstArrayElement = 0;
+		meshDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		meshDescriptorSet.descriptorCount = 1;
+		meshDescriptorSet.pBufferInfo = &meshBufferInfo;
 
-	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+		descriptorWrites.push_back(meshDescriptorSet);
+		
+		vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+	}
 }
 
 void ShadowPass::initDescriptorSetLayout()
@@ -283,13 +288,16 @@ void ShadowPass::initGraphicsPipeline()
 
 void ShadowPass::initUniformBuffer()
 {
-	VkDeviceSize cameraBufferSize = sizeof(CameraUniformBufferObject);
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		VkDeviceSize cameraBufferSize = sizeof(CameraUniformBufferObject);
 
-	std::vector<BufferData> cameraBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(cameraBufferSize, true);
-	cameraUniformStagingBuffer = cameraBufferDataVec[0].buffer;
-	cameraUniformStagingBufferMemory = cameraBufferDataVec[0].bufferMemory;
-	cameraUniformBuffer = cameraBufferDataVec[1].buffer;
-	cameraUniformBufferMemory = cameraBufferDataVec[1].bufferMemory;
+		std::vector<BufferData> cameraBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(cameraBufferSize, true);
+		cameraUniformStagingBuffers.push_back(cameraBufferDataVec[0].buffer);
+		cameraUniformStagingBufferMemoryList.push_back(cameraBufferDataVec[0].bufferMemory);
+		cameraUniformBuffers.push_back(cameraBufferDataVec[1].buffer);
+		cameraUniformBufferMemoryList.push_back(cameraBufferDataVec[1].bufferMemory);
+	}
 
 	VkDeviceSize meshBufferSize = sizeof(MeshUniformBufferObject);
 
@@ -330,12 +338,15 @@ void ShadowPass::loadLightUniforms(size_t lightIndex)
 		VkEngine::getEngine().getGraphicsQueue(),
 		&ubo,
 		sizeof(ubo),
-		cameraUniformStagingBufferMemory,
-		cameraUniformBuffer,
-		cameraUniformStagingBuffer);
+		cameraUniformStagingBufferMemoryList[lightIndex],
+		cameraUniformBuffers[lightIndex],
+		cameraUniformStagingBuffers[lightIndex]);
 }
 
 void ShadowPass::updateBufferData()
 {
-	loadLightUniforms(0);
+	for (size_t i = 0; i < lights.size(); i++)
+	{
+		loadLightUniforms(i);
+	}
 }
