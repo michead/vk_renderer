@@ -4,11 +4,12 @@
 
 #define PI 3.14159265359
 
-#define MAX_NUM_LIGHTS		4
+#define MAX_NUM_LIGHTS	4
 
 struct Light {
 	vec4 pos;
 	vec4 ke;
+	mat4 mat;
 };
 
 layout(binding = 0) uniform sampler2D samplerColor;
@@ -31,6 +32,10 @@ layout(binding = 9) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 
+void transmittance() {
+	
+}
+
 void main() {
 	vec3 kd = texture(samplerColor, inTexCoord).rgb;
     vec3 position = texture(samplerPosition, inTexCoord).xyz;
@@ -45,15 +50,13 @@ void main() {
 	vec3 color = kd * scene.ka.rgb;
 
     for(int i = 0; i < scene.numLights; i++) {
-		Light light = scene.lights[i];
-		vec3 lPos = light.pos.xyz;
-		vec3 lKe = light.ke.rgb;
-        vec3 cl = lKe / pow(length(lPos - position), 2);
-        vec3 l = normalize(lPos - position);
-        vec3 v = normalize(camera.pos.xyz - position);
-        vec3 h = normalize(v + l);
+		vec3 lightPos = scene.lights[i].pos.xyz;
+		vec3 lightKe = scene.lights[i].ke.rgb / pow(length(lightPos - position), 2);
+        vec3 lightVec = normalize(lightPos - position);
+        vec3 viewVec = normalize(camera.pos.xyz - position);
+        vec3 h = normalize(viewVec + lightVec);
 		
-        color += cl * max(0.0, dot(l, normal)) * (kd / PI + ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
+        color += lightKe * max(0.0, dot(lightVec, normal)) * (kd / PI + ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
     }
 
     outColor = vec4(color, 1);

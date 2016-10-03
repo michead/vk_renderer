@@ -404,6 +404,7 @@ void LightingPass::initDescriptorSetLayout()
 
 void LightingPass::initBufferData()
 {
+	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
 	sceneUBO.numLights = lights.size();
 
@@ -411,6 +412,7 @@ void LightingPass::initBufferData()
 	{
 		sceneUBO.lights[i].pos = glm::vec4(lights[i]->position, 1);
 		sceneUBO.lights[i].ke = glm::vec4(lights[i]->intensity, 1);
+		sceneUBO.lights[i].mat = camera->getProjMatrix() * lights[i]->getViewMatrix(camera->target);
 	}
 
 	sceneUBO.ka = glm::vec4(VkEngine::getEngine().getScene()->getAmbient(), 1);

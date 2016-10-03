@@ -8,6 +8,7 @@
 struct LPShaderLight{
 	glm::vec4 pos;
 	glm::vec4 ke;
+	glm::mat4 mat;
 };
 
 struct LPCameraUniformBufferObject {

@@ -327,7 +327,7 @@ void ShadowPass::loadLightUniforms(size_t lightIndex)
 	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 
 	CameraUniformBufferObject ubo = {};
-	ubo.view = glm::lookAt(lights[lightIndex]->position, camera->target, CAMERA_UP);
+	ubo.view = lights[lightIndex]->getViewMatrix(camera->target);
 	ubo.proj = camera->getProjMatrix();
 
 	updateBuffer(
