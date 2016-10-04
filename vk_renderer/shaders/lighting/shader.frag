@@ -6,6 +6,9 @@
 
 #define MAX_NUM_LIGHTS	4
 
+#define TRANSMITTANCE_SCALE	1.0f
+#define SHRINKING_SCALE		0.0025f
+
 struct Light {
 	vec4 pos;
 	vec4 ke;
@@ -32,8 +35,24 @@ layout(binding = 9) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 
-void transmittance() {
-	
+vec3 transmittance(vec3 pos, vec3 norm, vec3 l, mat4 lightMat, sampler2D shadowMap, float translucency, float subsurfWidth) {
+	float scale = TRANSMITTANCE_SCALE * (1 - translucency) / subsurfWidth;
+	vec4 shadowPos = lightMat * vec4(pos - norm * SHRINKING_SCALE, 1);
+	vec3 shadowCoords = shadowPos.xyz / shadowPos.w * 0.5f + 0.5f;
+
+	float d1 = texture(shadowMap, shadowCoords.xy).r;
+	float d2 = shadowCoords.z;
+	float d = scale * abs(d1 - d2);
+
+	float dd = -d * d;
+	vec3 profile =	vec3(0.233f, 0.455f, 0.649f) * exp(dd / 0.0064f) +
+					vec3(0.1f,   0.336f, 0.344f) * exp(dd / 0.0484f) +
+					vec3(0.118f, 0.198f, 0.0f)   * exp(dd / 0.187f)  +
+					vec3(0.113f, 0.007f, 0.007f) * exp(dd / 0.567f)  +
+					vec3(0.358f, 0.004f, 0.0f)   * exp(dd / 1.99f)   +
+					vec3(0.078f, 0.0f,   0.0f)   * exp(dd / 7.41f);
+
+	return profile * clamp(0.3f + dot(l, -norm), 0.f, 1.f);
 }
 
 void main() {
@@ -44,20 +63,23 @@ void main() {
 	vec3 ks = texture(samplerSpecular, inTexCoord).rgb;
 	float ns = texture(samplerSpecular, inTexCoord).a;
 	float translucency = texture(samplerMaterial, inTexCoord).r;
-	float subsurfWidth = texture(samplerMaterial, inTexCoord).b;
-
-	// Hack, review this
+	float subsurfWidth = texture(samplerMaterial, inTexCoord).g;
 	vec3 color = kd * scene.ka.rgb;
+	vec3 kt = vec3(0);
 
     for(int i = 0; i < scene.numLights; i++) {
 		vec3 lightPos = scene.lights[i].pos.xyz;
 		vec3 lightKe = scene.lights[i].ke.rgb / pow(length(lightPos - position), 2);
+		mat4 lightMat = scene.lights[i].mat;
         vec3 lightVec = normalize(lightPos - position);
         vec3 viewVec = normalize(camera.pos.xyz - position);
         vec3 h = normalize(viewVec + lightVec);
-		
-        color += lightKe * max(0.0, dot(lightVec, normal)) * (kd / PI + ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
+		vec3 lightScale = lightKe * max(0.0, dot(lightVec, normal));
+		kt += transmittance(position, normal, lightVec, lightMat, shadowMaps[i], translucency, subsurfWidth);
+		vec3 speculars = lightScale * (ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
+		vec3 lightMult = lightScale * (kd / PI) + lightKe * kt;
+		color += lightMult + speculars;
     }
 
-    outColor = vec4(color, 1);
+    outColor = vec4(kt, 1);
 }

@@ -324,7 +324,7 @@ void LightingPass::initDescriptorSetLayout()
 	positionSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	positionSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	positionSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
+	
 	bindings[1] = positionSamplerLayoutBinding;
 
 	VkDescriptorSetLayoutBinding normalSamplerLayoutBinding = {};
@@ -407,14 +407,14 @@ void LightingPass::initBufferData()
 	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
 	sceneUBO.numLights = lights.size();
-
+	
 	for (int i = 0; i < sceneUBO.numLights; i++)
 	{
 		sceneUBO.lights[i].pos = glm::vec4(lights[i]->position, 1);
 		sceneUBO.lights[i].ke = glm::vec4(lights[i]->intensity, 1);
 		sceneUBO.lights[i].mat = camera->getProjMatrix() * lights[i]->getViewMatrix(camera->target);
 	}
-
+	
 	sceneUBO.ka = glm::vec4(VkEngine::getEngine().getScene()->getAmbient(), 1);
 
 	updateBuffer(

@@ -285,8 +285,6 @@ void Scene::loadBinMesh(std::string meshesFilename)
 
 void Scene::initCamera(json11::Json cameraNode)
 {
-	camera = new Camera();
-
 	glm::vec3 position;
 	glm::vec3 target;
 
@@ -314,12 +312,10 @@ void Scene::initCamera(json11::Json cameraNode)
 	}
 	else
 	{
-		camera->target = CAMERA_TARGET;
+		target = CAMERA_TARGET;
 	}
 
-	camera->frame = Frame::lookAtFrame(position, target, CAMERA_UP);
-	camera->target = target;
-	camera->fovy = CAMERA_FOVY;
+	camera = new Camera(Frame::lookAtFrame(position, target, CAMERA_UP), CAMERA_FOVY, target);
 }
 
 void Scene::loadLights(std::vector<json11::Json> lightsNode)

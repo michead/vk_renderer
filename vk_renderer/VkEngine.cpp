@@ -39,6 +39,8 @@ void VkEngine::initCamera()
 	
 	camera->aspectRatio = swapchainExtent.width / (float) swapchainExtent.height;
 	camera->movement = STILL;
+
+	camera->initMatrices();
 }
 
 void VkEngine::initWindow()
@@ -324,7 +326,7 @@ void VkEngine::initBufferData()
 
 void VkEngine::updateBufferData()
 {
-	scene->getCamera()->updateMatrices();
+	scene->getCamera()->updateViewMatrix();
 
 	gfxPipeline->updateBufferData();
 }

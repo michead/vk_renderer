@@ -37,7 +37,7 @@ enum CameraMovement {
 
 struct Camera {
 public:
-	Camera() { }
+	Camera(Frame frame, float fovy, glm::vec3 target) : frame(frame), fovy(fovy), target(target) { }
 	~Camera() { }
 
 	Frame frame;
@@ -56,7 +56,8 @@ public:
 	void pan(glm::vec2 pan);
 	void zoom(float zoom);
 
-	void updateMatrices();
+	void initMatrices();
+	void updateViewMatrix();
 
 private:
 	glm::mat4 viewMatrix;

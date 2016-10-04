@@ -38,11 +38,17 @@ void Camera::zoom(float zoom)
 	frame.origin += frame.zAxis * zoom * CAMERA_DOLLY_SCALE;
 }
 
-void Camera::updateMatrices()
+void Camera::initMatrices()
 {
 	target = frame.origin + getFocus() * frame.zAxis;
 
-	viewMatrix = glm::lookAt(frame.origin, target, CAMERA_UP);
+	updateViewMatrix();
+
 	projMatrix = glm::perspective(fovy, aspectRatio, CAMERA_NEAR, CAMERA_FAR);
 	projMatrix[1][1] *= -1;
+}
+
+void Camera::updateViewMatrix()
+{
+	viewMatrix = glm::lookAt(frame.origin, target, CAMERA_UP);
 }
