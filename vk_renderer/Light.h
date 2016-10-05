@@ -17,5 +17,5 @@ struct Light {
 	glm::vec3 position;
 	glm::vec3 intensity;
 
-	glm::mat4 getViewMatrix(glm::vec3 target) const { return glm::lookAt(position, target, CAMERA_UP); }
+	glm::mat4 getViewMatrix(Camera* camera) const { return glm::lookAt(position, camera->target, camera->up); }
 };

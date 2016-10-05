@@ -6,8 +6,8 @@
 
 #define MAX_NUM_LIGHTS	4
 
-#define TRANSMITTANCE_SCALE	1.0f
-#define SHRINKING_SCALE		0.0025f
+#define TRANSMITTANCE_SCALE	2.0f
+#define SHRINKING_SCALE		0.005f
 
 struct Light {
 	vec4 pos;
@@ -65,7 +65,6 @@ void main() {
 	float translucency = texture(samplerMaterial, inTexCoord).r;
 	float subsurfWidth = texture(samplerMaterial, inTexCoord).g;
 	vec3 color = kd * scene.ka.rgb;
-	vec3 kt = vec3(0);
 
     for(int i = 0; i < scene.numLights; i++) {
 		vec3 lightPos = scene.lights[i].pos.xyz;
@@ -75,11 +74,11 @@ void main() {
         vec3 viewVec = normalize(camera.pos.xyz - position);
         vec3 h = normalize(viewVec + lightVec);
 		vec3 lightScale = lightKe * max(0.0, dot(lightVec, normal));
-		kt += transmittance(position, normal, lightVec, lightMat, shadowMaps[i], translucency, subsurfWidth);
+		vec3 kt = transmittance(position, normal, lightVec, lightMat, shadowMaps[i], translucency, subsurfWidth);
 		vec3 speculars = lightScale * (ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
 		vec3 lightMult = lightScale * (kd / PI) + lightKe * kt;
 		color += lightMult + speculars;
     }
 
-    outColor = vec4(kt, 1);
+	outColor = vec4(color, 1);
 }

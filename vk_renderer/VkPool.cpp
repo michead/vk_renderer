@@ -367,7 +367,7 @@ PipelineData VkPool::createPipeline(
 	rasterizer.lineWidth = 1.f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.depthBiasEnable = numColorAttachments == 0 ? VK_TRUE : VK_FALSE;
+	rasterizer.depthBiasEnable = /*numColorAttachments == 0 ? VK_TRUE :*/ VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.f;
 	rasterizer.depthBiasClamp = 0.f;
 	rasterizer.depthBiasSlopeFactor = 0.f;
@@ -407,13 +407,13 @@ PipelineData VkPool::createPipeline(
 
 	std::vector<VkDynamicState> dynamicStates = {
 		VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_LINE_WIDTH,
+		VK_DYNAMIC_STATE_LINE_WIDTH
 	};
 
-	if (numColorAttachments == 0)
-	{
-		dynamicStates.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
-	}
+	// if (numColorAttachments == 0)
+	// {
+	// 	dynamicStates.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+	// }
 
 	VkPipelineDynamicStateCreateInfo dynamicState = {};
 	dynamicState.dynamicStateCount = dynamicStates.size();

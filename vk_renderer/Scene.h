@@ -48,5 +48,5 @@ private:
 	void initCamera(json11::Json);
 	void loadLights(std::vector<json11::Json>);
 	void loadObjMesh(json11::Json);
-	void loadBinMesh(std::string);
+	void loadBinMesh(json11::Json);
 };

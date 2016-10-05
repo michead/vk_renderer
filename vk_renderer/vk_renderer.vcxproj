@@ -173,6 +173,7 @@
     <ClCompile Include="VkPool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Frame.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightingPass.h" />
     <ClInclude Include="Material.h" />

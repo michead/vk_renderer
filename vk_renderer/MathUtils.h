@@ -6,38 +6,11 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm\glm.hpp>
 
+
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define CLAMP(a, min_, max_) MIN((max_),MAX((min_),(a)))
 
-#define IDENTITY_FRAME {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}
-
-struct Frame {
-	glm::vec3 origin;
-	glm::vec3 xAxis;
-	glm::vec3 yAxis;
-	glm::vec3 zAxis;
-
-	static Frame lookAtFrame(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
-	{ 
-		Frame frame = {};
-		frame.origin = eye; 
-		frame.zAxis = normalize(center - eye); 
-		
-		frame.yAxis = glm::normalize(glm::cross(up, frame.zAxis)); 
-		frame.xAxis = glm::cross(frame.yAxis, frame.zAxis); 
-		
-		return frame; 
-	}
-
-	glm::mat4 toMatrix() const { 
-		return glm::mat4(
-			xAxis.x, yAxis.x, zAxis.x, origin.x, 
-			xAxis.y, yAxis.y, zAxis.y, origin.y, 
-			xAxis.z, yAxis.z, zAxis.z, origin.z, 
-			0,		 0,		  0,	   1); 
-	}
-};
 
 inline static glm::mat4 lookAtMatrix(const glm::vec3& eye, const glm::vec3& center, const glm::vec3& up)
 {

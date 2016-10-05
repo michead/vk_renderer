@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "Camera.h"
+#include "Frame.h"
 #include "MathUtils.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -39,7 +40,11 @@ void Scene::load()
 		initCamera(cameraNode);
 
 		std::vector<json11::Json> jsonMeshes = scene["meshes"].array_items();
-		for (const auto& jsonMesh : jsonMeshes) loadObjMesh(jsonMesh);
+		for (const auto& jsonMesh : jsonMeshes)
+		{
+			// loadObjMesh(jsonMesh);
+			loadBinMesh(jsonMesh);
+		}
 
 		std::vector<json11::Json> lightsNode = scene["lights"].array_items();
 		loadLights(lightsNode);
@@ -67,7 +72,7 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 	
 	json11::Json jsonMaterial = jsonMesh["material"];
 	float translucency = jsonMaterial["translucency"].number_value();
-	float sswidth = jsonMaterial["sswidth"].number_value();
+	float sswidth = jsonMaterial["ss_width"].number_value();
 
 	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + meshFilename).c_str(), path.c_str()))
 	{
@@ -188,10 +193,38 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 /**
  * No support for materials yet
  */
-void Scene::loadBinMesh(std::string meshesFilename)
+void Scene::loadBinMesh(json11::Json jsonMesh)
 {
+	Material* material = new Material();
+
+	json11::Json jsonMaterial = jsonMesh["material"];
+	
+	float translucency = jsonMaterial["translucency"].number_value();
+	float ssWidth = jsonMaterial["ss_width"].number_value();
+	std::vector<json11::Json> jsonKs = jsonMaterial["ks"].array_items();
+	glm::vec3 ks = { jsonKs[0].number_value(), jsonKs[1].number_value(), jsonKs[2].number_value() };
+	float ns = jsonMaterial["ns"].number_value();
+
+	material->translucency = translucency;
+	material->subsurfWidth = ssWidth;
+	material->ks = ks;
+	material->ns = ns;
+
+	std::string kdTxt = jsonMaterial["kd_txt"].string_value();
+	std::string normTxt = jsonMaterial["norm_txt"].string_value();
+
+	textureMap[kdTxt] = new Texture(path + kdTxt);
+	textureMap[normTxt] = new Texture(path + normTxt);
+
+	material->kdMap = textureMap[kdTxt];
+	material->normalMap = textureMap[normTxt];
+
+	materials.push_back(material);
+
+	std::string meshFilename = jsonMesh["filename"].string_value();
+
 	FILE *f;
-	if (fopen_s(&f, (path + meshesFilename).c_str(), "rb"))
+	if (fopen_s(&f, (path + meshFilename).c_str(), "rb"))
 	{
 		std::cerr << "File could not be opened." << std::endl;
 	}
@@ -219,6 +252,9 @@ void Scene::loadBinMesh(std::string meshesFilename)
 	loadVec(f, points);
 	loadVec(f, quads);
 	loadVec(f, splines);
+
+	Mesh* mesh = new Mesh();
+	mesh->material = materials.front();
 
 	if (normals.empty()) normals = computeVertexNormals(positions, triangles);
 	std::vector<glm::vec3> tangents = computeTangents(positions, normals, texCoords, triangles);
@@ -272,13 +308,35 @@ void Scene::loadBinMesh(std::string meshesFilename)
 
 			if (uniqueVertices.count(vertex) == 0)
 			{
-				uniqueVertices[vertex] = elems[0]->vertices.size();
-				elems[0]->vertices.push_back(vertex);
+				uniqueVertices[vertex] = mesh->vertices.size();
+				mesh->vertices.push_back(vertex);
 			}
 
-			elems[0]->indices.push_back(uniqueVertices[vertex]);
+			mesh->indices.push_back(uniqueVertices[vertex]);
 		}
 	}
+
+	if (jsonMesh.has_member("position"))
+	{
+		std::vector<json11::Json> jsonO = jsonMesh["position"].array_items();
+		mesh->frame.origin = {
+			jsonO[0].number_value(),
+			jsonO[1].number_value(),
+			jsonO[2].number_value() };
+	}
+
+	if (jsonMesh.has_member("z"))
+	{
+		std::vector<json11::Json> jsonZ = jsonMesh["z"].array_items();
+		mesh->frame.zAxis = {
+			jsonZ[0].number_value(),
+			jsonZ[1].number_value(),
+			jsonZ[2].number_value() };
+	}
+
+	mesh->frame = Frame::orthonormalizeF(mesh->frame);
+
+	elems.push_back(mesh);
 
 	fclose(f);
 }
@@ -287,6 +345,7 @@ void Scene::initCamera(json11::Json cameraNode)
 {
 	glm::vec3 position;
 	glm::vec3 target;
+	glm::vec3 up;
 
 	
 	if (cameraNode.has_member("position"))
@@ -299,7 +358,7 @@ void Scene::initCamera(json11::Json cameraNode)
 	}
 	else
 	{
-		camera->frame.origin = CAMERA_POSITION;
+		position = CAMERA_POSITION;
 	}
 
 	if (cameraNode.has_member("center"))
@@ -315,7 +374,20 @@ void Scene::initCamera(json11::Json cameraNode)
 		target = CAMERA_TARGET;
 	}
 
-	camera = new Camera(Frame::lookAtFrame(position, target, CAMERA_UP), CAMERA_FOVY, target);
+	if (cameraNode.has_member("up"))
+	{
+		std::vector<json11::Json> jsonPosArray = cameraNode["up"].array_items();
+		up = {
+			jsonPosArray[0].number_value(),
+			jsonPosArray[1].number_value(),
+			jsonPosArray[2].number_value() };
+	}
+	else
+	{
+		up = CAMERA_UP;
+	}
+
+	camera = new Camera(position, up, CAMERA_FOVY, target);
 }
 
 void Scene::loadLights(std::vector<json11::Json> lightsNode)

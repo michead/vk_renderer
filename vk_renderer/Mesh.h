@@ -3,6 +3,7 @@
 #include "VkEngine.h"
 #include "Material.h"
 #include "MathUtils.h"
+#include "Frame.h"
 
 
 struct MeshUniformBufferObject {

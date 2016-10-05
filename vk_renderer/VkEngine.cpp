@@ -95,7 +95,7 @@ void VkEngine::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods
 		}
 		else
 		{
-			// TODO: Other camera movement mode?
+			camera->movement = ZOOM;
 		}
 	}
 }

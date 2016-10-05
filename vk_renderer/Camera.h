@@ -6,18 +6,19 @@
 #include "glm\gtc\quaternion.hpp"
 #include <glm\gtx\vector_angle.hpp>
 
+#include "Frame.h"
 #include "MathUtils.h"
 
 #define CAMERA_POSITION		{ 0, 0, 1 }
 #define CAMERA_TARGET		{ 0, 0, 0 }
 #define CAMERA_UP			{ 0, 1, 0 }
-#define CAMERA_FOVY			45.f
-#define CAMERA_NEAR			.1f
-#define CAMERA_FAR			1.f
+#define CAMERA_FOVY			0.5f
+#define CAMERA_NEAR			3.f
+#define CAMERA_FAR			7.f
 #define CAMERA_ROT_SCALE	.001f
 #define CAMERA_DOLLY_SCALE	.001f
 #define CAMERA_PAN_SCALE	.001f
-#define MIN_THETA			.01f
+#define MIN_THETA			.001f
 #define MIN_FOCUS			.00001f
 
 
@@ -37,19 +38,19 @@ enum CameraMovement {
 
 struct Camera {
 public:
-	Camera(Frame frame, float fovy, glm::vec3 target) : frame(frame), fovy(fovy), target(target) { }
+	Camera(glm::vec3 position, glm::vec3 up, float fovy, glm::vec3 target) : up(up), fovy(fovy), target(target) { frame.origin = position; }
 	~Camera() { }
 
 	Frame frame;
+	glm::vec3 up;
 	glm::vec3 target;
 	float aspectRatio;
 	float fovy;
+	float focus;
 	CameraMovement movement;
 
 	glm::mat4& getViewMatrix() { return viewMatrix; }
 	glm::mat4& getProjMatrix() { return projMatrix; }
-
-	float getFocus() { return MAX(MIN_FOCUS, glm::distance(frame.origin, target)); }
 
 	void rotate(glm::vec2 rot);
 	void rotateAroundTarget(glm::vec2 rot);
@@ -58,6 +59,16 @@ public:
 
 	void initMatrices();
 	void updateViewMatrix();
+
+	static void lookAtCamera(
+		Camera* camera, 
+		const glm::vec3& eye, 
+		const glm::vec3& center, 
+		const glm::vec3& up)
+	{
+		camera->frame = Frame::lookAtFrame(eye, center, up);
+		camera->focus = length(eye - center);
+	}
 
 private:
 	glm::mat4 viewMatrix;

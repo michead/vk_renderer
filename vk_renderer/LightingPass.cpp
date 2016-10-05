@@ -412,7 +412,7 @@ void LightingPass::initBufferData()
 	{
 		sceneUBO.lights[i].pos = glm::vec4(lights[i]->position, 1);
 		sceneUBO.lights[i].ke = glm::vec4(lights[i]->intensity, 1);
-		sceneUBO.lights[i].mat = camera->getProjMatrix() * lights[i]->getViewMatrix(camera->target);
+		sceneUBO.lights[i].mat = camera->getProjMatrix() * lights[i]->getViewMatrix(camera) * glm::mat4();
 	}
 	
 	sceneUBO.ka = glm::vec4(VkEngine::getEngine().getScene()->getAmbient(), 1);

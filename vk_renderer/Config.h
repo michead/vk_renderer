@@ -6,7 +6,7 @@
 
 #define DEFAULT_WINDOW_WIDTH	1920
 #define DEFAULT_WINDOW_HEIGHT	1080
-#define DEFAULT_SCENE_PATH		"data/head/head.OBJ"
+#define DEFAULT_SCENE_PATH		"data/head_2/scene.json"
 
 struct Config {
 public:
