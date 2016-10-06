@@ -168,6 +168,7 @@
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ShadowPass.cpp" />
+    <ClCompile Include="SSAOPass.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VkEngine.cpp" />
     <ClCompile Include="VkPool.cpp" />
@@ -183,6 +184,7 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="Quad.h" />
+    <ClInclude Include="SSAOPass.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="GeometryPass.h" />
     <ClInclude Include="Pass.h" />
@@ -202,6 +204,10 @@
     <None Include="shaders\lighting\shader.vert" />
     <None Include="shaders\shadow\shader.frag" />
     <None Include="shaders\shadow\shader.vert" />
+    <None Include="shaders\ssao-blur\shader.frag" />
+    <None Include="shaders\ssao-blur\shader.vert" />
+    <None Include="shaders\ssao-main\shader.frag" />
+    <None Include="shaders\ssao-main\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

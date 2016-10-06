@@ -4,6 +4,7 @@
 #include "ShadowPass.h"
 #include "LightingPass.h"
 #include "GeometryPass.h"
+#include "SSAOPass.h"
 #include "Scene.h"
 #include "VkPool.h"
 #include "VkUtils.h"
@@ -13,15 +14,18 @@ void GfxPipeline::init()
 {
 	shadowPass = new ShadowPass(SHADER_PATH"shadow/vert.spv", SHADER_PATH"shadow/frag.spv");
 	geometryPass = new GeometryPass(SHADER_PATH"geometry/vert.spv", SHADER_PATH"geometry/frag.spv");
+	ssaoPass = new SSAOPass(SHADER_PATH"ssao-main/vert.spv", SHADER_PATH"ssao-main/frag.spv", geometryPass->getGBuffer());
 	lightingPass = new LightingPass(SHADER_PATH"lighting/vert.spv", SHADER_PATH"lighting/frag.spv", 
 		geometryPass->getGBuffer(), shadowPass->getNumLights(), shadowPass->getMaps());
 
 	shadowPass->init();
 	geometryPass->init();
+	ssaoPass->init();
 	lightingPass->init();
 
 	shadowPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	geomPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	ssaoPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	finalPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
@@ -80,6 +84,7 @@ void GfxPipeline::initBufferData()
 	shadowPass->initBufferData();
 	geometryPass->initBufferData();
 	lightingPass->initBufferData();
+	ssaoPass->initBufferData();
 }
 
 void GfxPipeline::updateBufferData()
@@ -87,10 +92,13 @@ void GfxPipeline::updateBufferData()
 	shadowPass->updateBufferData();
 	geometryPass->updateBufferData();
 	lightingPass->updateBufferData();
+	ssaoPass->updateBufferData();
 }
 
 void GfxPipeline::cleanup()
 {
 	delete lightingPass;
 	delete geometryPass;
+	delete shadowPass;
+	// delete ssaoPass;
 }

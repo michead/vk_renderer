@@ -13,4 +13,14 @@ move /y %cd%\frag.spv %cd%\shaders\lighting\frag.spv
 move /y %cd%\vert.spv %cd%\shaders\shadow\vert.spv
 move /y %cd%\frag.spv %cd%\shaders\shadow\frag.spv
 
+%cd%\glslangValidator.exe -V shaders/ssao-main/shader.vert
+%cd%\glslangValidator.exe -V shaders/ssao-main/shader.frag
+move /y %cd%\vert.spv %cd%\shaders\ssao-main\vert.spv
+move /y %cd%\frag.spv %cd%\shaders\ssao-main\frag.spv
+
+%cd%\glslangValidator.exe -V shaders/ssao-blur/shader.vert
+%cd%\glslangValidator.exe -V shaders/ssao-blur/shader.frag
+move /y %cd%\vert.spv %cd%\shaders\ssao-blur\vert.spv
+move /y %cd%\frag.spv %cd%\shaders\ssao-blur\frag.spv
+
 REM pause

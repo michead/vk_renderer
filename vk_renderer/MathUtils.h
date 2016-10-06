@@ -200,3 +200,21 @@ inline static void loadVec(FILE* f, std::vector<T>& v)
 	if (!n) return;
 	fread(v.data(), sizeof(T), n, f);
 }
+
+inline float lerp(float a, float b, float t)
+{ 
+	return (1 - t) * a + t * b;
+}
+
+inline float randF()
+{
+	return  (float) std::rand() / (RAND_MAX);
+}
+
+inline float randInRange(float a, float b)
+{ 
+	float random = std::rand() / float(RAND_MAX); 
+	float diff = b - a; 
+	random *= diff; 
+	return a + random;
+}

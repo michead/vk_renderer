@@ -75,7 +75,7 @@ public:
 	VkRenderPass createRenderPass(VkRenderPassCreateInfo createInfo);
 	VkFramebuffer createFramebuffer(VkFramebufferCreateInfo createInfo);
 	VkImageView createSwapchainImageView(VkImage swapchainImage);
-	ImageData createTextureResources(std::string path);
+	ImageData createTextureResources(void* pixels, unsigned int texWidth, unsigned int texHeight, bool highPrec = false);
 	GBufferAttachment createGBufferAttachment(GBufferAttachmentType type, bool toBeSampled = true);
 
 	void createSwapchain(glm::ivec2 resolution);

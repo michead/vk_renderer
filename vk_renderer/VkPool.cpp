@@ -4,9 +4,6 @@
 
 #include "VkUtils.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb\stb_image.h>
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -503,7 +500,7 @@ VkImageView VkPool::createSwapchainImageView(VkImage swapchainImage)
 	return swapchainImageViews.back();
 }
 
-ImageData VkPool::createTextureResources(std::string path)
+ImageData VkPool::createTextureResources(void* pixels, unsigned int texWidth, unsigned int texHeight, bool highPrec)
 {
 	textureImages.push_back(VK_NULL_HANDLE);
 	textureImageViews.push_back(VK_NULL_HANDLE);
@@ -513,21 +510,17 @@ ImageData VkPool::createTextureResources(std::string path)
 	VkImage stagingTextureImage;
 	VkDeviceMemory stagingTextureImageMemory;
 
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	size_t vecSize = highPrec ? 16 : 4;
+	VkFormat format = highPrec ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_UNORM;
 
-	if (!pixels)
-	{
-		throw std::runtime_error("Failed to load texture image!");
-	}
+	VkDeviceSize imageSize = texWidth * texHeight * vecSize;
 	
 	createImage(
 		VkEngine::getEngine().getPhysicalDevice(),
 		VkEngine::getEngine().getDevice(),
 		texWidth,
 		texHeight,
-		VK_FORMAT_R8G8B8A8_UNORM,
+		format,
 		VK_IMAGE_TILING_LINEAR,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -539,14 +532,12 @@ ImageData VkPool::createTextureResources(std::string path)
 	memcpy(data, pixels, (size_t) imageSize);
 	vkUnmapMemory(VkEngine::getEngine().getDevice(), stagingTextureImageMemory);
 
-	stbi_image_free(pixels);
-
 	createImage(
 		VkEngine::getEngine().getPhysicalDevice(),
 		VkEngine::getEngine().getDevice(),
 		texWidth,
 		texHeight,
-		VK_FORMAT_R8G8B8A8_UNORM,
+		format,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -589,7 +580,7 @@ ImageData VkPool::createTextureResources(std::string path)
 	createImageView(
 		device,
 		textureImages.back(),
-		VK_FORMAT_R8G8B8A8_UNORM,
+		format,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		textureImageViews.back());
 

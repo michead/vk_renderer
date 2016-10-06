@@ -28,6 +28,12 @@
     <Filter Include="Source Files\shaders\shadow">
       <UniqueIdentifier>{39c2f932-79bd-4900-be3b-3b8fe9c2722b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\shaders\ssao-main">
+      <UniqueIdentifier>{59df3a93-bebd-4eac-b85f-46e8fed7d8f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\ssao-blur">
+      <UniqueIdentifier>{8376d306-08de-416b-b24c-abc876f98a59}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -70,6 +76,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SSAOPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -134,6 +143,9 @@
     <ClInclude Include="Frame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SSAOPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\lighting\shader.frag">
@@ -156,6 +168,18 @@
     </None>
     <None Include="shaders\shadow\shader.vert">
       <Filter>Source Files\shaders\shadow</Filter>
+    </None>
+    <None Include="shaders\ssao-main\shader.vert">
+      <Filter>Source Files\shaders\ssao-main</Filter>
+    </None>
+    <None Include="shaders\ssao-main\shader.frag">
+      <Filter>Source Files\shaders\ssao-main</Filter>
+    </None>
+    <None Include="shaders\ssao-blur\shader.vert">
+      <Filter>Source Files\shaders\ssao-blur</Filter>
+    </None>
+    <None Include="shaders\ssao-blur\shader.frag">
+      <Filter>Source Files\shaders\ssao-blur</Filter>
     </None>
   </ItemGroup>
 </Project>

@@ -12,34 +12,30 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm\glm.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb\stb_image.h>
+
 
 void Texture::init()
 {
+	int texChannels;
+	pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+
+	if (!pixels)
+	{
+		throw std::runtime_error("Failed to load texture image!");
+	}
+
 	initResources();
-	initDescriptorSetLayout();
 }
 
 void Texture::initResources()
 {
-	ImageData imageData = VkEngine::getEngine().getPool()->createTextureResources(path);
+	ImageData imageData = VkEngine::getEngine().getPool()->createTextureResources(pixels, texWidth, texHeight, highPrec);
 	image = imageData.image;
 	imageView = imageData.imageView;
 	imageMemory = imageData.imageMemory;
 	sampler = imageData.sampler;
-}
 
-void Texture::initDescriptorSetLayout()
-{
-	std::vector<VkDescriptorSetLayoutBinding> bindings(1);
-
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	bindings[0] = samplerLayoutBinding;
-
-	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
+	stbi_image_free(pixels);
 }

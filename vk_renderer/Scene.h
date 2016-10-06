@@ -32,6 +32,8 @@ public:
 	Camera* getCamera() const { return camera; }
 	std::map<std::string, Texture*>& getTextureMap() { return textureMap; }
 
+	void addTexture(std::string name, Texture* texture) { textureMap[name] = texture; }
+
 private:
 	std::string filename;
 	std::string path;

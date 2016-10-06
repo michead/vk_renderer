@@ -344,8 +344,8 @@ void VkEngine::initOffscreenRenderPasses()
 
 void VkEngine::cleanup()
 {
-	delete gfxPipeline;
 	delete pool;
+	delete gfxPipeline;
 	delete config;
 	delete scene;
 }
