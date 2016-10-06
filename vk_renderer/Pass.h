@@ -16,6 +16,7 @@ class Pass {
 	friend class VkEngine;
 
 public:
+	Pass() { }
 	Pass(std::string vsPath, std::string fsPath) : vsPath(vsPath), fsPath(fsPath) { }
 	Pass(std::string vsPath, std::string gsPath, std::string fsPath) : vsPath(vsPath), gsPath(gsPath), fsPath(fsPath) { }
 	~Pass() { }

@@ -11,6 +11,7 @@
 
 struct SSAOPCameraUniformBufferObject {
 	glm::vec4 noiseScale;
+	glm::mat4 view;
 	glm::mat4 proj;
 };
 
@@ -21,8 +22,10 @@ struct SSAOPKernelUniformBufferObject {
 
 class SSAOPass : public Pass {
 public:
-	SSAOPass(std::string vsPath, std::string fsPath, GBuffer* gBuffer) :
-		Pass(vsPath, fsPath), gBuffer(gBuffer)
+	SSAOPass(std::string mainVSPath, std::string mainFSPath, 
+			 std::string blurVSPath, std::string blurFSPath, GBuffer* gBuffer) :
+			 mainVSPath(mainVSPath), mainFSPath(mainFSPath),
+			 blurVSPath(blurVSPath), blurFSPath(blurFSPath), gBuffer(gBuffer)
 	{
 		quad = new Quad();
 
@@ -35,11 +38,17 @@ public:
 
 	VkCommandBuffer getMainPassCmdBuffer() const { return commandBuffers[0]; }
 	VkCommandBuffer getBlurPassCmdBuffer() const { return commandBuffers[1]; }
+	GBufferAttachment* getAOMap() { return &blurredAOAttachment; } // TODO: Switch to blurred map
 
 	virtual void initBufferData() override;
 	virtual void updateBufferData() override;
 
 private:
+	std::string mainVSPath;
+	std::string mainFSPath;
+	std::string blurVSPath;
+	std::string blurFSPath;
+
 	VkRenderPass renderPass;
 	VkSemaphore mainPassSemaphore;
 	std::array<VkCommandBuffer, 2> commandBuffers;
@@ -85,4 +94,9 @@ private:
 	void loadNoiseTexture();
 	void loadKernelUniforms();
 	void loadCameraUniforms();
+
+	void initDescriptorSetMainPass();
+	void initDescriptorSetBlurPass();
+	void initDescriptorSetLayoutMainPass();
+	void initDescriptorSetLayoutBlurPass();
 };

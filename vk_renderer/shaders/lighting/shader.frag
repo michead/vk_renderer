@@ -30,7 +30,8 @@ layout(binding = 8) uniform Scene {
 	Light lights[MAX_NUM_LIGHTS];
 	int numLights;
 } scene;
-layout(binding = 9) uniform sampler2D shadowMaps[MAX_NUM_LIGHTS];
+layout(binding = 9) uniform sampler2D samplerShadows[MAX_NUM_LIGHTS];
+layout(binding = 10) uniform sampler2D samplerVisibility;
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -64,6 +65,7 @@ void main() {
 	float ns = texture(samplerSpecular, inTexCoord).a;
 	float translucency = texture(samplerMaterial, inTexCoord).r;
 	float subsurfWidth = texture(samplerMaterial, inTexCoord).g;
+	float visibility = texture(samplerVisibility, inTexCoord).r;
 	vec3 color = kd * scene.ka.rgb;
 
     for(int i = 0; i < scene.numLights; i++) {
@@ -74,11 +76,11 @@ void main() {
         vec3 viewVec = normalize(camera.pos.xyz - position);
         vec3 h = normalize(viewVec + lightVec);
 		vec3 lightScale = lightKe * max(0.0, dot(lightVec, normal));
-		vec3 kt = transmittance(position, normal, lightVec, lightMat, shadowMaps[i], translucency, subsurfWidth);
+		vec3 kt = transmittance(position, normal, lightVec, lightMat, samplerShadows[i], translucency, subsurfWidth);
 		vec3 speculars = lightScale * (ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
 		vec3 lightMult = lightScale * (kd / PI) + lightKe * kt;
 		color += lightMult + speculars;
     }
 
-	outColor = vec4(color, 1);
+	outColor = vec4(visibility * color, 1);
 }

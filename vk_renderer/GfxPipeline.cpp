@@ -14,9 +14,10 @@ void GfxPipeline::init()
 {
 	shadowPass = new ShadowPass(SHADER_PATH"shadow/vert.spv", SHADER_PATH"shadow/frag.spv");
 	geometryPass = new GeometryPass(SHADER_PATH"geometry/vert.spv", SHADER_PATH"geometry/frag.spv");
-	ssaoPass = new SSAOPass(SHADER_PATH"ssao-main/vert.spv", SHADER_PATH"ssao-main/frag.spv", geometryPass->getGBuffer());
+	ssaoPass = new SSAOPass(SHADER_PATH"ssao-main/vert.spv", SHADER_PATH"ssao-main/frag.spv",
+		SHADER_PATH"ssao-blur/vert.spv", SHADER_PATH"ssao-blur/frag.spv", geometryPass->getGBuffer());
 	lightingPass = new LightingPass(SHADER_PATH"lighting/vert.spv", SHADER_PATH"lighting/frag.spv", 
-		geometryPass->getGBuffer(), shadowPass->getNumLights(), shadowPass->getMaps());
+		geometryPass->getGBuffer(), shadowPass->getNumLights(), shadowPass->getMaps(), ssaoPass->getAOMap());
 
 	shadowPass->init();
 	geometryPass->init();
@@ -25,7 +26,8 @@ void GfxPipeline::init()
 
 	shadowPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	geomPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
-	ssaoPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	mainSSAOPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	blurSSAOPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	finalPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
@@ -38,6 +40,8 @@ void GfxPipeline::run()
 	
 	VkCommandBuffer geomPassCmdBuffer = geometryPass->getCurrentCmdBuffer();
 	VkCommandBuffer finalPassCmdBuffer = lightingPass->getCurrentCmdBuffer();
+	VkCommandBuffer mainSSAOPassCmdBuffer = ssaoPass->getMainPassCmdBuffer();
+	VkCommandBuffer blurSSAOPassCmdBuffer = ssaoPass->getBlurPassCmdBuffer();
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 
@@ -73,6 +77,18 @@ void GfxPipeline::run()
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	submitInfo.pWaitSemaphores = &geomPassCompleteSemaphore;
+	submitInfo.pCommandBuffers = &mainSSAOPassCmdBuffer;
+	submitInfo.pSignalSemaphores = &mainSSAOPassCompleteSemaphore;
+
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+
+	submitInfo.pWaitSemaphores = &mainSSAOPassCompleteSemaphore;
+	submitInfo.pCommandBuffers = &blurSSAOPassCmdBuffer;
+	submitInfo.pSignalSemaphores = &blurSSAOPassCompleteSemaphore;
+
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+
+	submitInfo.pWaitSemaphores = &blurSSAOPassCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &renderCompleteSemaphore;
 	submitInfo.pCommandBuffers = &finalPassCmdBuffer;
 

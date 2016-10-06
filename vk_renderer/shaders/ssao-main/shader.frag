@@ -10,6 +10,7 @@ layout(location = 0) out vec4 outColor;
 
 layout(binding = 0) uniform CameraUniformBufferObject {
 	vec4 noiseScale;
+	mat4 view;
 	mat4 proj;
 } camera;
 
@@ -25,7 +26,7 @@ layout(binding = 4) uniform sampler2D samplerDepth;
 mat4 invProj = inverse(camera.proj);
 
 vec3 vsPos(vec2 texCoord) {
-	float z = texture(samplerDepth, texCoord).r * 2 - 1;
+	float z = texture(samplerDepth, texCoord).r;
     vec2 scaledTexCoord = texCoord * 2 - 1;
 
 	vec3 pos = vec3(scaledTexCoord.x, scaledTexCoord.y, z);
@@ -48,7 +49,7 @@ bool isSampleOccluded(vec3 origin, mat3 tbn, int index) {
 }
 
 mat3 tbnMat(vec3 normal) {
-	vec3 randVec = texture(samplerNoise, inTexCoord * camera.noiseScale.xy).rgb * 2 - 1;
+	vec3 randVec = texture(samplerNoise, inTexCoord * camera.noiseScale.xy).rgb;
 	vec3 tangent = normalize(randVec - normal * dot(randVec, normal));
 	vec3 bitangent = normalize(cross(normal, tangent));
 	
@@ -56,7 +57,7 @@ mat3 tbnMat(vec3 normal) {
 }
 
 void main() {
-	vec3 normal = texture(samplerNormal, inTexCoord).rgb * 2 - 1;
+	vec3 normal = (camera.view * texture(samplerNormal, inTexCoord)).rgb;
 	mat3 tbn = tbnMat(normal);
 
 	float occlusion = 0;

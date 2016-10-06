@@ -84,13 +84,14 @@ void SSAOPass::initAttachments()
 	VK_CHECK(vkAllocateCommandBuffers(VkEngine::getEngine().getDevice(), &allocInfo, commandBuffers.data()));
 
 	aoAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR);
+	blurredAOAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR);
 
 	VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
 
 	VkFramebufferCreateInfo framebufferCreateInfo = {};
 	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebufferCreateInfo.pNext = NULL;
-	framebufferCreateInfo.renderPass = renderPass;
+	framebufferCreateInfo.renderPass =renderPass;
 	framebufferCreateInfo.pAttachments = &aoAttachment.imageView;
 	framebufferCreateInfo.attachmentCount = 1;
 	framebufferCreateInfo.width = extent.width;
@@ -98,6 +99,10 @@ void SSAOPass::initAttachments()
 	framebufferCreateInfo.layers = 1;
 
 	framebuffers[0] = VkEngine::getEngine().getPool()->createFramebuffer(framebufferCreateInfo);
+
+	framebufferCreateInfo.pAttachments = &blurredAOAttachment.imageView;
+
+	framebuffers[1] = VkEngine::getEngine().getPool()->createFramebuffer(framebufferCreateInfo);
 }
 
 void SSAOPass::initSemaphores()
@@ -121,8 +126,7 @@ void SSAOPass::initCommandBuffers()
 		firstTime = false;
 	}
 
-	// TODO: Both command buffers should be set here -- i < 2
-	for (size_t i = 0; i < 1; i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		VkCommandBufferAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -167,7 +171,7 @@ void SSAOPass::initCommandBuffers()
 
 		vkCmdSetViewport(commandBuffers[i], 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffers[i], 0, 1, &renderArea);
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[i]);
 
 		VkBuffer vertexBuffers[] = { quad->getVertexBuffer() };
 		VkDeviceSize offsets[] = { 0 };
@@ -176,10 +180,10 @@ void SSAOPass::initCommandBuffers()
 		vkCmdBindDescriptorSets(
 			commandBuffers[i],
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelineLayout,
+			pipelineLayouts[i],
 			0,
 			1,
-			&descriptorSets[0],
+			&descriptorSets[i],
 			0,
 			nullptr);
 
@@ -192,6 +196,12 @@ void SSAOPass::initCommandBuffers()
 }
 
 void SSAOPass::initDescriptorSets()
+{
+	initDescriptorSetMainPass();
+	initDescriptorSetBlurPass();
+}
+
+void SSAOPass::initDescriptorSetMainPass()
 {
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -286,7 +296,60 @@ void SSAOPass::initDescriptorSets()
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
+void SSAOPass::initDescriptorSetBlurPass()
+{
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &blurPassDescriptorSetLayout;
+
+	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[1]));
+
+	std::vector<VkWriteDescriptorSet> descriptorWrites;
+
+	VkDescriptorImageInfo colorImageInfo = {};
+	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	colorImageInfo.imageView = gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageView;
+	colorImageInfo.sampler = gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageSampler;
+
+	VkWriteDescriptorSet colorDescriptorSet = {};
+	colorDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	colorDescriptorSet.dstSet = descriptorSets[1];
+	colorDescriptorSet.dstBinding = 0;
+	colorDescriptorSet.dstArrayElement = 0;
+	colorDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	colorDescriptorSet.descriptorCount = 1;
+	colorDescriptorSet.pImageInfo = &colorImageInfo;
+
+	descriptorWrites.push_back(colorDescriptorSet);
+
+	VkDescriptorImageInfo aoImageInfo = {};
+	aoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	aoImageInfo.imageView = aoAttachment.imageView;
+	aoImageInfo.sampler = aoAttachment.imageSampler;
+
+	VkWriteDescriptorSet aoDescriptorSet = {};
+	aoDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	aoDescriptorSet.dstSet = descriptorSets[1];
+	aoDescriptorSet.dstBinding = 1;
+	aoDescriptorSet.dstArrayElement = 0;
+	aoDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	aoDescriptorSet.descriptorCount = 1;
+	aoDescriptorSet.pImageInfo = &aoImageInfo;
+
+	descriptorWrites.push_back(aoDescriptorSet);
+
+	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+}
+
 void SSAOPass::initDescriptorSetLayout()
+{
+	initDescriptorSetLayoutMainPass();
+	initDescriptorSetLayoutBlurPass();
+}
+
+void SSAOPass::initDescriptorSetLayoutMainPass()
 {
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
@@ -338,16 +401,36 @@ void SSAOPass::initDescriptorSetLayout()
 	mainPassDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }
 
+void SSAOPass::initDescriptorSetLayoutBlurPass()
+{
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
+
+	VkDescriptorSetLayoutBinding colorLayoutBinding = {};
+	colorLayoutBinding.binding = 0;
+	colorLayoutBinding.descriptorCount = 1;
+	colorLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	colorLayoutBinding.pImmutableSamplers = nullptr;
+	colorLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings.push_back(colorLayoutBinding);
+
+	VkDescriptorSetLayoutBinding aoLayoutBinding = {};
+	aoLayoutBinding.binding = 1;
+	aoLayoutBinding.descriptorCount = 1;
+	aoLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	aoLayoutBinding.pImmutableSamplers = nullptr;
+	aoLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings.push_back(aoLayoutBinding);
+
+	blurPassDescriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
+}
+
 void SSAOPass::initGraphicsPipeline()
 {
-	std::vector<char> vs = readFile(vsPath);
-	std::vector<char> fs = readFile(fsPath);
+	std::vector<char> vs = readFile(mainVSPath);
+	std::vector<char> fs = readFile(mainFSPath);
 	std::vector<char> gs;
-
-	if (!gsPath.empty())
-	{
-		gs = readFile(gsPath);
-	}
 
 	PipelineData pipelineData = VkEngine::getEngine().getPool()->createPipeline(
 		renderPass,
@@ -358,8 +441,23 @@ void SSAOPass::initGraphicsPipeline()
 		gs,
 		1);
 
-	pipeline = pipelineData.pipeline;
-	pipelineLayout = pipelineData.pipelineLayout;
+	pipelines[0] = pipelineData.pipeline;
+	pipelineLayouts[0] = pipelineData.pipelineLayout;
+
+	vs = readFile(blurVSPath);
+	fs = readFile(blurFSPath);
+
+	pipelineData = VkEngine::getEngine().getPool()->createPipeline(
+		renderPass,
+		blurPassDescriptorSetLayout,
+		VkEngine::getEngine().getSwapchainExtent(),
+		vs,
+		fs,
+		gs,
+		1);
+
+	pipelines[1] = pipelineData.pipeline;
+	pipelineLayouts[1] = pipelineData.pipelineLayout;
 }
 
 void SSAOPass::initUniformBuffer()
@@ -403,6 +501,7 @@ void SSAOPass::loadCameraUniforms()
 
 	SSAOPCameraUniformBufferObject ubo = {};
 	ubo.noiseScale = glm::vec4(noiseScale, 0, 0);
+	ubo.view = camera->getViewMatrix();
 	ubo.proj = camera->getProjMatrix();
 
 	updateBuffer(

@@ -121,124 +121,153 @@ void LightingPass::initDescriptorSets()
 
 	VK_CHECK(vkAllocateDescriptorSets(VkEngine::getEngine().getDevice(), &allocInfo, &descriptorSets[0]));
 
-	std::vector<VkWriteDescriptorSet> descriptorWrites(10);
+	uint32_t bindingIndex = 0;
+
+	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 	VkDescriptorImageInfo colorImageInfo = {};
 	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	colorImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageView;
 	colorImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageSampler;
 
-	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[0].dstSet = descriptorSets[0];
-	descriptorWrites[0].dstBinding = 0;
-	descriptorWrites[0].dstArrayElement = 0;
-	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[0].descriptorCount = 1;
-	descriptorWrites[0].pImageInfo = &colorImageInfo;
+	VkWriteDescriptorSet colorDescriptorSet = {};
+	colorDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	colorDescriptorSet.dstSet = descriptorSets[0];
+	colorDescriptorSet.dstBinding = bindingIndex++;
+	colorDescriptorSet.dstArrayElement = 0;
+	colorDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	colorDescriptorSet.descriptorCount = 1;
+	colorDescriptorSet.pImageInfo = &colorImageInfo;
+
+	descriptorWrites.push_back(colorDescriptorSet);
 
 	VkDescriptorImageInfo positionImageInfo = {};
 	positionImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	positionImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_POSITION_ATTACH_ID].imageView;
 	positionImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_POSITION_ATTACH_ID].imageSampler;
 
-	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[1].dstSet = descriptorSets[0];
-	descriptorWrites[1].dstBinding = 1;
-	descriptorWrites[1].dstArrayElement = 0;
-	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[1].descriptorCount = 1;
-	descriptorWrites[1].pImageInfo = &positionImageInfo;
+	VkWriteDescriptorSet positionDescriptorSet = {};
+	positionDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	positionDescriptorSet.dstSet = descriptorSets[0];
+	positionDescriptorSet.dstBinding = bindingIndex++;
+	positionDescriptorSet.dstArrayElement = 0;
+	positionDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	positionDescriptorSet.descriptorCount = 1;
+	positionDescriptorSet.pImageInfo = &positionImageInfo;
+
+	descriptorWrites.push_back(positionDescriptorSet);
 
 	VkDescriptorImageInfo normalImageInfo = {};
 	normalImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	normalImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_NORMAL_ATTACH_ID].imageView;
 	normalImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_NORMAL_ATTACH_ID].imageSampler;
 
-	descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[2].dstSet = descriptorSets[0];
-	descriptorWrites[2].dstBinding = 2;
-	descriptorWrites[2].dstArrayElement = 0;
-	descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[2].descriptorCount = 1;
-	descriptorWrites[2].pImageInfo = &normalImageInfo;
+	VkWriteDescriptorSet normalDescriptorSet = {};
+	normalDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	normalDescriptorSet.dstSet = descriptorSets[0];
+	normalDescriptorSet.dstBinding = bindingIndex++;
+	normalDescriptorSet.dstArrayElement = 0;
+	normalDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	normalDescriptorSet.descriptorCount = 1;
+	normalDescriptorSet.pImageInfo = &normalImageInfo;
+
+	descriptorWrites.push_back(normalDescriptorSet);
 
 	VkDescriptorImageInfo tangentImageInfo = {};
 	tangentImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	tangentImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_TANGENT_ATTACH_ID].imageView;
 	tangentImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_TANGENT_ATTACH_ID].imageSampler;
 
-	descriptorWrites[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[3].dstSet = descriptorSets[0];
-	descriptorWrites[3].dstBinding = 3;
-	descriptorWrites[3].dstArrayElement = 0;
-	descriptorWrites[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[3].descriptorCount = 1;
-	descriptorWrites[3].pImageInfo = &tangentImageInfo;
+	VkWriteDescriptorSet tangentDescriptorSet = {};
+	tangentDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	tangentDescriptorSet.dstSet = descriptorSets[0];
+	tangentDescriptorSet.dstBinding = bindingIndex++;
+	tangentDescriptorSet.dstArrayElement = 0;
+	tangentDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	tangentDescriptorSet.descriptorCount = 1;
+	tangentDescriptorSet.pImageInfo = &tangentImageInfo;
+
+	descriptorWrites.push_back(tangentDescriptorSet);
 
 	VkDescriptorImageInfo specularImageInfo = {};
 	specularImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	specularImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_SPECULAR_ATTACH_ID].imageView;
 	specularImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_SPECULAR_ATTACH_ID].imageSampler;
 
-	descriptorWrites[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[4].dstSet = descriptorSets[0];
-	descriptorWrites[4].dstBinding = 4;
-	descriptorWrites[4].dstArrayElement = 0;
-	descriptorWrites[4].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[4].descriptorCount = 1;
-	descriptorWrites[4].pImageInfo = &specularImageInfo;
+	VkWriteDescriptorSet specularDescriptorSet = {};
+	specularDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	specularDescriptorSet.dstSet = descriptorSets[0];
+	specularDescriptorSet.dstBinding = bindingIndex++;
+	specularDescriptorSet.dstArrayElement = 0;
+	specularDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	specularDescriptorSet.descriptorCount = 1;
+	specularDescriptorSet.pImageInfo = &specularImageInfo;
+
+	descriptorWrites.push_back(specularDescriptorSet);
 
 	VkDescriptorImageInfo materialImageInfo = {};
 	materialImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	materialImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_MATERIAL_ATTACH_ID].imageView;
 	materialImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_MATERIAL_ATTACH_ID].imageSampler;
 
-	descriptorWrites[5].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[5].dstSet = descriptorSets[0];
-	descriptorWrites[5].dstBinding = 5;
-	descriptorWrites[5].dstArrayElement = 0;
-	descriptorWrites[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[5].descriptorCount = 1;
-	descriptorWrites[5].pImageInfo = &materialImageInfo;
+	VkWriteDescriptorSet materialDescriptorSet = {};
+	materialDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	materialDescriptorSet.dstSet = descriptorSets[0];
+	materialDescriptorSet.dstBinding = bindingIndex++;
+	materialDescriptorSet.dstArrayElement = 0;
+	materialDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	materialDescriptorSet.descriptorCount = 1;
+	materialDescriptorSet.pImageInfo = &materialImageInfo;
+
+	descriptorWrites.push_back(materialDescriptorSet);
 
 	VkDescriptorImageInfo depthImageInfo = {};
 	depthImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	depthImageInfo.imageView = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageView;
 	depthImageInfo.sampler = prevPassGBuffer->attachments[GBUFFER_DEPTH_ATTACH_ID].imageSampler;
 
-	descriptorWrites[6].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[6].dstSet = descriptorSets[0];
-	descriptorWrites[6].dstBinding = 6;
-	descriptorWrites[6].dstArrayElement = 0;
-	descriptorWrites[6].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[6].descriptorCount = 1;
-	descriptorWrites[6].pImageInfo = &depthImageInfo;
+	VkWriteDescriptorSet depthDescriptorSet = {};
+	depthDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	depthDescriptorSet.dstSet = descriptorSets[0];
+	depthDescriptorSet.dstBinding = bindingIndex++;
+	depthDescriptorSet.dstArrayElement = 0;
+	depthDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	depthDescriptorSet.descriptorCount = 1;
+	depthDescriptorSet.pImageInfo = &depthImageInfo;
+
+	descriptorWrites.push_back(depthDescriptorSet);
 
 	VkDescriptorBufferInfo cameraBufferInfo = {};
 	cameraBufferInfo.buffer = cameraUniformBuffer;
 	cameraBufferInfo.offset = 0;
 	cameraBufferInfo.range = sizeof(LPCameraUniformBufferObject);
 
-	descriptorWrites[7].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[7].dstSet = descriptorSets[0];
-	descriptorWrites[7].dstBinding = 7;
-	descriptorWrites[7].dstArrayElement = 0;
-	descriptorWrites[7].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[7].descriptorCount = 1;
-	descriptorWrites[7].pBufferInfo = &cameraBufferInfo;
+	VkWriteDescriptorSet cameraDescriptorSet = {};
+	cameraDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	cameraDescriptorSet.dstSet = descriptorSets[0];
+	cameraDescriptorSet.dstBinding = bindingIndex++;
+	cameraDescriptorSet.dstArrayElement = 0;
+	cameraDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	cameraDescriptorSet.descriptorCount = 1;
+	cameraDescriptorSet.pBufferInfo = &cameraBufferInfo;
+
+	descriptorWrites.push_back(cameraDescriptorSet);
 
 	VkDescriptorBufferInfo sceneBufferInfo = {};
 	sceneBufferInfo.buffer = sceneUniformBuffer;
 	sceneBufferInfo.offset = 0;
 	sceneBufferInfo.range = sizeof(LPSceneUniformBufferObject);
 
-	descriptorWrites[8].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[8].dstSet = descriptorSets[0];
-	descriptorWrites[8].dstBinding = 8;
-	descriptorWrites[8].dstArrayElement = 0;
-	descriptorWrites[8].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[8].descriptorCount = 1;
-	descriptorWrites[8].pBufferInfo = &sceneBufferInfo;
+	VkWriteDescriptorSet sceneDescriptorSet = {};
+	sceneDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	sceneDescriptorSet.dstSet = descriptorSets[0];
+	sceneDescriptorSet.dstBinding = bindingIndex++;
+	sceneDescriptorSet.dstArrayElement = 0;
+	sceneDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	sceneDescriptorSet.descriptorCount = 1;
+	sceneDescriptorSet.pBufferInfo = &sceneBufferInfo;
+
+	descriptorWrites.push_back(sceneDescriptorSet);
 
 	std::vector<VkDescriptorImageInfo> shadowImageInfos;
 	for (size_t l = 0; l < numShadowMaps; l++)
@@ -251,13 +280,32 @@ void LightingPass::initDescriptorSets()
 		shadowImageInfos.push_back(shadowImageInfo);
 	}
 
-	descriptorWrites[9].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[9].dstSet = descriptorSets[0];
-	descriptorWrites[9].dstBinding = 9;
-	descriptorWrites[9].dstArrayElement = 0;
-	descriptorWrites[9].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[9].descriptorCount = shadowImageInfos.size();
-	descriptorWrites[9].pImageInfo = shadowImageInfos.data();
+	VkWriteDescriptorSet shadowDescriptorSet = {};
+	shadowDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	shadowDescriptorSet.dstSet = descriptorSets[0];
+	shadowDescriptorSet.dstBinding = bindingIndex++;
+	shadowDescriptorSet.dstArrayElement = 0;
+	shadowDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	shadowDescriptorSet.descriptorCount = shadowImageInfos.size();
+	shadowDescriptorSet.pImageInfo = shadowImageInfos.data();
+
+	descriptorWrites.push_back(shadowDescriptorSet);
+
+	VkDescriptorImageInfo aoImageInfo = {};
+	aoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	aoImageInfo.imageView = aoMap->imageView;
+	aoImageInfo.sampler = aoMap->imageSampler;
+
+	VkWriteDescriptorSet aoDescriptorSet = {};
+	aoDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	aoDescriptorSet.dstSet = descriptorSets[0];
+	aoDescriptorSet.dstBinding = bindingIndex++;
+	aoDescriptorSet.dstArrayElement = 0;
+	aoDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	aoDescriptorSet.descriptorCount = 1;
+	aoDescriptorSet.pImageInfo = &aoImageInfo;
+
+	descriptorWrites.push_back(aoDescriptorSet);
 
 	vkUpdateDescriptorSets(VkEngine::getEngine().getDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
@@ -307,97 +355,108 @@ void LightingPass::initUniformBuffer()
 
 void LightingPass::initDescriptorSetLayout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> bindings(10);
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
+
+	uint32_t bindingIndex = 0;
 
 	VkDescriptorSetLayoutBinding colorSamplerLayoutBinding = {};
-	colorSamplerLayoutBinding.binding = 0;
+	colorSamplerLayoutBinding.binding = bindingIndex++;
 	colorSamplerLayoutBinding.descriptorCount = 1;
 	colorSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	colorSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	colorSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[0] = colorSamplerLayoutBinding;
+	bindings.push_back(colorSamplerLayoutBinding);
 
 	VkDescriptorSetLayoutBinding positionSamplerLayoutBinding = {};
-	positionSamplerLayoutBinding.binding = 1;
+	positionSamplerLayoutBinding.binding = bindingIndex++;
 	positionSamplerLayoutBinding.descriptorCount = 1;
 	positionSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	positionSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	positionSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 	
-	bindings[1] = positionSamplerLayoutBinding;
+	bindings.push_back(positionSamplerLayoutBinding);
 
 	VkDescriptorSetLayoutBinding normalSamplerLayoutBinding = {};
-	normalSamplerLayoutBinding.binding = 2;
+	normalSamplerLayoutBinding.binding = bindingIndex++;
 	normalSamplerLayoutBinding.descriptorCount = 1;
 	normalSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	normalSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	normalSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[2] = normalSamplerLayoutBinding;
+	bindings.push_back(normalSamplerLayoutBinding);
 
 	VkDescriptorSetLayoutBinding tangentLayoutBinding = {};
-	tangentLayoutBinding.binding = 3;
+	tangentLayoutBinding.binding = bindingIndex++;
 	tangentLayoutBinding.descriptorCount = 1;
 	tangentLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	tangentLayoutBinding.pImmutableSamplers = nullptr;
 	tangentLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[3] = tangentLayoutBinding;
+	bindings.push_back(tangentLayoutBinding);
 
 	VkDescriptorSetLayoutBinding specularLayoutBinding = {};
-	specularLayoutBinding.binding = 4;
+	specularLayoutBinding.binding = bindingIndex++;
 	specularLayoutBinding.descriptorCount = 1;
 	specularLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	specularLayoutBinding.pImmutableSamplers = nullptr;
 	specularLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[4] = specularLayoutBinding;
+	bindings.push_back(specularLayoutBinding);
 
 	VkDescriptorSetLayoutBinding materialLayoutBinding = {};
-	materialLayoutBinding.binding = 5;
+	materialLayoutBinding.binding = bindingIndex++;
 	materialLayoutBinding.descriptorCount = 1;
 	materialLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	materialLayoutBinding.pImmutableSamplers = nullptr;
 	materialLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[5] = materialLayoutBinding;
+	bindings.push_back(materialLayoutBinding);
 
 	VkDescriptorSetLayoutBinding depthLayoutBinding = {};
-	depthLayoutBinding.binding = 6;
+	depthLayoutBinding.binding = bindingIndex++;
 	depthLayoutBinding.descriptorCount = 1;
 	depthLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	depthLayoutBinding.pImmutableSamplers = nullptr;
 	depthLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[6] = depthLayoutBinding;
+	bindings.push_back(depthLayoutBinding);
 
 	VkDescriptorSetLayoutBinding cameraLayoutBinding = {};
-	cameraLayoutBinding.binding = 7;
+	cameraLayoutBinding.binding = bindingIndex++;
 	cameraLayoutBinding.descriptorCount = 1;
 	cameraLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	cameraLayoutBinding.pImmutableSamplers = nullptr;
 	cameraLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[7] = cameraLayoutBinding;
+	bindings.push_back(cameraLayoutBinding);
 
 	VkDescriptorSetLayoutBinding sceneLayoutBinding = {};
-	sceneLayoutBinding.binding = 8;
+	sceneLayoutBinding.binding = bindingIndex++;
 	sceneLayoutBinding.descriptorCount = 1;
 	sceneLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	sceneLayoutBinding.pImmutableSamplers = nullptr;
 	sceneLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[8] = sceneLayoutBinding;
+	bindings.push_back(sceneLayoutBinding);
 
 	VkDescriptorSetLayoutBinding shadowLayoutBinding = {};
-	shadowLayoutBinding.binding = 9;
+	shadowLayoutBinding.binding = bindingIndex++;
 	shadowLayoutBinding.descriptorCount = VkEngine::getEngine().getScene()->getLights().size();
 	shadowLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	shadowLayoutBinding.pImmutableSamplers = nullptr;
 	shadowLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	bindings[9] = shadowLayoutBinding;
+	bindings.push_back(shadowLayoutBinding);
+
+	VkDescriptorSetLayoutBinding aoLayoutBinding = {};
+	aoLayoutBinding.binding = bindingIndex++;
+	aoLayoutBinding.descriptorCount = 1;
+	aoLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	aoLayoutBinding.pImmutableSamplers = nullptr;
+	aoLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	bindings.push_back(aoLayoutBinding);
 
 	descriptorSetLayout = VkEngine::getEngine().getPool()->createDescriptorSetLayout(bindings);
 }

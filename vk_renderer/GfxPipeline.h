@@ -28,7 +28,8 @@ private:
 
 	VkSemaphore shadowPassCompleteSemaphore;
 	VkSemaphore geomPassCompleteSemaphore;
-	VkSemaphore ssaoPassCompleteSemaphore;
+	VkSemaphore mainSSAOPassCompleteSemaphore;
+	VkSemaphore blurSSAOPassCompleteSemaphore;
 	VkSemaphore finalPassCompleteSemaphore;
 
 	void cleanup();

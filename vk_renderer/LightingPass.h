@@ -24,8 +24,11 @@ struct LPSceneUniformBufferObject {
 
 class LightingPass : public Pass {
 public:
-	LightingPass(std::string vsPath, std::string fsPath, GBuffer* prevPassGBuffer, size_t numShadowMaps, GBufferAttachment* shadowMaps) :
-		Pass(vsPath, fsPath), prevPassGBuffer(prevPassGBuffer), numShadowMaps(numShadowMaps), shadowMaps(shadowMaps) { quad = new Quad(); }
+	LightingPass(std::string vsPath, std::string fsPath, GBuffer* prevPassGBuffer, 
+		size_t numShadowMaps, GBufferAttachment* shadowMaps, GBufferAttachment* aoMap) :
+		Pass(vsPath, fsPath), prevPassGBuffer(prevPassGBuffer), 
+		numShadowMaps(numShadowMaps), shadowMaps(shadowMaps), aoMap(aoMap) 
+		{ quad = new Quad(); }
 	~LightingPass() { delete quad; }
 
 	VkCommandBuffer getCurrentCmdBuffer() const { return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; }
@@ -41,6 +44,7 @@ private:
 	GBuffer* prevPassGBuffer;
 	size_t numShadowMaps;
 	GBufferAttachment* shadowMaps;
+	GBufferAttachment* aoMap;
 	VkAttachmentDescription colorAttachment;
 	LPCameraUniformBufferObject cameraUBO;
 	LPSceneUniformBufferObject sceneUBO;
