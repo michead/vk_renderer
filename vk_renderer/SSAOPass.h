@@ -31,7 +31,7 @@ public:
 		computeNoiseTexels();
 		loadNoiseTexture();
 	}
-	~SSAOPass() { delete quad; delete noiseTexture; }
+	~SSAOPass() { delete noiseTexture; delete quad; }
 
 	VkCommandBuffer getMainPassCmdBuffer() const { return commandBuffers[0]; }
 	VkCommandBuffer getBlurPassCmdBuffer() const { return commandBuffers[1]; }

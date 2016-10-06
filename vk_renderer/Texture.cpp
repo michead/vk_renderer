@@ -27,6 +27,8 @@ void Texture::init()
 	}
 
 	initResources();
+
+	stbi_image_free(pixels);
 }
 
 void Texture::initResources()
@@ -36,6 +38,4 @@ void Texture::initResources()
 	imageView = imageData.imageView;
 	imageMemory = imageData.imageMemory;
 	sampler = imageData.sampler;
-
-	stbi_image_free(pixels);
 }

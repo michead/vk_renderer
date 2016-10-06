@@ -100,5 +100,5 @@ void GfxPipeline::cleanup()
 	delete lightingPass;
 	delete geometryPass;
 	delete shadowPass;
-	// delete ssaoPass;
+	delete ssaoPass;
 }
