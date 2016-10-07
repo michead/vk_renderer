@@ -8,24 +8,47 @@
 
 void LightingPass::initAttachments()
 {
+	std::vector<VkAttachmentReference> attachmentReferences;
+
 	colorAttachment = {};
-	colorAttachment.format = VkEngine::getEngine().getSwapchainFormat();
+	colorAttachment.format = isFinalPass ? VkEngine::getEngine().getSwapchainFormat() : VK_FORMAT_R8G8B8A8_UNORM;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	colorAttachment.finalLayout = isFinalPass ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	attachmentReferences.push_back(colorAttachmentRef);
+
+	// TODO: Uncomment this once 'merge' pass has been implemented
+	/*
+	specularAttachment = {};
+	specularAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+	specularAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	specularAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	specularAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	specularAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	specularAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	specularAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	specularAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkAttachmentReference specularAttachmentRef = {};
+	specularAttachmentRef.attachment = 1;
+	specularAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	attachmentReferences.push_back(specularAttachmentRef);
+	*/
+
 	VkSubpassDescription subPass = {};
 	subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subPass.colorAttachmentCount = 1;
-	subPass.pColorAttachments = &colorAttachmentRef;
+	subPass.colorAttachmentCount = attachmentReferences.size();
+	subPass.pColorAttachments = attachmentReferences.data();
 
 	VkSubpassDependency dependency = {};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;

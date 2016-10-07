@@ -23,4 +23,14 @@ move /y %cd%\frag.spv %cd%\shaders\ssao-main\frag.spv
 move /y %cd%\vert.spv %cd%\shaders\ssao-blur\vert.spv
 move /y %cd%\frag.spv %cd%\shaders\ssao-blur\frag.spv
 
+%cd%\glslangValidator.exe -V shaders/subsurf/shader.vert
+%cd%\glslangValidator.exe -V shaders/subsurf/shader.frag
+move /y %cd%\vert.spv %cd%\shaders\subsurf\vert.spv
+move /y %cd%\frag.spv %cd%\shaders\subsurf\frag.spv
+
+%cd%\glslangValidator.exe -V shaders/merge/shader.vert
+%cd%\glslangValidator.exe -V shaders/merge/shader.frag
+move /y %cd%\vert.spv %cd%\shaders\merge\vert.spv
+move /y %cd%\frag.spv %cd%\shaders\merge\frag.spv
+
 REM pause

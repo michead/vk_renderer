@@ -38,7 +38,7 @@ public:
 
 	VkCommandBuffer getMainPassCmdBuffer() const { return commandBuffers[0]; }
 	VkCommandBuffer getBlurPassCmdBuffer() const { return commandBuffers[1]; }
-	GBufferAttachment* getAOMap() { return &blurredAOAttachment; } // TODO: Switch to blurred map
+	GBufferAttachment* getAOMap() { return &blurredAOAttachment; }
 
 	virtual void initBufferData() override;
 	virtual void updateBufferData() override;

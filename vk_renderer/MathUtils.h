@@ -218,3 +218,16 @@ inline float randInRange(float a, float b)
 	random *= diff; 
 	return a + random;
 }
+
+inline glm::vec3 gaussian(glm::vec3 falloff, float variance, float r)
+{
+	glm::vec3 g;
+
+	for (int i = 0; i < 3; i++)
+	{
+		float rr = r / (.001f + falloff[i]);
+		g[i] = exp((-(rr * rr)) / (2.0f * variance)) / (2.f * 3.14f * variance);
+	}
+
+	return g;
+}

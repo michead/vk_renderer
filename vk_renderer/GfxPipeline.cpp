@@ -5,6 +5,7 @@
 #include "LightingPass.h"
 #include "GeometryPass.h"
 #include "SSAOPass.h"
+#include "SubsurfPass.h"
 #include "Scene.h"
 #include "VkPool.h"
 #include "VkUtils.h"
@@ -12,12 +13,15 @@
 
 void GfxPipeline::init()
 {
-	shadowPass = new ShadowPass(SHADER_PATH"shadow/vert.spv", SHADER_PATH"shadow/frag.spv");
-	geometryPass = new GeometryPass(SHADER_PATH"geometry/vert.spv", SHADER_PATH"geometry/frag.spv");
-	ssaoPass = new SSAOPass(SHADER_PATH"ssao-main/vert.spv", SHADER_PATH"ssao-main/frag.spv",
-		SHADER_PATH"ssao-blur/vert.spv", SHADER_PATH"ssao-blur/frag.spv", geometryPass->getGBuffer());
-	lightingPass = new LightingPass(SHADER_PATH"lighting/vert.spv", SHADER_PATH"lighting/frag.spv", 
-		geometryPass->getGBuffer(), shadowPass->getNumLights(), shadowPass->getMaps(), ssaoPass->getAOMap());
+	shadowPass = new ShadowPass(SHADOW_PASS_VS, SHADOW_PASS_FS);
+	geometryPass = new GeometryPass(GEOMETRY_PASS_VS, GEOMETRY_PASS_FS);
+	ssaoPass = new SSAOPass(SSAO_MAIN_PASS_VS, SSAO_MAIN_PASS_FS, SSAO_BLUR_PASS_VS, SSAO_BLUR_PASS_FS, geometryPass->getGBuffer());
+	lightingPass = new LightingPass(LIGHTING_PASS_VS, LIGHTING_PASS_FS, geometryPass->getGBuffer(), shadowPass->getNumLights(), 
+		shadowPass->getMaps(), ssaoPass->getAOMap(), true);
+	sssBlurPassOne = new SubsurfPass(SUBSURF_PASS_VS, SUBSURF_PASS_FS,
+		glm::vec2(1, 0), geometryPass->getGBuffer());
+	sssBlurPassTwo = new SubsurfPass(SUBSURF_PASS_VS, SUBSURF_PASS_FS,
+		glm::vec2(0, 1), geometryPass->getGBuffer());
 
 	shadowPass->init();
 	geometryPass->init();
@@ -29,6 +33,8 @@ void GfxPipeline::init()
 	mainSSAOPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	blurSSAOPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	finalPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	sssBlurPassOneCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	sssBlurPassTwoCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
 void GfxPipeline::run()

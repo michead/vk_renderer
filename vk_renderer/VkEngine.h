@@ -13,7 +13,6 @@
 #define APPLICATION_NAME "VkEngine"
 #define ENGINE_NAME APPLICATION_NAME
 #define SHADER_MAIN "main"
-#define SHADER_PATH	"shaders/"
 
 struct Config;
 struct Scene;

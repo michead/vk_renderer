@@ -34,6 +34,12 @@
     <Filter Include="Source Files\shaders\ssao-blur">
       <UniqueIdentifier>{8376d306-08de-416b-b24c-abc876f98a59}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\shaders\subsurf">
+      <UniqueIdentifier>{0643c9f6-7d0f-4355-a37a-0e38b110a9cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\merge">
+      <UniqueIdentifier>{94d100d5-3c85-4364-8d6b-3dc7475c410e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -79,6 +85,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SSAOPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SubsurfPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MergePass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -146,6 +158,12 @@
     <ClInclude Include="SSAOPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SubsurfPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MergePass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\lighting\shader.frag">
@@ -180,6 +198,18 @@
     </None>
     <None Include="shaders\ssao-blur\shader.frag">
       <Filter>Source Files\shaders\ssao-blur</Filter>
+    </None>
+    <None Include="shaders\subsurf\shader.vert">
+      <Filter>Source Files\shaders\subsurf</Filter>
+    </None>
+    <None Include="shaders\subsurf\shader.frag">
+      <Filter>Source Files\shaders\subsurf</Filter>
+    </None>
+    <None Include="shaders\merge\shader.frag">
+      <Filter>Source Files\shaders\merge</Filter>
+    </None>
+    <None Include="shaders\merge\shader.vert">
+      <Filter>Source Files\shaders\merge</Filter>
     </None>
   </ItemGroup>
 </Project>
