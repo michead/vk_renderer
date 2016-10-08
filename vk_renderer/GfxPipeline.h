@@ -37,6 +37,7 @@ public:
 	void initBufferData();
 	void updateBufferData();
 
+	VkRenderPass getPresentationRenderPass() const;
 	VkCommandBuffer getPresentationCmdBuffer() const;
 
 private:

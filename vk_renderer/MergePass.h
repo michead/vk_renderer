@@ -13,6 +13,7 @@ public:
 		specularAttachment(specularAttachment) { quad = new Quad(); }
 	~MergePass() { delete quad; }
 
+	VkRenderPass getRenderPass() const { return renderPass; }
 	VkCommandBuffer getCurrentCmdBuffer() const { return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; }
 
 private:

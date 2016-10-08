@@ -79,7 +79,6 @@ void VkEngine::initImGui()
 	ImGui_ImplGlfwVulkan_Init(window, true, &init_data);
 
 	debugCmdBuffers.resize(swapchainImages.size());
-	debugFences.resize(swapchainImages.size());
 
 	for (size_t i = 0; i < swapchainImages.size(); i++)
 	{
@@ -89,11 +88,6 @@ void VkEngine::initImGui()
 		bufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		bufferAllocateInfo.commandBufferCount = 1;
 		VK_CHECK(vkAllocateCommandBuffers(device, &bufferAllocateInfo, &debugCmdBuffers[i]));
-
-		VkFenceCreateInfo fenceCreateInfo = {};
-		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		debugFences[i] = VkEngine::getPool()->createFence();
 	}
 
 	VkCommandBuffer presentCmdBuffer = debugCmdBuffers[swapchainImageIndex];
@@ -245,8 +239,7 @@ void VkEngine::drawDebugHUD()
 	renderPassBeginInfo.framebuffer = framebuffers[swapchainImageIndex];
 	renderPassBeginInfo.renderArea.extent.width = swapchainExtent.width;
 	renderPassBeginInfo.renderArea.extent.height = swapchainExtent.height;
-	renderPassBeginInfo.clearValueCount = 1;
-	renderPassBeginInfo.pClearValues = &clearColor;
+	renderPassBeginInfo.clearValueCount = 0;
 
 	vkCmdBeginRenderPass(debugCmdBuffers[swapchainImageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -256,8 +249,6 @@ void VkEngine::drawDebugHUD()
 	ImGui::Text("Avg %.3f ms/frame (%.1f FPS)", 1000.f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
 	ImGui_ImplGlfwVulkan_Render(debugCmdBuffers[swapchainImageIndex]);
-
-	VK_CHECK(vkEndCommandBuffer(debugCmdBuffers[swapchainImageIndex]));
 }
 
 void VkEngine::initPool()
@@ -292,12 +283,16 @@ void VkEngine::initRenderPass()
 	VkAttachmentDescription attachment = {};
 	attachment.format = swapchainFormat;
 	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+#if SHOW_HUD
+	attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+#else
 	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+#endif
 
 	VkAttachmentReference colorReference = {};
 	colorReference.attachment = 0;
@@ -370,17 +365,6 @@ void VkEngine::initCommandPool()
 
 void VkEngine::draw()
 {
-#if SHOW_HUD
-	while (true)
-	{
-		VkResult result;
-		result = vkWaitForFences(device, 1, &debugFences[swapchainImageIndex], VK_TRUE, FENCE_TIMEOUT);
-		if (result == VK_SUCCESS) break;
-		if (result == VK_TIMEOUT) continue;
-		VK_CHECK(result);
-	}
-#endif
-
 	VkResult result = vkAcquireNextImageKHR(
 		device, 
 		swapchain, 
@@ -425,26 +409,31 @@ void VkEngine::draw()
 		1, 
 		&barrier);
 
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+	VK_CHECK(vkEndCommandBuffer(debugCmdBuffers[swapchainImageIndex]));
+
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = &renderCompleteSemaphore;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &debugCmdBuffers[swapchainImageIndex];
-	VK_CHECK(vkEndCommandBuffer(debugCmdBuffers[swapchainImageIndex]));
-	VK_CHECK(vkResetFences(device, 1, &debugFences[swapchainImageIndex]));
-	VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, debugFences[swapchainImageIndex]));
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.pSignalSemaphores = &debugDrawCompleteSemaphore;
+	submitInfo.pCommandBuffers = &debugCmdBuffers[swapchainImageIndex];
 
-	VkSwapchainKHR swapchains[1] = { swapchain };
-
-	uint32_t indices[1] = { swapchainImageIndex };
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapchains;
-	presentInfo.pImageIndices = indices;
+	presentInfo.pSwapchains = &swapchain;
+	presentInfo.pImageIndices = &swapchainImageIndex;
 	presentInfo.pResults = nullptr;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = &debugDrawCompleteSemaphore;
 
 #else
 	VkPresentInfoKHR presentInfo = {};

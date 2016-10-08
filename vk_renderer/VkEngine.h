@@ -17,8 +17,15 @@
 #define IMGUI_CLEAR_COLOR { 114, 144, 154 }
 #define IMGUI_IMAGE_RANGE { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
 #define FENCE_TIMEOUT 100
-#define SHOW_HUD 0
 
+#define DEFAULT_SS_STRENGTH		{	.48f,	.41f,	.28f	}
+#define DEFAULT_SS_FALLOFF		{	1.f,	.37f,	.3f		}
+
+#ifdef NDEBUG
+#define SHOW_HUD 0
+#else
+#define SHOW_HUD 1
+#endif
 
 struct Config;
 struct Scene;
@@ -87,7 +94,8 @@ private:
 	VkSemaphore debugDrawCompleteSemaphore;
 	VkCommandPool debugCmdPool;
 	std::vector<VkCommandBuffer> debugCmdBuffers;
-	std::vector<VkFence> debugFences;
+	bool sssEnabled = true;
+	bool ssaoEnabled = true;
 
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;

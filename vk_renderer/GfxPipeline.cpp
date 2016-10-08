@@ -133,6 +133,11 @@ VkCommandBuffer GfxPipeline::getPresentationCmdBuffer() const
 	return mergePass->getCurrentCmdBuffer(); 
 }
 
+VkRenderPass GfxPipeline::getPresentationRenderPass() const
+{
+	return mergePass->getRenderPass();
+}
+
 void GfxPipeline::initBufferData()
 {
 	shadowPass->initBufferData();
