@@ -23,6 +23,9 @@ class SubsurfPass : public Pass {
 public:
 	SubsurfPass(std::string vsPath, std::string fsPath, glm::vec2 blurDirection, GBuffer* gBuffer) :
 		vsPath(vsPath), fsPath(fsPath), gBuffer(gBuffer), blurDirection(blurDirection) 
+	{ quad = new Quad(); computeKernel(SS_STRENGTH, SS_FALLOFF); inColorAttachment = &gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID]; }
+	SubsurfPass(std::string vsPath, std::string fsPath, glm::vec2 blurDirection, GBuffer* gBuffer, GBufferAttachment* inColorAttachment) :
+		vsPath(vsPath), fsPath(fsPath), gBuffer(gBuffer), blurDirection(blurDirection), inColorAttachment(inColorAttachment)
 	{ quad = new Quad(); computeKernel(SS_STRENGTH, SS_FALLOFF); }
 	~SubsurfPass() { delete quad; }
 
@@ -40,13 +43,14 @@ private:
 	VkSemaphore mainPassSemaphore;
 	VkCommandBuffer commandBuffer;
 	VkFramebuffer framebuffer;
-	GBuffer* gBuffer;
 
 	glm::vec2 blurDirection;
 	glm::vec4 kernel[SS_NUM_SAMPLES];
 
 	Quad* quad;
 	GBufferAttachment attachment;
+	GBuffer* gBuffer;
+	GBufferAttachment* inColorAttachment;
 	SSSPCameraUniformBufferObject cameraUBO;
 	SSSPInstanceUniformBufferObject instanceUBO;
 	VkBuffer cameraUniformStagingBuffer;

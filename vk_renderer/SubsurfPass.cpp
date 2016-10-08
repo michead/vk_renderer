@@ -128,6 +128,8 @@ void SubsurfPass::initCommandBuffers()
 
 void SubsurfPass::initDescriptorSets()
 {
+	descriptorSets.resize(1);
+
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = VkEngine::getEngine().getDescriptorPool();
@@ -142,8 +144,8 @@ void SubsurfPass::initDescriptorSets()
 
 	VkDescriptorImageInfo colorImageInfo = {};
 	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	colorImageInfo.imageView = gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageView;
-	colorImageInfo.sampler = gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageSampler;
+	colorImageInfo.imageView = inColorAttachment->imageView;
+	colorImageInfo.sampler = inColorAttachment->imageSampler;
 
 	VkWriteDescriptorSet colorDescriptorSet = {};
 	colorDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -291,7 +293,7 @@ void SubsurfPass::initDescriptorSetLayout()
 
 	VkDescriptorSetLayoutBinding instanceLayoutBinding = {};
 	instanceLayoutBinding.binding = bindingIndex++;
-	instanceLayoutBinding.descriptorCount = VkEngine::getEngine().getScene()->getLights().size();
+	instanceLayoutBinding.descriptorCount = 1;
 	instanceLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	instanceLayoutBinding.pImmutableSamplers = nullptr;
 	instanceLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;

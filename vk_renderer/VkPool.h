@@ -7,7 +7,9 @@
 #include "Config.h"
 #include "GBuffer.h"
 
-#define MAX_DESCRIPTOR_SETS	32
+#define MAX_DESCRIPTOR_SETS			32
+#define POOL_UNIFORM_BUFFER_SIZE	40
+#define POOL_COMBINED_SAMPLER_SIZE	40
 
 struct BufferData {
 	VkBuffer buffer;
@@ -77,6 +79,7 @@ public:
 	VkImageView createSwapchainImageView(VkImage swapchainImage);
 	ImageData createTextureResources(void* pixels, unsigned int texWidth, unsigned int texHeight, bool highPrec = false);
 	GBufferAttachment createGBufferAttachment(GBufferAttachmentType type, bool toBeSampled = true);
+	VkFence createFence();
 
 	void createSwapchain(glm::ivec2 resolution);
 	void createDebugCallback();
@@ -114,6 +117,7 @@ private:
 	std::vector<VkDeviceMemory> offscreenImageMemoryList;
 	std::vector<VkSampler> offscreenImageSamplers;
 	std::vector<VkShaderModule> shaderModules;
+	std::vector<VkFence> fences;
 
 	VkSwapchainKHR swapchain;
 	VkDevice device;

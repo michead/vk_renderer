@@ -2,6 +2,7 @@
 
 #include "vulkan\vulkan.h"
 
+
 #define SHADOW_PASS_VS		"shaders/shadow/vert.spv"
 #define SHADOW_PASS_FS		"shaders/shadow/frag.spv"
 #define GEOMETRY_PASS_VS	"shaders/geometry/vert.spv"
@@ -14,12 +15,16 @@
 #define LIGHTING_PASS_FS	"shaders/lighting/frag.spv"
 #define SUBSURF_PASS_VS		"shaders/subsurf/vert.spv"
 #define SUBSURF_PASS_FS		"shaders/subsurf/frag.spv"
+#define MERGE_PASS_VS		"shaders/merge/vert.spv"
+#define MERGE_PASS_FS		"shaders/merge/frag.spv"
+
 
 class ShadowPass;
 class GeometryPass;
 class LightingPass;
 class SSAOPass;
 class SubsurfPass;
+class MergePass;
 
 
 class GfxPipeline {
@@ -32,7 +37,7 @@ public:
 	void initBufferData();
 	void updateBufferData();
 
-	uint16_t getNumPasses() const { return 4; }
+	VkCommandBuffer getPresentationCmdBuffer() const;
 
 private:
 	ShadowPass* shadowPass;
@@ -41,14 +46,16 @@ private:
 	LightingPass* lightingPass;
 	SubsurfPass* sssBlurPassOne;
 	SubsurfPass* sssBlurPassTwo;
+	MergePass* mergePass;
 
 	VkSemaphore shadowPassCompleteSemaphore;
 	VkSemaphore geomPassCompleteSemaphore;
 	VkSemaphore mainSSAOPassCompleteSemaphore;
 	VkSemaphore blurSSAOPassCompleteSemaphore;
-	VkSemaphore finalPassCompleteSemaphore;
+	VkSemaphore lightingPassCompleteSemaphore;
 	VkSemaphore sssBlurPassOneCompleteSemaphore;
 	VkSemaphore sssBlurPassTwoCompleteSemaphore;
+	VkSemaphore mergePassCompleteSemaphore;
 
 	void cleanup();
 };

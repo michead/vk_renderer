@@ -14,5 +14,5 @@ out gl_PerVertex {
 void main() {
     outTexCoord = inTexCoord;
 
-	gl_Position = vec4(inPosition.xyz, 1);
+	gl_Position = vec4(inPosition.xy, 0, 1);
 }

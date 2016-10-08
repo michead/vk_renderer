@@ -19,6 +19,18 @@ VkSemaphore VkPool::createSemaphore()
 	return semaphores.back();
 }
 
+VkFence VkPool::createFence()
+{
+	VkFenceCreateInfo fenceCreateInfo = {};
+	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	fences.push_back(VK_NULL_HANDLE);
+	VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &fences.back()));
+
+	return fences.back();
+}
+
 VkDescriptorPool VkPool::createDescriptorPool(
 	uint32_t bufferDescriptorCount, 
 	uint32_t imageSamplerDescriptorCount,
@@ -818,6 +830,9 @@ void VkPool::createDevice()
 	}
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
+	// These make ImGui happy
+	deviceFeatures.shaderCullDistance = VK_TRUE;
+	deviceFeatures.shaderClipDistance = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -886,6 +901,7 @@ void VkPool::freeResources()
 {
 	for (VkShaderModule shader : shaderModules) { vkDestroyShaderModule(device, shader, nullptr); }
 	for (VkSemaphore semaphore : semaphores) { vkDestroySemaphore(device, semaphore, nullptr); }
+	for (VkFence fence : fences) { vkDestroyFence(device, fence, nullptr); }
 	for (VkDescriptorPool descriptorPool : descriptorPools) { vkDestroyDescriptorPool(device, descriptorPool, nullptr); }
 	for (VkDeviceMemory deviceMemory : deviceMemoryList) { vkFreeMemory(device, deviceMemory, nullptr); }
 	for (VkBuffer buffer : buffers) { vkDestroyBuffer(device, buffer, nullptr); }

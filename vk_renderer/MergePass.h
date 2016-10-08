@@ -8,31 +8,25 @@
 class MergePass : public Pass {
 public:
 	MergePass(std::string vsPath, std::string fsPath, GBufferAttachment* diffuseAttachment, 
-		GBufferAttachment* specularAttachment, bool isFInalPass) :
+		GBufferAttachment* specularAttachment) :
 		vsPath(vsPath), fsPath(fsPath), diffuseAttachment(diffuseAttachment), 
-		specularAttachment(specularAttachment), isFinalPass(isFInalPass) { }
+		specularAttachment(specularAttachment) { quad = new Quad(); }
 	~MergePass() { delete quad; }
 
-	GBufferAttachment* getColorAttachment() { return &attachment; }
-	VkCommandBuffer getCurrentCmdBuffer() const
-	{
-		return isFinalPass ? commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()] : commandBuffers[0];
-	}
+	VkCommandBuffer getCurrentCmdBuffer() const { return commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()]; }
 
 private:
-	std::string vsPath;
-	std::string fsPath;
+	std::string vsPath, fsPath;
 
 	VkRenderPass renderPass;
-	VkSemaphore mainPassSemaphore;
 	std::vector<VkCommandBuffer> commandBuffers;
-	VkFramebuffer framebuffer;
-	GBufferAttachment* diffuseAttachment;
-	GBufferAttachment* specularAttachment;
 
 	Quad* quad;
-	GBufferAttachment attachment;
-	bool isFinalPass;
+	GBuffer* prevPassGBuffer;
+	size_t numShadowMaps;
+	GBufferAttachment* diffuseAttachment;
+	GBufferAttachment* specularAttachment;
+	VkAttachmentDescription colorAttachment;
 
 	virtual void initAttachments() override;
 	virtual void initCommandBuffers() override;

@@ -10,9 +10,15 @@
 #include <glm\glm.hpp>
 #include <glm\gtc\matrix_transform.hpp>
 
+
 #define APPLICATION_NAME "VkEngine"
 #define ENGINE_NAME APPLICATION_NAME
 #define SHADER_MAIN "main"
+#define IMGUI_CLEAR_COLOR { 114, 144, 154 }
+#define IMGUI_IMAGE_RANGE { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
+#define FENCE_TIMEOUT 100
+#define SHOW_HUD 0
+
 
 struct Config;
 struct Scene;
@@ -78,6 +84,11 @@ private:
 	VkSemaphore imageAvailableSemaphore;
 	VkSemaphore renderCompleteSemaphore;
 
+	VkSemaphore debugDrawCompleteSemaphore;
+	VkCommandPool debugCmdPool;
+	std::vector<VkCommandBuffer> debugCmdBuffers;
+	std::vector<VkFence> debugFences;
+
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;
 	GfxPipeline* gfxPipeline;
@@ -89,6 +100,7 @@ private:
 
 	void initWindow();
 	void initVulkan();
+	void initImGui();
 	void mainLoop();
 	void initPool();
 	void initImageViews();
@@ -112,6 +124,22 @@ private:
 	static void cursorPosFunc(GLFWwindow* window, double xpos, double ypos);
 
 	static void onWindowResized(GLFWwindow* window, int width, int height);
+
+	static void debugFrameBegin();
+	static void debugFrameEnd();
+	
+	void drawDebugHUD();
+
+	static void checkVkResult(VkResult err)
+	{
+		if (err == 0)
+			return;
+		
+		printf("VkResult %d\n", err);
+		
+		if (err < 0)
+			abort();
+	}
 
 	void cleanup();
 };

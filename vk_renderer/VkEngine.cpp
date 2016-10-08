@@ -10,6 +10,13 @@
 #include "VkPool.h"
 #include "GfxPipeline.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw_vulkan.h"
+
+#define GLFW_INCLUDE_NONE
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 
 void VkEngine::init(int argc, char** argv)
 {
@@ -22,6 +29,7 @@ void VkEngine::run()
 	loadScene();
 	initWindow();
 	initVulkan();
+	initImGui();
 	initCamera();
 	setupInputCallbacks();
 	mainLoop();
@@ -54,6 +62,58 @@ void VkEngine::initWindow()
 
 	glfwSetWindowUserPointer(window, this);
 	glfwSetWindowSizeCallback(window, onWindowResized);
+}
+
+void VkEngine::initImGui()
+{
+	debugCmdPool = VkEngine::getPool()->createCommandPool();
+
+	ImGui_ImplGlfwVulkan_Init_Data init_data = {};
+	init_data.allocator = nullptr;
+	init_data.gpu = physicalDevice;
+	init_data.device = device;
+	init_data.render_pass = renderPass;
+	init_data.pipeline_cache = VK_NULL_HANDLE;
+	init_data.descriptor_pool = descriptorPool;
+	init_data.check_vk_result = checkVkResult;
+	ImGui_ImplGlfwVulkan_Init(window, true, &init_data);
+
+	debugCmdBuffers.resize(swapchainImages.size());
+	debugFences.resize(swapchainImages.size());
+
+	for (size_t i = 0; i < swapchainImages.size(); i++)
+	{
+		VkCommandBufferAllocateInfo bufferAllocateInfo = {};
+		bufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		bufferAllocateInfo.commandPool = debugCmdPool;
+		bufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		bufferAllocateInfo.commandBufferCount = 1;
+		VK_CHECK(vkAllocateCommandBuffers(device, &bufferAllocateInfo, &debugCmdBuffers[i]));
+
+		VkFenceCreateInfo fenceCreateInfo = {};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+		debugFences[i] = VkEngine::getPool()->createFence();
+	}
+
+	VkCommandBuffer presentCmdBuffer = debugCmdBuffers[swapchainImageIndex];
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	VK_CHECK(vkBeginCommandBuffer(presentCmdBuffer, &beginInfo));
+
+	ImGui_ImplGlfwVulkan_CreateFontsTexture(presentCmdBuffer);
+
+	VkSubmitInfo endInfo = {};
+	endInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	endInfo.commandBufferCount = 1;
+	endInfo.pCommandBuffers = &presentCmdBuffer;
+	VK_CHECK(vkEndCommandBuffer(presentCmdBuffer));
+	VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &endInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkDeviceWaitIdle(device));
+
+	ImGui_ImplGlfwVulkan_InvalidateFontUploadObjects();
 }
 
 void VkEngine::setupInputCallbacks()
@@ -156,11 +216,48 @@ void VkEngine::mainLoop()
 	{
 		glfwPollEvents();
 
+#if SHOW_HUD
+		ImGui_ImplGlfwVulkan_NewFrame();
+#endif
+
 		updateBufferData();
 		draw();
 	}
 
 	VK_CHECK(vkDeviceWaitIdle(device));
+	ImGui_ImplGlfwVulkan_Shutdown();
+}
+
+void VkEngine::drawDebugHUD()
+{
+	static VkClearValue clearColor = IMGUI_CLEAR_COLOR;
+
+	VK_CHECK(vkResetCommandPool(device, debugCmdPool, 0));
+
+	VkCommandBufferBeginInfo cmdBufferBegininfo = {};
+	cmdBufferBegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	cmdBufferBegininfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	VK_CHECK(vkBeginCommandBuffer(debugCmdBuffers[swapchainImageIndex], &cmdBufferBegininfo));
+
+	VkRenderPassBeginInfo renderPassBeginInfo = {};
+	renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassBeginInfo.renderPass = renderPass;
+	renderPassBeginInfo.framebuffer = framebuffers[swapchainImageIndex];
+	renderPassBeginInfo.renderArea.extent.width = swapchainExtent.width;
+	renderPassBeginInfo.renderArea.extent.height = swapchainExtent.height;
+	renderPassBeginInfo.clearValueCount = 1;
+	renderPassBeginInfo.pClearValues = &clearColor;
+
+	vkCmdBeginRenderPass(debugCmdBuffers[swapchainImageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	static float f = .0f;
+	ImGui::Text("Text test");
+	ImGui::SliderFloat("SliderFloat test", &f, .0f, .0f);
+	ImGui::Text("Avg %.3f ms/frame (%.1f FPS)", 1000.f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+	ImGui_ImplGlfwVulkan_Render(debugCmdBuffers[swapchainImageIndex]);
+
+	VK_CHECK(vkEndCommandBuffer(debugCmdBuffers[swapchainImageIndex]));
 }
 
 void VkEngine::initPool()
@@ -273,6 +370,17 @@ void VkEngine::initCommandPool()
 
 void VkEngine::draw()
 {
+#if SHOW_HUD
+	while (true)
+	{
+		VkResult result;
+		result = vkWaitForFences(device, 1, &debugFences[swapchainImageIndex], VK_TRUE, FENCE_TIMEOUT);
+		if (result == VK_SUCCESS) break;
+		if (result == VK_TIMEOUT) continue;
+		VK_CHECK(result);
+	}
+#endif
+
 	VkResult result = vkAcquireNextImageKHR(
 		device, 
 		swapchain, 
@@ -286,9 +394,59 @@ void VkEngine::draw()
 		recreateSwapchain();
 		return;
 	}
-	
+
 	gfxPipeline->run();
 
+#if SHOW_HUD
+	drawDebugHUD();
+	
+	vkCmdEndRenderPass(debugCmdBuffers[swapchainImageIndex]);
+
+	VkImageMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = swapchainImages[swapchainImageIndex];
+	barrier.subresourceRange = IMGUI_IMAGE_RANGE;
+
+	vkCmdPipelineBarrier(
+		debugCmdBuffers[swapchainImageIndex], 
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
+		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
+		0, 
+		0, 
+		NULL, 
+		0, 
+		NULL, 
+		1, 
+		&barrier);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = &renderCompleteSemaphore;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &debugCmdBuffers[swapchainImageIndex];
+	VK_CHECK(vkEndCommandBuffer(debugCmdBuffers[swapchainImageIndex]));
+	VK_CHECK(vkResetFences(device, 1, &debugFences[swapchainImageIndex]));
+	VK_CHECK(vkQueueSubmit(graphicsQueue, 1, &submitInfo, debugFences[swapchainImageIndex]));
+
+	VkSwapchainKHR swapchains[1] = { swapchain };
+
+	uint32_t indices[1] = { swapchainImageIndex };
+
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapchains;
+	presentInfo.pImageIndices = indices;
+	presentInfo.pResults = nullptr;
+
+#else
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
@@ -297,6 +455,7 @@ void VkEngine::draw()
 	presentInfo.pSwapchains = &swapchain;
 	presentInfo.pImageIndices = &swapchainImageIndex;
 	presentInfo.pResults = nullptr;
+#endif
 
 	result = vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);
 
@@ -304,12 +463,14 @@ void VkEngine::draw()
 	{
 		recreateSwapchain();
 	}
+
 }
 
 void VkEngine::initSemaphores()
 {
 	imageAvailableSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	renderCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+	debugDrawCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 }
 
 void VkEngine::recreateSwapchain()
@@ -333,8 +494,7 @@ void VkEngine::updateBufferData()
 
 void VkEngine::initDescriptorPool()
 {
-	uint16_t numPasses = gfxPipeline->getNumPasses();
-	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(numPasses * 15, numPasses * 15); // Rough estimate
+	descriptorPool = VkEngine::getEngine().getPool()->createDescriptorPool(POOL_UNIFORM_BUFFER_SIZE, POOL_COMBINED_SAMPLER_SIZE);
 }
 
 void VkEngine::initOffscreenRenderPasses()

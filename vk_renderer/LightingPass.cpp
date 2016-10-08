@@ -10,15 +10,15 @@ void LightingPass::initAttachments()
 {
 	std::vector<VkAttachmentReference> attachmentReferences;
 
-	colorAttachment = {};
-	colorAttachment.format = isFinalPass ? VkEngine::getEngine().getSwapchainFormat() : VK_FORMAT_R8G8B8A8_UNORM;
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = isFinalPass ? VK_IMAGE_LAYOUT_PRESENT_SRC_KHR : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment = 0;
@@ -26,28 +26,25 @@ void LightingPass::initAttachments()
 
 	attachmentReferences.push_back(colorAttachmentRef);
 
-	// TODO: Uncomment this once 'merge' pass has been implemented
-	/*
-	specularAttachment = {};
-	specularAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
-	specularAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	specularAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	specularAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	specularAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	specularAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	specularAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	specularAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	VkAttachmentDescription speculAttachment = {};
+	speculAttachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+	speculAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	speculAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	speculAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	speculAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	speculAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	speculAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	speculAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	VkAttachmentReference specularAttachmentRef = {};
 	specularAttachmentRef.attachment = 1;
 	specularAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	attachmentReferences.push_back(specularAttachmentRef);
-	*/
 
 	VkSubpassDescription subPass = {};
 	subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subPass.colorAttachmentCount = attachmentReferences.size();
+	subPass.colorAttachmentCount = 2;
 	subPass.pColorAttachments = attachmentReferences.data();
 
 	VkSubpassDependency dependency = {};
@@ -58,16 +55,50 @@ void LightingPass::initAttachments()
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+	std::array<VkAttachmentDescription, 2> attachDescriptions = {
+		colorAttachment,
+		speculAttachment
+	};
+
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.attachmentCount = 2;
+	renderPassInfo.pAttachments = attachDescriptions.data();
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subPass;
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
 	renderPass = VkEngine::getEngine().getPool()->createRenderPass(renderPassInfo);
+
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = VkEngine::getEngine().getCommandPool();
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = 1;
+
+	diffuseAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR);
+	specularAttachment = VkEngine::getEngine().getPool()->createGBufferAttachment(GBufferAttachmentType::COLOR);
+	
+	std::array<VkImageView, 2> attachments = {
+		diffuseAttachment.imageView,
+		specularAttachment.imageView
+	};
+
+
+	VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
+
+	VkFramebufferCreateInfo framebufferCreateInfo = {};
+	framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	framebufferCreateInfo.pNext = NULL;
+	framebufferCreateInfo.renderPass = renderPass;
+	framebufferCreateInfo.pAttachments = attachments.data();
+	framebufferCreateInfo.attachmentCount = 2;
+	framebufferCreateInfo.width = extent.width;
+	framebufferCreateInfo.height = extent.height;
+	framebufferCreateInfo.layers = 1;
+
+	framebuffer = VkEngine::getEngine().getPool()->createFramebuffer(framebufferCreateInfo);
 }
 
 void LightingPass::initCommandBuffers()
@@ -89,7 +120,7 @@ void LightingPass::initCommandBuffers()
 
 	std::array<VkClearValue, 2> clearValues = {};
 	clearValues[0].color = TRANSPARENT_BLACK_CLEAR;
-	clearValues[1].depthStencil = DEPTH_STENCIL_CLEAR;
+	clearValues[1].color = TRANSPARENT_BLACK_CLEAR;
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -105,7 +136,7 @@ void LightingPass::initCommandBuffers()
 	{
 		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
-		renderPassInfo.framebuffer = framebuffers[i];
+		renderPassInfo.framebuffer = framebuffer;
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
@@ -351,7 +382,7 @@ void LightingPass::initGraphicsPipeline()
 		vs,
 		fs,
 		gs,
-		1);
+		2);
 
 	pipeline = pipelineData.pipeline;
 	pipelineLayout = pipelineData.pipelineLayout;

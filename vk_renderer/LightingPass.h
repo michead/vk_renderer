@@ -27,14 +27,13 @@ public:
 	LightingPass(std::string vsPath, std::string fsPath, GBuffer* prevPassGBuffer, 
 		size_t numShadowMaps, GBufferAttachment* shadowMaps, GBufferAttachment* aoMap, bool isFinalPass) :
 		Pass(vsPath, fsPath), prevPassGBuffer(prevPassGBuffer), numShadowMaps(numShadowMaps), 
-		shadowMaps(shadowMaps), aoMap(aoMap) , isFinalPass(isFinalPass)
+		shadowMaps(shadowMaps), aoMap(aoMap)
 		{ quad = new Quad(); }
 	~LightingPass() { delete quad; }
 
-	VkCommandBuffer getCurrentCmdBuffer() const
-	{
-		return isFinalPass ? commandBuffers[VkEngine::getEngine().getSwapchainImageIndex()] : commandBuffers[0];
-	}
+	VkCommandBuffer getCurrentCmdBuffer() const { return commandBuffers[0]; }
+	GBufferAttachment* getDiffuseAttachment() { return &diffuseAttachment; }
+	GBufferAttachment* getSpecularAttachment() { return &specularAttachment; }
 
 	virtual void initBufferData() override;
 	virtual void updateBufferData() override;
@@ -44,14 +43,15 @@ private:
 
 	VkRenderPass renderPass;
 	std::vector<VkCommandBuffer> commandBuffers;
+	VkFramebuffer framebuffer;
 
 	Quad* quad;
 	GBuffer* prevPassGBuffer;
 	size_t numShadowMaps;
 	GBufferAttachment* shadowMaps;
 	GBufferAttachment* aoMap;
-	VkAttachmentDescription colorAttachment;
-	VkAttachmentDescription specularAttachment;
+	GBufferAttachment diffuseAttachment;
+	GBufferAttachment specularAttachment;
 	LPCameraUniformBufferObject cameraUBO;
 	LPSceneUniformBufferObject sceneUBO;
 	VkBuffer cameraUniformStagingBuffer;
