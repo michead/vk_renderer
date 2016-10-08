@@ -6,8 +6,8 @@
 
 #define MAX_NUM_LIGHTS	4
 
-#define TRANSMITTANCE_SCALE	65.f
-#define SHRINKING_SCALE		.001f
+#define TRANSMIT_INV_SCALE	10.f
+#define SHRINKING_SCALE		.005f
 
 struct Light {
 	vec4 pos;
@@ -38,9 +38,9 @@ layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outSpeculars;
 
 vec3 transmittance(vec3 pos, vec3 norm, vec3 l, mat4 lightMat, sampler2D shadowMap, float translucency, float subsurfWidth) {
-	float scale = TRANSMITTANCE_SCALE * (1 - translucency) / subsurfWidth;
+	float scale = TRANSMIT_INV_SCALE * (1.f - translucency) / subsurfWidth;
 	vec4 shadowPos = lightMat * vec4(pos - norm * SHRINKING_SCALE, 1);
-	vec3 shadowCoords = shadowPos.xyz / shadowPos.w * 0.5f + 0.5f;
+	vec3 shadowCoords = shadowPos.xyz / shadowPos.w;
 
 	float d1 = texture(shadowMap, shadowCoords.xy).r;
 	float d2 = shadowCoords.z;
@@ -81,9 +81,9 @@ void main() {
 		vec3 kt = transmittance(position, normal, lightVec, lightMat, samplerShadows[i], translucency, subsurfWidth);
 		speculars += lightScale * (ks * (ns + 8) / (8 * PI) * pow(max(0.0, dot(h, normal)), ns));
 		vec3 lightMult = lightScale * (kd / PI) + lightKe * kt;
-		color += lightMult; // + speculars;
+		color += lightMult;
     }
 
-	outColor = vec4(visibility * color, 1);
-	outSpeculars = vec4(visibility * speculars, 1);
+	outColor = vec4(color * visibility, 1);
+	outSpeculars = vec4(speculars * visibility, 1);
 }

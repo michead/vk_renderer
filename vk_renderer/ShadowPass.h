@@ -16,6 +16,7 @@ class ShadowPass : public Pass {
 	using Pass::Pass;
 
 public:
+	virtual void initBufferData() override;
 	virtual void updateBufferData() override;
 
 	ShadowPass(std::string vs, std::string fs) : Pass(vs, fs) 

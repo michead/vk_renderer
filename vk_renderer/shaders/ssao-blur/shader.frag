@@ -12,7 +12,7 @@ layout(binding = 0) uniform sampler2DArray samplerAO;
 void main() {
 	vec2 texelSize = 1 / vec2(textureSize(samplerAO, 0));
 	vec2 offsetOrigin = vec2(-BLUR_SIZE * 0.5 + 0.5);
-	
+
 	float avgVisibility = 0;
 
 	for (int i = 0; i < BLUR_SIZE; i++) {
