@@ -9,7 +9,7 @@
 #define NOISE_SIZE	4
 
 
-struct SSAOPCameraUniformBufferObject {
+struct SSAOPViewUniformBufferObject {
 	glm::vec4 noiseScale;
 	glm::mat4 view;
 	glm::mat4 proj;
@@ -69,12 +69,12 @@ private:
 	GBufferAttachment aoAttachment;
 	GBufferAttachment blurredAOAttachment;
 	VkAttachmentDescription colorAttachment;
-	SSAOPCameraUniformBufferObject cameraUBO;
+	SSAOPViewUniformBufferObject viewUBO;
 	SSAOPKernelUniformBufferObject kernelUBO;
-	VkBuffer cameraUniformStagingBuffer;
-	VkDeviceMemory cameraUniformStagingBufferMemory;
-	VkBuffer cameraUniformBuffer;
-	VkDeviceMemory cameraUniformBufferMemory;
+	VkBuffer viewUniformStagingBuffer;
+	VkDeviceMemory viewUniformStagingBufferMemory;
+	VkBuffer viewUniformBuffer;
+	VkDeviceMemory viewUniformBufferMemory;
 	VkBuffer kernelUniformStagingBuffer;
 	VkDeviceMemory kernelUniformStagingBufferMemory;
 	VkBuffer kernelUniformBuffer;
@@ -93,7 +93,7 @@ private:
 	void computeNoiseTexels();
 	void loadNoiseTexture();
 	void loadKernelUniforms();
-	void loadCameraUniforms();
+	void loadViewUniforms();
 
 	void initDescriptorSetMainPass();
 	void initDescriptorSetBlurPass();

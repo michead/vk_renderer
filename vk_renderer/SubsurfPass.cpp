@@ -344,7 +344,15 @@ void SubsurfPass::loadCameraUniforms()
 	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 
 	SSSPCameraUniformBufferObject ubo = {};
-	ubo.fovy = camera->fovy;
+	
+	if (VkEngine::getEngine().isSSSEnabled())
+	{
+		ubo.fovy = camera->fovy;
+	}
+	else
+	{
+		ubo.fovy = 0;
+	}
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),

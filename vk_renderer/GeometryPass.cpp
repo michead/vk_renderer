@@ -116,8 +116,17 @@ void GeometryPass::loadMaterial(const Material* material)
 	ubo.ks = glm::vec4(material->ks, 1);
 	ubo.ns = material->ns;
 	ubo.opacity = material->opacity;
-	ubo.translucency = material->translucency;
-	ubo.subsurfWidth = material->subsurfWidth;
+
+	if (VkEngine::getEngine().isDebugHUDEnabled())
+	{
+		ubo.translucency = VkEngine::getEngine().getTranslucencyOverride();
+		ubo.subsurfWidth = VkEngine::getEngine().getSubsurfWidthOverride();
+	}
+	else
+	{
+		ubo.translucency = material->translucency;
+		ubo.subsurfWidth = material->subsurfWidth;
+	}
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),

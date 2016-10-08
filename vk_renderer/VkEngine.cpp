@@ -77,6 +77,8 @@ void VkEngine::initImGui()
 	init_data.descriptor_pool = descriptorPool;
 	init_data.check_vk_result = checkVkResult;
 	ImGui_ImplGlfwVulkan_Init(window, true, &init_data);
+	ImGui::GetIO().FontGlobalScale = (float)swapchainExtent.width / swapchainExtent.height * HUD_FONT_SCALE;
+	ImGui::GetIO().DisplaySize = { swapchainExtent.width * HUD_AREA_SCALE, swapchainExtent.height * HUD_AREA_SCALE };
 
 	debugCmdBuffers.resize(swapchainImages.size());
 
@@ -224,8 +226,6 @@ void VkEngine::mainLoop()
 
 void VkEngine::drawDebugHUD()
 {
-	static VkClearValue clearColor = IMGUI_CLEAR_COLOR;
-
 	VK_CHECK(vkResetCommandPool(device, debugCmdPool, 0));
 
 	VkCommandBufferBeginInfo cmdBufferBegininfo = {};
@@ -243,12 +243,38 @@ void VkEngine::drawDebugHUD()
 
 	vkCmdBeginRenderPass(debugCmdBuffers[swapchainImageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	static float f = .0f;
-	ImGui::Text("Text test");
-	ImGui::SliderFloat("SliderFloat test", &f, .0f, .0f);
+	static auto firstFrame = true;
+
+	ImGui::PushID("Subsurface Scattering");
+	ImGui::CollapsingHeader("Subsurface Scattering");
+	if (firstFrame) { ImGui::Checkbox("Toggle", &firstFrame); }
+	else ImGui::Checkbox("Toggle", &sssEnabled);
+	ImGui::SliderFloat("Translucency", &translucencyOverride, .0f, .9f);
+	ImGui::SliderFloat("Kernel Width", &subsurfWidthOverride, 0, .05f);
+	// These attributes are static in the current implementation, no way to tweak them
+	// ImGui::SliderFloat3("Strength", (float*)&subsurfStrengthOverride, 0, 1);
+	// ImGui::SliderFloat3("Falloff", (float*) &subsurfFalloffOverride, 0, 1);
+	ImGui::PopID();
+
+	ImGui::PushID("Ambient Occlusion");
+	ImGui::CollapsingHeader("Ambient Occlusion");
+	if (firstFrame) { ImGui::Checkbox("Toggle", &firstFrame); }
+	else ImGui::Checkbox("Toggle", &ssaoEnabled);
+	ImGui::PopID();
+
+	ImGui::PushID("Stats");
+	ImGui::CollapsingHeader("Stats");
 	ImGui::Text("Avg %.3f ms/frame (%.1f FPS)", 1000.f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::PopID();
+
+	if (firstFrame)
+	{
+		firstFrame = false;
+	}
 
 	ImGui_ImplGlfwVulkan_Render(debugCmdBuffers[swapchainImageIndex]);
+
+	vkCmdEndRenderPass(debugCmdBuffers[swapchainImageIndex]);
 }
 
 void VkEngine::initPool()
@@ -283,14 +309,15 @@ void VkEngine::initRenderPass()
 	VkAttachmentDescription attachment = {};
 	attachment.format = swapchainFormat;
 	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 #if SHOW_HUD
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 #else
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 #endif
 
@@ -363,29 +390,8 @@ void VkEngine::initCommandPool()
 	commandPool = VkEngine::getEngine().getPool()->createCommandPool();
 }
 
-void VkEngine::draw()
+void VkEngine::endDebugFrame()
 {
-	VkResult result = vkAcquireNextImageKHR(
-		device, 
-		swapchain, 
-		std::numeric_limits<uint64_t>::max(), 
-		imageAvailableSemaphore, 
-		VK_NULL_HANDLE, 
-		&swapchainImageIndex);
-
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-	{
-		recreateSwapchain();
-		return;
-	}
-
-	gfxPipeline->run();
-
-#if SHOW_HUD
-	drawDebugHUD();
-	
-	vkCmdEndRenderPass(debugCmdBuffers[swapchainImageIndex]);
-
 	VkImageMemoryBarrier barrier = {};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -395,18 +401,18 @@ void VkEngine::draw()
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.image = swapchainImages[swapchainImageIndex];
-	barrier.subresourceRange = IMGUI_IMAGE_RANGE;
+	barrier.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 
 	vkCmdPipelineBarrier(
-		debugCmdBuffers[swapchainImageIndex], 
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 
-		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 
-		0, 
-		0, 
-		NULL, 
-		0, 
-		NULL, 
-		1, 
+		debugCmdBuffers[swapchainImageIndex],
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		0,
+		0,
+		NULL,
+		0,
+		NULL,
+		1,
 		&barrier);
 
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -425,6 +431,25 @@ void VkEngine::draw()
 	submitInfo.pCommandBuffers = &debugCmdBuffers[swapchainImageIndex];
 
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+}
+
+void VkEngine::draw()
+{
+	VkResult result = vkAcquireNextImageKHR(
+		device, 
+		swapchain, 
+		std::numeric_limits<uint64_t>::max(), 
+		imageAvailableSemaphore, 
+		VK_NULL_HANDLE, 
+		&swapchainImageIndex);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+	{
+		recreateSwapchain();
+		return;
+	}
+
+	gfxPipeline->run();
 
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -433,17 +458,14 @@ void VkEngine::draw()
 	presentInfo.pImageIndices = &swapchainImageIndex;
 	presentInfo.pResults = nullptr;
 	presentInfo.waitSemaphoreCount = 1;
+
+#if SHOW_HUD
+	drawDebugHUD();
+	endDebugFrame();
+
 	presentInfo.pWaitSemaphores = &debugDrawCompleteSemaphore;
-
 #else
-	VkPresentInfoKHR presentInfo = {};
-	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = &renderCompleteSemaphore;
-	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &swapchain;
-	presentInfo.pImageIndices = &swapchainImageIndex;
-	presentInfo.pResults = nullptr;
 #endif
 
 	result = vkQueuePresentKHR(VkEngine::getEngine().getPresentationQueue(), &presentInfo);

@@ -214,9 +214,9 @@ void SSAOPass::initDescriptorSetMainPass()
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
 	VkDescriptorBufferInfo cameraBufferInfo = {};
-	cameraBufferInfo.buffer = cameraUniformBuffer;
+	cameraBufferInfo.buffer = viewUniformBuffer;
 	cameraBufferInfo.offset = 0;
-	cameraBufferInfo.range = sizeof(SSAOPCameraUniformBufferObject);
+	cameraBufferInfo.range = sizeof(SSAOPViewUniformBufferObject);
 
 	VkWriteDescriptorSet cameraDescriptorSet = {};
 	cameraDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -308,31 +308,15 @@ void SSAOPass::initDescriptorSetBlurPass()
 
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-	VkDescriptorImageInfo colorImageInfo = {};
-	colorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	colorImageInfo.imageView = gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageView;
-	colorImageInfo.sampler = gBuffer->attachments[GBUFFER_COLOR_ATTACH_ID].imageSampler;
-
-	VkWriteDescriptorSet colorDescriptorSet = {};
-	colorDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	colorDescriptorSet.dstSet = descriptorSets[1];
-	colorDescriptorSet.dstBinding = 0;
-	colorDescriptorSet.dstArrayElement = 0;
-	colorDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	colorDescriptorSet.descriptorCount = 1;
-	colorDescriptorSet.pImageInfo = &colorImageInfo;
-
-	descriptorWrites.push_back(colorDescriptorSet);
-
 	VkDescriptorImageInfo aoImageInfo = {};
 	aoImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	aoImageInfo.imageView = aoAttachment.imageView;
 	aoImageInfo.sampler = aoAttachment.imageSampler;
-
+	
 	VkWriteDescriptorSet aoDescriptorSet = {};
 	aoDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	aoDescriptorSet.dstSet = descriptorSets[1];
-	aoDescriptorSet.dstBinding = 1;
+	aoDescriptorSet.dstBinding = 0;
 	aoDescriptorSet.dstArrayElement = 0;
 	aoDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	aoDescriptorSet.descriptorCount = 1;
@@ -405,17 +389,8 @@ void SSAOPass::initDescriptorSetLayoutBlurPass()
 {
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-	VkDescriptorSetLayoutBinding colorLayoutBinding = {};
-	colorLayoutBinding.binding = 0;
-	colorLayoutBinding.descriptorCount = 1;
-	colorLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	colorLayoutBinding.pImmutableSamplers = nullptr;
-	colorLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	bindings.push_back(colorLayoutBinding);
-
 	VkDescriptorSetLayoutBinding aoLayoutBinding = {};
-	aoLayoutBinding.binding = 1;
+	aoLayoutBinding.binding = 0;
 	aoLayoutBinding.descriptorCount = 1;
 	aoLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	aoLayoutBinding.pImmutableSamplers = nullptr;
@@ -462,13 +437,13 @@ void SSAOPass::initGraphicsPipeline()
 
 void SSAOPass::initUniformBuffer()
 {
-	VkDeviceSize cameraBufferSize = sizeof(SSAOPCameraUniformBufferObject);
+	VkDeviceSize cameraBufferSize = sizeof(SSAOPViewUniformBufferObject);
 
 	std::vector<BufferData> cameraBufferDataVec = VkEngine::getEngine().getPool()->createUniformBuffer(cameraBufferSize, true);
-	cameraUniformStagingBuffer = cameraBufferDataVec[0].buffer;
-	cameraUniformStagingBufferMemory = cameraBufferDataVec[0].bufferMemory;
-	cameraUniformBuffer = cameraBufferDataVec[1].buffer;
-	cameraUniformBufferMemory = cameraBufferDataVec[1].bufferMemory;
+	viewUniformStagingBuffer = cameraBufferDataVec[0].buffer;
+	viewUniformStagingBufferMemory = cameraBufferDataVec[0].bufferMemory;
+	viewUniformBuffer = cameraBufferDataVec[1].buffer;
+	viewUniformBufferMemory = cameraBufferDataVec[1].bufferMemory;
 
 	VkDeviceSize kernelBufferSize = sizeof(SSAOPKernelUniformBufferObject);
 
@@ -495,12 +470,21 @@ void SSAOPass::loadKernelUniforms()
 		kernelUniformStagingBuffer);
 }
 
-void SSAOPass::loadCameraUniforms()
+void SSAOPass::loadViewUniforms()
 {
 	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 
-	SSAOPCameraUniformBufferObject ubo = {};
-	ubo.noiseScale = glm::vec4(noiseScale, 0, 0);
+	SSAOPViewUniformBufferObject ubo = {};
+	
+	if (VkEngine::getEngine().isSSAOEnabled())
+	{
+		ubo.noiseScale = glm::vec4(noiseScale, 0, 0);
+	}
+	else
+	{
+		ubo.noiseScale = glm::vec4(0);
+	}
+
 	ubo.view = camera->getViewMatrix();
 	ubo.proj = camera->getProjMatrix();
 
@@ -510,9 +494,9 @@ void SSAOPass::loadCameraUniforms()
 		VkEngine::getEngine().getGraphicsQueue(),
 		&ubo,
 		sizeof(ubo),
-		cameraUniformStagingBufferMemory,
-		cameraUniformBuffer,
-		cameraUniformStagingBuffer);
+		viewUniformStagingBufferMemory,
+		viewUniformBuffer,
+		viewUniformStagingBuffer);
 }
 
 void SSAOPass::initBufferData()
@@ -522,5 +506,5 @@ void SSAOPass::initBufferData()
 
 void SSAOPass::updateBufferData()
 {
-	loadCameraUniforms();
+	loadViewUniforms();
 }

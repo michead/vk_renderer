@@ -14,18 +14,20 @@
 #define APPLICATION_NAME "VkEngine"
 #define ENGINE_NAME APPLICATION_NAME
 #define SHADER_MAIN "main"
-#define IMGUI_CLEAR_COLOR { 114, 144, 154 }
-#define IMGUI_IMAGE_RANGE { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 }
-#define FENCE_TIMEOUT 100
 
-#define DEFAULT_SS_STRENGTH		{	.48f,	.41f,	.28f	}
-#define DEFAULT_SS_FALLOFF		{	1.f,	.37f,	.3f		}
+#define DEFAULT_SUBSURF_STRENGTH	{	.48f,	.41f,	.28f	}
+#define DEFAULT_SUBSURF_FALLOFF		{	1.f,	.37f,	.3f		}
+#define DEFAULT_TRANSLUCENCY	.83f
+#define DEFAULT_SUBSURF_WIDTH	.012f
+#define HUD_FONT_SCALE 1.1f
+#define HUD_AREA_SCALE .18f
 
 #ifdef NDEBUG
 #define SHOW_HUD 0
 #else
 #define SHOW_HUD 1
 #endif
+
 
 struct Config;
 struct Scene;
@@ -42,6 +44,8 @@ public:
 	static VkEngine& getEngine() { static VkEngine engine; return engine; }
 	void init(int argc, char** argv);
 	void run();
+
+	bool isDebugHUDEnabled() { return SHOW_HUD; }
 
 	VkInstance getInstance() { return instance; }
 	VkDevice getDevice() { return device; }
@@ -66,6 +70,13 @@ public:
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
+
+	bool isSSSEnabled() { return sssEnabled; }
+	bool isSSAOEnabled() { return ssaoEnabled; }
+	float getSubsurfWidthOverride() { return subsurfWidthOverride; }
+	float getTranslucencyOverride() { return translucencyOverride; }
+	glm::vec3 getSubsurfStrengthOverride() { return subsurfStrengthOverride; }
+	glm::vec3 getSubsurfFalloffOverride() { return subsurfFalloffOverride; }
 
 private:
 	VkPool* pool;
@@ -96,6 +107,10 @@ private:
 	std::vector<VkCommandBuffer> debugCmdBuffers;
 	bool sssEnabled = true;
 	bool ssaoEnabled = true;
+	float subsurfWidthOverride = DEFAULT_SUBSURF_WIDTH;
+	float translucencyOverride = DEFAULT_TRANSLUCENCY;
+	glm::vec3 subsurfStrengthOverride = DEFAULT_SUBSURF_STRENGTH;
+	glm::vec3 subsurfFalloffOverride = DEFAULT_SUBSURF_FALLOFF;
 
 	uint32_t swapchainImageIndex;
 	uint16_t gBufferIndex = 0;
@@ -133,9 +148,7 @@ private:
 
 	static void onWindowResized(GLFWwindow* window, int width, int height);
 
-	static void debugFrameBegin();
-	static void debugFrameEnd();
-	
+	void endDebugFrame();
 	void drawDebugHUD();
 
 	static void checkVkResult(VkResult err)

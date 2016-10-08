@@ -20,6 +20,12 @@ layout(binding = 4) uniform Instance {
 
 void main() {
 	vec4 colorM = texture(samplerColor, inTexCoord);
+	
+	if (camera.fovy == 0.f) { 
+		outColor = vec4(colorM.rgb, 1);
+		return; 
+	}
+	
 	float depthM = texture(samplerDepth, inTexCoord).r;
 	float subsurfWidth = texture(samplerMaterial, inTexCoord).g;
 

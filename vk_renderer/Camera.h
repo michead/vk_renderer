@@ -13,7 +13,7 @@
 #define CAMERA_TARGET		{ 0, 0, 0 }
 #define CAMERA_UP			{ 0, 1, 0 }
 #define CAMERA_FOVY			0.5f
-#define CAMERA_NEAR			3.f
+#define CAMERA_NEAR			1.f
 #define CAMERA_FAR			7.f
 #define CAMERA_ROT_SCALE	.001f
 #define CAMERA_DOLLY_SCALE	.001f

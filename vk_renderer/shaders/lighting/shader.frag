@@ -6,8 +6,8 @@
 
 #define MAX_NUM_LIGHTS	4
 
-#define TRANSMITTANCE_SCALE	2.0f
-#define SHRINKING_SCALE		0.005f
+#define TRANSMITTANCE_SCALE	65.f
+#define SHRINKING_SCALE		.001f
 
 struct Light {
 	vec4 pos;

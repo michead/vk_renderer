@@ -2,17 +2,17 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#define RADIUS			0.1
+#define RADIUS			0.5
 #define KERNEL_SIZE		32
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform CameraUniformBufferObject {
+layout(binding = 0) uniform ViewUniformBufferObject {
 	vec4 noiseScale;
 	mat4 view;
 	mat4 proj;
-} camera;
+} unif;
 
 layout(binding = 1) uniform KernelUniformBufferObject {
 	vec4 sampleKernel[KERNEL_SIZE];
@@ -23,7 +23,7 @@ layout(binding = 3) uniform sampler2D samplerNormal;
 layout(binding = 4) uniform sampler2D samplerDepth;
 
 
-mat4 invProj = inverse(camera.proj);
+mat4 invProj = inverse(unif.proj);
 
 vec3 vsPos(vec2 texCoord) {
 	float z = texture(samplerDepth, texCoord).r;
@@ -40,7 +40,7 @@ bool isSampleOccluded(vec3 origin, mat3 tbn, int index) {
 	smpl = smpl * RADIUS + origin;
 
 	vec4 offset = vec4(smpl, 1);
-	offset = camera.proj * offset;
+	offset = unif.proj * offset;
 	offset.xy /= offset.w;
 	offset.xy = offset.xy * 0.5 + 0.5;
   
@@ -49,7 +49,7 @@ bool isSampleOccluded(vec3 origin, mat3 tbn, int index) {
 }
 
 mat3 tbnMat(vec3 normal) {
-	vec3 randVec = texture(samplerNoise, inTexCoord * camera.noiseScale.xy).rgb;
+	vec3 randVec = texture(samplerNoise, inTexCoord * unif.noiseScale.xy).rgb;
 	vec3 tangent = normalize(randVec - normal * dot(randVec, normal));
 	vec3 bitangent = normalize(cross(normal, tangent));
 	
@@ -57,7 +57,12 @@ mat3 tbnMat(vec3 normal) {
 }
 
 void main() {
-	vec3 normal = (camera.view * texture(samplerNormal, inTexCoord)).rgb;
+	if (unif.noiseScale.xy == vec2(0)) { 
+		outColor = vec4(1, 0, 0, 0);
+		return; 
+	}
+
+	vec3 normal = (unif.view * texture(samplerNormal, inTexCoord)).rgb;
 	mat3 tbn = tbnMat(normal);
 
 	float occlusion = 0;
