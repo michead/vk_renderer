@@ -37,6 +37,17 @@ layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outSpeculars;
 
+vec3 convolute(float scaledDist) {
+	float dd = -scaledDist * scaledDist;
+
+	return	vec3(0.233f, 0.455f, 0.649f) * exp(dd / 0.0064f) +
+			vec3(0.1f,   0.336f, 0.344f) * exp(dd / 0.0484f) +
+			vec3(0.118f, 0.198f, 0.0f)   * exp(dd / 0.187f)  +
+			vec3(0.113f, 0.007f, 0.007f) * exp(dd / 0.567f)  +
+			vec3(0.358f, 0.004f, 0.0f)   * exp(dd / 1.99f)   +
+			vec3(0.078f, 0.0f,   0.0f)   * exp(dd / 7.41f);
+}
+
 vec3 transmittance(vec3 pos, vec3 norm, vec3 l, mat4 lightMat, sampler2D shadowMap, float translucency, float subsurfWidth) {
 	float scale = TRANSMIT_INV_SCALE * (1.f - translucency) / subsurfWidth;
 	vec4 shadowPos = lightMat * vec4(pos - norm * SHRINKING_SCALE, 1);
@@ -44,15 +55,9 @@ vec3 transmittance(vec3 pos, vec3 norm, vec3 l, mat4 lightMat, sampler2D shadowM
 
 	float d1 = texture(shadowMap, shadowCoords.xy).r;
 	float d2 = shadowCoords.z;
-	float d = scale * abs(d1 - d2);
+	float scaledDist = scale * abs(d1 - d2);
 
-	float dd = -d * d;
-	vec3 profile =	vec3(0.233f, 0.455f, 0.649f) * exp(dd / 0.0064f) +
-					vec3(0.1f,   0.336f, 0.344f) * exp(dd / 0.0484f) +
-					vec3(0.118f, 0.198f, 0.0f)   * exp(dd / 0.187f)  +
-					vec3(0.113f, 0.007f, 0.007f) * exp(dd / 0.567f)  +
-					vec3(0.358f, 0.004f, 0.0f)   * exp(dd / 1.99f)   +
-					vec3(0.078f, 0.0f,   0.0f)   * exp(dd / 7.41f);
+	vec3 profile = convolute(scaledDist);
 
 	return profile * clamp(0.3f + dot(l, -norm), 0.f, 1.f);
 }

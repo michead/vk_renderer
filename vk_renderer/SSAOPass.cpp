@@ -17,7 +17,7 @@ void SSAOPass::computeKernel()
 		sampleKernel[i] = glm::vec4(normalize(glm::vec3(randInRange(-1, 1), randInRange(-1, 1), randF())), 0);
 
 		float scale = float(i) / float(KERNEL_SIZE);
-		scale = lerp(0.1f, 1, scale * scale);
+		scale = lerp(.1f, 1, scale * scale);
 		sampleKernel[i] *= scale;
 	}
 }

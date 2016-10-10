@@ -7,7 +7,7 @@
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2DArray samplerAO;
+layout(binding = 0) uniform sampler2D samplerAO;
 
 void main() {
 	vec2 texelSize = 1 / vec2(textureSize(samplerAO, 0));
@@ -18,11 +18,11 @@ void main() {
 	for (int i = 0; i < BLUR_SIZE; i++) {
 		for (int j = 0; j < BLUR_SIZE; j++) {
 			vec2 offset = (offsetOrigin + vec2(i, j)) * texelSize;
-			avgVisibility += texture(samplerAO, vec3(inTexCoord + offset, 0)).r;
+			avgVisibility += texture(samplerAO, inTexCoord + offset).r;
 		}
 	}
 
 	avgVisibility /= float(BLUR_SIZE * BLUR_SIZE);
 	
-	outColor = vec4(avgVisibility, 0, 0, 1);
+	outColor.r = avgVisibility;
 }

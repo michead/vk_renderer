@@ -22,7 +22,6 @@ layout(binding = 2) uniform sampler2D samplerNoise;
 layout(binding = 3) uniform sampler2D samplerNormal;
 layout(binding = 4) uniform sampler2D samplerDepth;
 
-
 mat4 invProj = inverse(unif.proj);
 
 vec3 vsPos(vec2 texCoord) {
@@ -75,5 +74,5 @@ void main() {
 
 	float visibility = 1 - occlusion / KERNEL_SIZE;
    
-	outColor = vec4(visibility, 0, 0, 0);
+	outColor.r = visibility;
 }
