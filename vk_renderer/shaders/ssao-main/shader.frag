@@ -3,7 +3,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #define RADIUS			0.5
-#define KERNEL_SIZE		32
+#define KERNEL_SIZE		16
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -12,6 +12,7 @@ layout(binding = 0) uniform ViewUniformBufferObject {
 	vec4 noiseScale;
 	mat4 view;
 	mat4 proj;
+	mat4 invProj;
 } unif;
 
 layout(binding = 1) uniform KernelUniformBufferObject {
@@ -22,20 +23,16 @@ layout(binding = 2) uniform sampler2D samplerNoise;
 layout(binding = 3) uniform sampler2D samplerNormal;
 layout(binding = 4) uniform sampler2D samplerDepth;
 
-mat4 invProj = inverse(unif.proj);
-
 bool isSampleOccluded(vec3 fragVSPos, float fragSSDepth, mat3 tbn, int index) {
 	vec3 smpl = tbn * kernel.sampleKernel[index].xyz;
 	vec3 vsSmplPos = smpl * RADIUS + fragVSPos;
-	vec4 ssSmplPos = unif.proj * vec4(vsSmplPos, 1);
-	ssSmplPos.z /= ssSmplPos.w;
 
-	vec4 offset = vec4(vsSmplPos, 1);
-	offset = unif.proj * offset;
-	offset.xy /= offset.w;
-	offset.xy = offset.xy * 0.5 + 0.5;
+	vec4 ssSmplPos = vec4(vsSmplPos, 1);
+	ssSmplPos = unif.proj * ssSmplPos;
+	ssSmplPos.xyz /= ssSmplPos.w;
+	ssSmplPos.xy = ssSmplPos.xy * 0.5 + 0.5;
 
-	float sampleDepth = texture(samplerDepth, offset.xy).r;
+	float sampleDepth = texture(samplerDepth, ssSmplPos.xy).r;
 	return sampleDepth < ssSmplPos.z && abs(fragSSDepth - sampleDepth) < RADIUS;
 }
 
@@ -59,7 +56,7 @@ void main() {
 	float fragSSDepth = texture(samplerDepth, inTexCoord).r;
     vec2 scaledTexCoord = inTexCoord * 2 - 1;
 	vec3 pos = vec3(scaledTexCoord.x, scaledTexCoord.y, fragSSDepth);
-	vec4 unprojPos = invProj * vec4(pos, 1);
+	vec4 unprojPos = unif.invProj * vec4(pos, 1);
 	vec3 fragVSPos = unprojPos.xyz / unprojPos.w;
 
 	float occlusion = 0;

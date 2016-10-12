@@ -487,6 +487,7 @@ void SSAOPass::loadViewUniforms()
 
 	ubo.view = camera->getViewMatrix();
 	ubo.proj = camera->getProjMatrix();
+	ubo.invProj = glm::inverse(ubo.proj);
 
 	updateBuffer(
 		VkEngine::getEngine().getDevice(),

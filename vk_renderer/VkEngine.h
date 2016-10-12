@@ -22,8 +22,6 @@
 #define HUD_FONT_SCALE 1.1f
 #define HUD_AREA_SCALE .18f
 
-// #define SHOW_HUD 1
-
 #ifdef NDEBUG
 #define SHOW_HUD 0
 #else

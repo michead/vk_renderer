@@ -5,7 +5,7 @@
 #include "Scene.h"
 
 
-#define KERNEL_SIZE 32
+#define KERNEL_SIZE 16
 #define NOISE_SIZE	4
 
 
@@ -13,6 +13,7 @@ struct SSAOPViewUniformBufferObject {
 	glm::vec4 noiseScale;
 	glm::mat4 view;
 	glm::mat4 proj;
+	glm::mat4 invProj;
 };
 
 struct SSAOPKernelUniformBufferObject {
