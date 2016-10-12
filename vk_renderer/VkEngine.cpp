@@ -245,6 +245,7 @@ void VkEngine::drawDebugHUD()
 
 	vkCmdBeginRenderPass(debugCmdBuffers[swapchainImageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	static bool started = false;
 	static bool firstFrame = true;
 	static std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
 	static std::ofstream outFile;
@@ -263,21 +264,29 @@ void VkEngine::drawDebugHUD()
 	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 	long elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count();
 
-	if (elapsed > 20000000 && !ssaoEnabled)
+	if (elapsed > 30000000 && !ssaoEnabled)
 	{
 		outFile << "SSAO" << std::endl;
 		ssaoEnabled = true;
 	}
-
-	if (elapsed > 40000000 && !sssEnabled)
+	
+	if (elapsed > 50000000 && !sssEnabled)
 	{
 		outFile << "SSS" << std::endl;
 		sssEnabled = true;
 	}
 
-	outFile << std::to_string(elapsed * 0.000001f) << " : " << std::to_string(ImGui::GetIO().Framerate) << std::endl;
+	if (elapsed > 10000000 && !started)
+	{
+		started = true;
+		startTime = std::chrono::steady_clock::now();
+	}
+	else
+	{
+		outFile << std::to_string(elapsed * 0.000001f) << " : " << std::to_string(ImGui::GetIO().Framerate) << std::endl;
+	}
 
-	if (std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count() > 60000000)
+	if (std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count() > 70000000)
 	{
 		system("pause");
 		outFile.close();

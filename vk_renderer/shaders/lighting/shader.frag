@@ -89,6 +89,6 @@ void main() {
 		color += lightMult;
     }
 
-	outColor = vec4(vec3(visibility), 1);
+	outColor = vec4(color * visibility, 1);
 	outSpeculars = vec4(speculars * visibility, 1);
 }
