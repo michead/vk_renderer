@@ -3,6 +3,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #define NUM_SAMPLES	17
+#define EDGE_LERP_SCALE 300.0f
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 0) out vec4 outColor;
@@ -30,22 +31,21 @@ void main() {
 	float subsurfWidth = texture(samplerMaterial, inTexCoord).g;
 
 	float dist = 1.0 / tan(0.5 * camera.fovy);
-    float scale = dist / depthM;
+    float scale = dist / depthM / 2.0f;
 
-    vec2 finalStep = subsurfWidth * scale * instance.blurDirection;
-    finalStep *= colorM.a;
-    finalStep *= 1.0f / 3.0f;
+    vec2 offset = subsurfWidth * scale * instance.blurDirection;
 
     vec3 colorBlurred = colorM.xyz;
     colorBlurred *= instance.kernel[0].rgb;
 
     for (int i = 1; i < NUM_SAMPLES; i++) {
-        vec2 offset = inTexCoord + instance.kernel[i].a * finalStep;
-        vec3 color = texture(samplerColor, offset).rgb;
-
-        float depth = texture(samplerDepth, offset).r;
-        float s = clamp(300.0f * dist * subsurfWidth * abs(depthM - depth), 0.0f, 1.0f);
-        color = mix(color, colorM.xyz, s);
+        vec2 sampleTexCoord = inTexCoord + instance.kernel[i].a * offset;
+        vec3 color = texture(samplerColor, sampleTexCoord).rgb;
+		
+        float depth = texture(samplerDepth, sampleTexCoord).r;
+        float dd = abs(depthM - depth);
+		float s = clamp(EDGE_LERP_SCALE * dist * subsurfWidth * dd, 0.0f, 1.0f);
+        color = mix(color, colorM.rgb, s);
 
         colorBlurred += instance.kernel[i].rgb * color;
     }

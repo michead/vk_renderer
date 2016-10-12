@@ -1,5 +1,7 @@
 #include "VkEngine.h"
 
+#include <chrono>
+#include <iostream>
 #include <set>
 
 #include "Camera.h"
@@ -243,7 +245,44 @@ void VkEngine::drawDebugHUD()
 
 	vkCmdBeginRenderPass(debugCmdBuffers[swapchainImageIndex], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	static auto firstFrame = true;
+	static bool firstFrame = true;
+	static std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
+	static std::ofstream outFile;
+
+	if (firstFrame)
+	{
+		ssaoEnabled = false;
+		sssEnabled = false;
+		firstFrame = false;
+
+		outFile.open("perf.txt", std::ofstream::out | std::ofstream::trunc);
+		outFile.close();
+		outFile.open("perf.txt", std::ios_base::app);
+	}
+
+	std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+	long elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count();
+
+	if (elapsed > 20000000 && !ssaoEnabled)
+	{
+		outFile << "SSAO" << std::endl;
+		ssaoEnabled = true;
+	}
+
+	if (elapsed > 40000000 && !sssEnabled)
+	{
+		outFile << "SSS" << std::endl;
+		sssEnabled = true;
+	}
+
+	outFile << std::to_string(elapsed * 0.000001f) << " : " << std::to_string(ImGui::GetIO().Framerate) << std::endl;
+
+	if (std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count() > 60000000)
+	{
+		system("pause");
+		outFile.close();
+		exit(0);
+	}
 
 	ImGui::PushID("Subsurface Scattering");
 	ImGui::CollapsingHeader("Subsurface Scattering");
@@ -369,7 +408,7 @@ void VkEngine::initRenderPass()
 void VkEngine::initFramebuffers()
 {
 	framebuffers.resize(swapchainImageViews.size());
-
+	
 	VkFramebufferCreateInfo framebufferInfo = {};
 	framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebufferInfo.renderPass = renderPass;
@@ -488,7 +527,15 @@ void VkEngine::recreateSwapchain()
 {
 	VK_CHECK(vkDeviceWaitIdle(device));
 
-	// TODO
+	delete pool;
+	initPool();
+	initImageViews();
+	initRenderPass(); // Graphics pipeline recreation may be avoided via viewport and scissor rectangle sizes dynamic states
+	initCommandPool();
+	initDescriptorPool();
+	initSemaphores();
+	initFramebuffers();
+	initOffscreenRenderPasses();
 }
 
 void VkEngine::initBufferData()

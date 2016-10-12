@@ -24,27 +24,19 @@ layout(binding = 4) uniform sampler2D samplerDepth;
 
 mat4 invProj = inverse(unif.proj);
 
-vec3 vsPos(vec2 texCoord) {
-	float z = texture(samplerDepth, texCoord).r;
-    vec2 scaledTexCoord = texCoord * 2 - 1;
-
-	vec3 pos = vec3(scaledTexCoord.x, scaledTexCoord.y, z);
-	vec4 unprojPos = invProj * vec4(pos, 1);
-	
-	return unprojPos.xyz / unprojPos.w;
-}
-
-bool isSampleOccluded(vec3 origin, mat3 tbn, int index) {
+bool isSampleOccluded(vec3 fragVSPos, float fragSSDepth, mat3 tbn, int index) {
 	vec3 smpl = tbn * kernel.sampleKernel[index].xyz;
-	smpl = smpl * RADIUS + origin;
+	vec3 vsSmplPos = smpl * RADIUS + fragVSPos;
+	vec4 ssSmplPos = unif.proj * vec4(vsSmplPos, 1);
+	ssSmplPos.z /= ssSmplPos.w;
 
-	vec4 offset = vec4(smpl, 1);
+	vec4 offset = vec4(vsSmplPos, 1);
 	offset = unif.proj * offset;
 	offset.xy /= offset.w;
 	offset.xy = offset.xy * 0.5 + 0.5;
-  
-	float sampleDepth = vsPos(offset.xy).z;
-	return sampleDepth > smpl.z && abs(origin.z - sampleDepth) < RADIUS;
+
+	float sampleDepth = texture(samplerDepth, offset.xy).r;
+	return sampleDepth < ssSmplPos.z && abs(fragSSDepth - sampleDepth) < RADIUS;
 }
 
 mat3 tbnMat(vec3 normal) {
@@ -63,11 +55,17 @@ void main() {
 
 	vec3 normal = (unif.view * texture(samplerNormal, inTexCoord)).rgb;
 	mat3 tbn = tbnMat(normal);
+	
+	float fragSSDepth = texture(samplerDepth, inTexCoord).r;
+    vec2 scaledTexCoord = inTexCoord * 2 - 1;
+	vec3 pos = vec3(scaledTexCoord.x, scaledTexCoord.y, fragSSDepth);
+	vec4 unprojPos = invProj * vec4(pos, 1);
+	vec3 fragVSPos = unprojPos.xyz / unprojPos.w;
 
 	float occlusion = 0;
 
 	for (int i = 0; i < KERNEL_SIZE; i++) {
-		if (isSampleOccluded(vsPos(inTexCoord), tbn, i)) {
+		if (isSampleOccluded(fragVSPos, fragSSDepth, tbn, i)) {
 			occlusion++;
 		}
 	}
