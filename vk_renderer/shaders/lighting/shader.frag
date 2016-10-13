@@ -6,7 +6,7 @@
 
 #define MAX_NUM_LIGHTS	4
 
-#define TRANSMIT_INV_SCALE	10.f
+#define TRANSMIT_INV_SCALE	180.f
 #define SHRINKING_SCALE		.005f
 
 struct Light {
@@ -53,7 +53,7 @@ vec3 transmittance(vec3 pos, vec3 norm, vec3 l, mat4 lightMat, sampler2D shadowM
 	vec4 shadowPos = lightMat * vec4(pos - norm * SHRINKING_SCALE, 1);
 	vec3 shadowCoords = shadowPos.xyz / shadowPos.w;
 
-	float d1 = texture(shadowMap, shadowCoords.xy).r;
+	float d1 = texture(shadowMap, shadowCoords.xy * 0.5 + 0.5).r;
 	float d2 = shadowCoords.z;
 	float scaledDist = scale * abs(d1 - d2);
 
