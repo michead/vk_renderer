@@ -31,7 +31,9 @@ void VkEngine::run()
 	loadScene();
 	initWindow();
 	initVulkan();
+#if SHOW_HUD
 	initImGui();
+#endif
 	initCamera();
 	setupInputCallbacks();
 	mainLoop();
@@ -210,6 +212,10 @@ void VkEngine::mainLoop()
 {
 	initBufferData();
 
+#ifdef PERF_NUM_FRAMES
+	long long numFrames = 0;
+#endif
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
@@ -277,10 +283,39 @@ void VkEngine::mainLoop()
 			exit(0);
 		}
 #endif
+
+#ifdef PERF_NUM_FRAMES
+		numFrames++;
+		if (numFrames > PERF_NUM_FRAMES)
+			break;
+#endif
 	}
 
 	VK_CHECK(vkDeviceWaitIdle(device));
+
+#if SHOW_HUD
 	ImGui_ImplGlfwVulkan_Shutdown();
+#endif
+
+#ifdef PERF_NUM_FRAMES
+	double dShadowPerf = gfxPipeline->getTimeSpentInShadowPass() / double(numFrames) / 1000.0;
+	double dGeomPerf = gfxPipeline->getTimeSpentInGeomPass() / double(numFrames) / 1000.0;
+	double dMainSSAOPerf = gfxPipeline->getTimeSpentInMainSSAOPass() / double(numFrames) / 1000.0;
+	double dBlurSSAOPerf = gfxPipeline->getTimeSpentInBlurSSAOPass() / double(numFrames) / 1000.0;
+	double dLightingPerf = gfxPipeline->getTimeSpentInLightingPass() / double(numFrames) / 1000.0;
+	double dSSSPerf = gfxPipeline->getTimeSpentInSSSPass() / double(numFrames) / 1000.0;
+	double dMergePerf = gfxPipeline->getTimeSpentInMergePass() / double(numFrames) / 1000.0;
+
+	std::cout << "Time spent in shadow pass: " + std::to_string(dShadowPerf) << std::endl;
+	std::cout << "Time spent in geometry pass: " + std::to_string(dGeomPerf) << std::endl;
+	std::cout << "Time spent in main SSAO: " + std::to_string(dMainSSAOPerf) << std::endl;
+	std::cout << "Time spent in blur SSAO: " + std::to_string(dBlurSSAOPerf) << std::endl;
+	std::cout << "Time spent in lighting pass: " + std::to_string(dLightingPerf) << std::endl;
+	std::cout << "Time spent in blur SSS: " + std::to_string(dSSSPerf) << std::endl;
+	std::cout << "Time spent in add spec pass: " + std::to_string(dMergePerf) << std::endl;
+
+	system("pause");
+#endif
 }
 
 void VkEngine::drawDebugHUD()

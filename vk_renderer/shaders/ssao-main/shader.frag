@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#define RADIUS			0.5
+#define RADIUS			0.75
 #define KERNEL_SIZE		16
 
 layout(location = 0) in vec2 inTexCoord;

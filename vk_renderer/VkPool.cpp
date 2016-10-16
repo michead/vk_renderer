@@ -19,11 +19,27 @@ VkSemaphore VkPool::createSemaphore()
 	return semaphores.back();
 }
 
+VkQueryPool VkPool::createQueryPool(VkQueryType queryType, uint32_t queryCount)
+{
+	VkQueryPoolCreateInfo info;
+	info.flags = 0;
+	info.pipelineStatistics = 0;
+	info.pNext = NULL;
+	info.queryCount = queryCount;
+	info.queryType = VK_QUERY_TYPE_TIMESTAMP;
+	info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+
+	queryPools.push_back(VK_NULL_HANDLE);
+	VK_CHECK(vkCreateQueryPool(device, &info, NULL, &queryPools.back()));
+
+	return queryPools.back();
+}
+
 VkFence VkPool::createFence()
 {
 	VkFenceCreateInfo fenceCreateInfo = {};
 	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+	fenceCreateInfo.flags = 0; // VK_FENCE_CREATE_SIGNALED_BIT;
 
 	fences.push_back(VK_NULL_HANDLE);
 	VK_CHECK(vkCreateFence(device, &fenceCreateInfo, nullptr, &fences.back()));
@@ -734,7 +750,9 @@ void VkPool::setPhysicalDevice()
 	VkPhysicalDeviceProperties deviceProperties;
 	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
+#ifndef NDEBUG
 	std::cout << "Device in use: " << deviceProperties.deviceName << std::endl;
+#endif
 }
 
 void VkPool::createSwapchain(glm::ivec2 resolution)
@@ -793,6 +811,7 @@ void VkPool::createSwapchain(glm::ivec2 resolution)
 	swapchainExtent = extent;
 }
 
+#ifndef NDEBUG
 void VkPool::createDebugCallback()
 {
 	if (!ENABLE_VALIDATION_LAYERS)
@@ -805,6 +824,7 @@ void VkPool::createDebugCallback()
 
 	VK_CHECK(CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &debugCallback));
 }
+#endif
 
 void VkPool::createSurface(GLFWwindow* window)
 {
@@ -928,10 +948,13 @@ void VkPool::freeResources()
 	for (VkFramebuffer framebuffer : framebuffers) { vkDestroyFramebuffer(device, framebuffer, nullptr); }
 	for (VkCommandPool commandPool : commandPools) { vkDestroyCommandPool(device, commandPool, nullptr); }
 	for (VkImageView swapchainImageView : swapchainImageViews) { vkDestroyImageView(device, swapchainImageView, nullptr); }
+	for (VkQueryPool queryPool : queryPools) { vkDestroyQueryPool(device, queryPool, nullptr); }
 
 	vkDestroySwapchainKHR(device, swapchain, nullptr);
 	vkDestroySurfaceKHR(instance, surface, nullptr);
+#ifndef NDEBUG
 	destroyDebugReportCallbackEXT(instance, debugCallback, nullptr);
+#endif
 	vkDestroyDevice(device, nullptr);
 	vkDestroyInstance(instance, nullptr);
 }

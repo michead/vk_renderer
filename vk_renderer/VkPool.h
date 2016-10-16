@@ -33,8 +33,10 @@ class VkPool {
 public:
 	VkPool(GLFWwindow* window, Config* config)
 	{ 
-		createInstance(); 
+		createInstance();
+#ifndef NDEBUG
 		createDebugCallback();
+#endif
 		createSurface(window);
 		setPhysicalDevice();
 		createDevice();  
@@ -80,6 +82,7 @@ public:
 	ImageData createTextureResources(void* pixels, unsigned int texWidth, unsigned int texHeight, bool highPrec = false);
 	GBufferAttachment createGBufferAttachment(GBufferAttachmentType type, bool toBeSampled = true);
 	VkFence createFence();
+	VkQueryPool createQueryPool(VkQueryType queryType, uint32_t queryCount);
 
 	void createSwapchain(glm::ivec2 resolution);
 	void createDebugCallback();
@@ -118,6 +121,7 @@ private:
 	std::vector<VkSampler> offscreenImageSamplers;
 	std::vector<VkShaderModule> shaderModules;
 	std::vector<VkFence> fences;
+	std::vector<VkQueryPool> queryPools;
 
 	VkSwapchainKHR swapchain;
 	VkDevice device;

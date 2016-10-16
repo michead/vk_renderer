@@ -137,6 +137,7 @@ inline bool checkValidationLayerSupport()
 	return true;
 }
 
+#ifndef NDEBUG
 inline VkResult CreateDebugReportCallbackEXT(
 	VkInstance instance, 
 	const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, 
@@ -181,6 +182,7 @@ inline static VKAPI_ATTR VkBool32 VKAPI_CALL debugReportCallback(
 
 	return VK_FALSE;
 }
+#endif
 
 inline QueueFamilyIndices findQueueFamilyIndices(VkPhysicalDevice device, VkSurfaceKHR surface)
 {

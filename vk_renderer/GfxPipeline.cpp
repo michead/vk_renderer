@@ -1,5 +1,7 @@
 #include "GfxPipeline.h"
 
+#include <chrono>
+
 #include "Camera.h"
 #include "ShadowPass.h"
 #include "LightingPass.h"
@@ -41,6 +43,8 @@ void GfxPipeline::init()
 	sssBlurPassOneCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	sssBlurPassTwoCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	lightingPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
+
+	// queryPool = VkEngine::getEngine().getPool()->createQueryPool(VK_QUERY_TYPE_TIMESTAMP, 2 * 7);
 }
 
 void GfxPipeline::run()
@@ -67,6 +71,12 @@ void GfxPipeline::run()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.signalSemaphoreCount = 1;
 
+#ifdef PERF_NUM_FRAMES
+	static VkFence fence = VkEngine::getEngine().getPool()->createFence();
+	std::chrono::steady_clock::time_point shadowStart = std::chrono::steady_clock::now();
+#else
+	static VkFence fence = VK_NULL_HANDLE;
+#endif
 	for (size_t i = 0; i < shadowPass->getNumLights(); i++)
 	{
 		VkCommandBuffer cmdBuffer = shadowPass->getCmdBufferAt(i);
@@ -82,33 +92,90 @@ void GfxPipeline::run()
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 		submitInfo.pCommandBuffers = &cmdBuffer;
 
-		VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+		VK_CHECK(
+			vkQueueSubmit(
+				VkEngine::getEngine().getGraphicsQueue(), 
+				1, 
+				&submitInfo, i == (shadowPass->getNumLights() - 1) ? fence : VK_NULL_HANDLE
+			)
+		);
 	}
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point shadowEnd = std::chrono::steady_clock::now();
+	timeSpentInShadowPass += std::chrono::duration_cast<std::chrono::microseconds>(shadowEnd - shadowStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 
+#ifdef PERF_NUM_FRAMES
+	std::chrono::steady_clock::time_point geomStart = std::chrono::steady_clock::now();
+#endif
 	submitInfo.pWaitSemaphores = &shadowPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &geomPassCmdBuffer;
 	submitInfo.pSignalSemaphores = &geomPassCompleteSemaphore;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point geomEnd = std::chrono::steady_clock::now();
+	timeSpentInGeomPass += std::chrono::duration_cast<std::chrono::microseconds>(geomEnd - geomStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 
+#ifdef PERF_NUM_FRAMES
+	std::chrono::steady_clock::time_point mainSSAOStart = std::chrono::steady_clock::now();
+#endif
 	submitInfo.pWaitSemaphores = &geomPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &mainSSAOPassCmdBuffer;
 	submitInfo.pSignalSemaphores = &mainSSAOPassCompleteSemaphore;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point mainSSAOEnd = std::chrono::steady_clock::now();
+	timeSpentInMainSSAOPass += std::chrono::duration_cast<std::chrono::microseconds>(mainSSAOEnd - mainSSAOStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 
+#ifdef PERF_NUM_FRAMES
+	std::chrono::steady_clock::time_point blurSSAOStart = std::chrono::steady_clock::now();
+#else
+	static VkFence fence4 = VK_NULL_HANDLE;
+#endif
 	submitInfo.pWaitSemaphores = &mainSSAOPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &blurSSAOPassCmdBuffer;
 	submitInfo.pSignalSemaphores = &blurSSAOPassCompleteSemaphore;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point blurSSAOEnd = std::chrono::steady_clock::now();
+	timeSpentInBlurSSAOPass += std::chrono::duration_cast<std::chrono::microseconds>(blurSSAOEnd - blurSSAOStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 
+#ifdef PERF_NUM_FRAMES
+	std::chrono::steady_clock::time_point lightingStart = std::chrono::steady_clock::now();
+#else
+	static VkFence fence5 = VK_NULL_HANDLE;
+#endif
 	submitInfo.pWaitSemaphores = &blurSSAOPassCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &lightingPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &lightingPassCmdBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point lightingEnd = std::chrono::steady_clock::now();
+	timeSpentInLightingPass += std::chrono::duration_cast<std::chrono::microseconds>(lightingEnd - lightingStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 
+#ifdef PERF_NUM_FRAMES
+	std::chrono::steady_clock::time_point sssStart = std::chrono::steady_clock::now();
+#else
+	static VkFence fence6 = VK_NULL_HANDLE;
+#endif
 	submitInfo.pWaitSemaphores = &lightingPassCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &sssBlurPassOneCompleteSemaphore;
 	submitInfo.pCommandBuffers = &sssBlurPassOneCmdBuffer;
@@ -119,13 +186,28 @@ void GfxPipeline::run()
 	submitInfo.pSignalSemaphores = &sssBlurPassTwoCompleteSemaphore;
 	submitInfo.pCommandBuffers = &sssBlurPassTwoCmdBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point sssEnd = std::chrono::steady_clock::now();
+	timeSpentInSSSPass += std::chrono::duration_cast<std::chrono::microseconds>(sssEnd - sssStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 
+#ifdef PERF_NUM_FRAMES
+	std::chrono::steady_clock::time_point mergeStart = std::chrono::steady_clock::now();
+#endif
 	submitInfo.pWaitSemaphores = &sssBlurPassTwoCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &renderingCompleteSemaphore;
 	submitInfo.pCommandBuffers = &mergePassCmdBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
+#ifdef PERF_NUM_FRAMES
+	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
+	std::chrono::steady_clock::time_point mergeEnd = std::chrono::steady_clock::now();
+	timeSpentInMergePass += std::chrono::duration_cast<std::chrono::microseconds>(mergeEnd - mergeStart).count();
+	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+#endif
 }
 
 VkCommandBuffer GfxPipeline::getPresentationCmdBuffer() const

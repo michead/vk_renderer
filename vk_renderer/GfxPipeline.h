@@ -18,6 +18,8 @@
 #define MERGE_PASS_VS		"shaders/merge/vert.spv"
 #define MERGE_PASS_FS		"shaders/merge/frag.spv"
 
+#define FENCE_TIMEOUT		100000
+
 
 class ShadowPass;
 class GeometryPass;
@@ -40,6 +42,14 @@ public:
 	VkRenderPass getPresentationRenderPass() const;
 	VkCommandBuffer getPresentationCmdBuffer() const;
 
+	long long getTimeSpentInShadowPass() { return timeSpentInShadowPass; }
+	long long getTimeSpentInGeomPass() { return timeSpentInGeomPass; }
+	long long getTimeSpentInMainSSAOPass() { return timeSpentInMainSSAOPass; }
+	long long getTimeSpentInBlurSSAOPass() { return timeSpentInBlurSSAOPass; }
+	long long getTimeSpentInLightingPass() { return timeSpentInLightingPass; }
+	long long getTimeSpentInSSSPass() { return timeSpentInSSSPass; }
+	long long getTimeSpentInMergePass() { return timeSpentInMergePass; }
+
 private:
 	ShadowPass* shadowPass;
 	GeometryPass* geometryPass;
@@ -57,6 +67,16 @@ private:
 	VkSemaphore sssBlurPassOneCompleteSemaphore;
 	VkSemaphore sssBlurPassTwoCompleteSemaphore;
 	VkSemaphore mergePassCompleteSemaphore;
+
+	VkQueryPool queryPool;
+
+	double timeSpentInShadowPass = 0;
+	double timeSpentInGeomPass = 0;
+	double timeSpentInLightingPass = 0;
+	double timeSpentInMainSSAOPass = 0;
+	double timeSpentInBlurSSAOPass = 0;
+	double timeSpentInSSSPass = 0;
+	double timeSpentInMergePass = 0;
 
 	void cleanup();
 };
