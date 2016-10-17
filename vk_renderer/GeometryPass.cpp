@@ -41,6 +41,11 @@ void GeometryPass::initCommandBuffers()
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
+#ifdef PERF_GPU_TIME
+	vkCmdResetQueryPool(commandBuffer, VkEngine::getEngine().getQueryPool(), 8, 1);
+	vkCmdResetQueryPool(commandBuffer, VkEngine::getEngine().getQueryPool(), 9, 1);
+#endif
+
 	VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
 
 	VkRect2D renderArea = {};
@@ -106,6 +111,11 @@ void GeometryPass::initCommandBuffers()
 
 	vkCmdEndRenderPass(commandBuffer);
 
+#ifdef PERF_GPU_TIME
+	vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 8);
+	vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 9);
+#endif
+
 	VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }
 
@@ -125,7 +135,7 @@ void GeometryPass::loadMaterial(const Material* material)
 	else
 	{
 		ubo.translucency = material->translucency;
-		ubo.subsurfWidth = material->subsurfWidth;
+		ubo.subsurfWidth = VkEngine::getEngine().isSSSEnabled() ? material->subsurfWidth : 0;
 	}
 
 	updateBuffer(

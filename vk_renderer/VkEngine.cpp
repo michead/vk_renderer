@@ -1,6 +1,5 @@
 #include "VkEngine.h"
 
-#include <chrono>
 #include <iostream>
 #include <set>
 
@@ -212,8 +211,9 @@ void VkEngine::mainLoop()
 {
 	initBufferData();
 
-#ifdef PERF_NUM_FRAMES
-	long long numFrames = 0;
+#ifdef PERF_GPU_TIME
+	startTime = std::chrono::high_resolution_clock::now();
+	numFrames = 0;
 #endif
 
 	while (!glfwWindowShouldClose(window))
@@ -284,10 +284,12 @@ void VkEngine::mainLoop()
 		}
 #endif
 
-#ifdef PERF_NUM_FRAMES
-		numFrames++;
-		if (numFrames > PERF_NUM_FRAMES)
+#ifdef PERF_GPU_TIME
+		if (++numFrames >= PERF_NUM_FRAMES)
+		{
+			endTime = std::chrono::high_resolution_clock::now();
 			break;
+		}
 #endif
 	}
 
@@ -297,7 +299,8 @@ void VkEngine::mainLoop()
 	ImGui_ImplGlfwVulkan_Shutdown();
 #endif
 
-#ifdef PERF_NUM_FRAMES
+#ifdef PERF_GPU_TIME
+	double avgFPS = numFrames / (std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count() / 1000000000.0);
 	double dShadowPerf = gfxPipeline->getTimeSpentInShadowPass() / double(numFrames) / 1000.0;
 	double dGeomPerf = gfxPipeline->getTimeSpentInGeomPass() / double(numFrames) / 1000.0;
 	double dMainSSAOPerf = gfxPipeline->getTimeSpentInMainSSAOPass() / double(numFrames) / 1000.0;
@@ -306,6 +309,7 @@ void VkEngine::mainLoop()
 	double dSSSPerf = gfxPipeline->getTimeSpentInSSSPass() / double(numFrames) / 1000.0;
 	double dMergePerf = gfxPipeline->getTimeSpentInMergePass() / double(numFrames) / 1000.0;
 
+	std::cout << "Avg FPS: " + std::to_string(avgFPS) << std::endl;
 	std::cout << "Time spent in shadow pass: " + std::to_string(dShadowPerf) << std::endl;
 	std::cout << "Time spent in geometry pass: " + std::to_string(dGeomPerf) << std::endl;
 	std::cout << "Time spent in main SSAO: " + std::to_string(dMainSSAOPerf) << std::endl;
@@ -339,6 +343,7 @@ void VkEngine::drawDebugHUD()
 
 	static bool firstFrame = true;
 
+#ifndef NDEBUG
 	ImGui::PushID("Subsurface Scattering");
 	ImGui::CollapsingHeader("Subsurface Scattering");
 	if (firstFrame) { ImGui::Checkbox("Toggle", &firstFrame); }
@@ -355,6 +360,7 @@ void VkEngine::drawDebugHUD()
 	if (firstFrame) { ImGui::Checkbox("Toggle", &firstFrame); }
 	else ImGui::Checkbox("Toggle", &ssaoEnabled);
 	ImGui::PopID();
+#endif
 
 	ImGui::PushID("Stats");
 	ImGui::CollapsingHeader("Stats");
@@ -386,6 +392,8 @@ void VkEngine::initPool()
 	swapchainImages = pool->getSwapchainImages();
 	swapchainFormat = pool->getSwapchainFormat();
 	swapchainExtent = pool->getSwapchainExtent();
+
+	queryPool = pool->createQueryPool(VK_QUERY_TYPE_TIMESTAMP, 25);
 }
 
 void VkEngine::initImageViews()

@@ -71,8 +71,8 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 	std::string meshFilename = jsonMesh["filename"].string_value();
 	
 	json11::Json jsonMaterial = jsonMesh["material"];
-	float translucency = jsonMaterial["translucency"].number_value();
-	float sswidth = jsonMaterial["ss_width"].number_value();
+	double translucency = jsonMaterial["translucency"].number_value();
+	double sswidth = jsonMaterial["ss_width"].number_value();
 
 	if (!tinyobj::LoadObj(&attrib_, &shapes_, &materials_, &err_, (path + meshFilename).c_str(), path.c_str()))
 	{
@@ -101,8 +101,8 @@ void Scene::loadObjMesh(json11::Json jsonMesh)
 		materials[i]->ks = { material.specular[0], material.specular[1], material.specular[2] };
 		materials[i]->ns = material.shininess;
 
-		materials[i]->translucency = translucency;
-		materials[i]->subsurfWidth = sswidth;
+		materials[i]->translucency = (float)translucency;
+		materials[i]->subsurfWidth = (float)sswidth;
 
 		if (textureMap.find(material.diffuse_texname) != textureMap.end())
 			materials[i]->kdMap = textureMap[material.diffuse_texname];
@@ -199,16 +199,16 @@ void Scene::loadBinMesh(json11::Json jsonMesh)
 
 	json11::Json jsonMaterial = jsonMesh["material"];
 	
-	float translucency = jsonMaterial["translucency"].number_value();
-	float ssWidth = jsonMaterial["ss_width"].number_value();
+	double translucency = jsonMaterial["translucency"].number_value();
+	double ssWidth = jsonMaterial["ss_width"].number_value();
 	std::vector<json11::Json> jsonKs = jsonMaterial["ks"].array_items();
 	glm::vec3 ks = { jsonKs[0].number_value(), jsonKs[1].number_value(), jsonKs[2].number_value() };
-	float ns = jsonMaterial["ns"].number_value();
+	double ns = jsonMaterial["ns"].number_value();
 
-	material->translucency = translucency;
-	material->subsurfWidth = ssWidth;
+	material->translucency = (float)translucency;
+	material->subsurfWidth = (float)ssWidth;
 	material->ks = ks;
-	material->ns = ns;
+	material->ns = (float)ns;
 
 	std::string kdTxt = jsonMaterial["kd_txt"].string_value();
 	std::string normTxt = jsonMaterial["norm_txt"].string_value();

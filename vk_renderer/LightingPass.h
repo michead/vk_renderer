@@ -19,6 +19,7 @@ struct LPSceneUniformBufferObject {
 	glm::vec4 ka;
 	LPShaderLight lights[MAX_NUM_LIGHTS];
 	int numLights;
+	VkBool32 addSpeculars;
 };
 
 

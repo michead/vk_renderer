@@ -42,13 +42,13 @@ public:
 	VkRenderPass getPresentationRenderPass() const;
 	VkCommandBuffer getPresentationCmdBuffer() const;
 
-	long long getTimeSpentInShadowPass() { return timeSpentInShadowPass; }
-	long long getTimeSpentInGeomPass() { return timeSpentInGeomPass; }
-	long long getTimeSpentInMainSSAOPass() { return timeSpentInMainSSAOPass; }
-	long long getTimeSpentInBlurSSAOPass() { return timeSpentInBlurSSAOPass; }
-	long long getTimeSpentInLightingPass() { return timeSpentInLightingPass; }
-	long long getTimeSpentInSSSPass() { return timeSpentInSSSPass; }
-	long long getTimeSpentInMergePass() { return timeSpentInMergePass; }
+	double getTimeSpentInShadowPass() { return timeSpentInShadowPass; }
+	double getTimeSpentInGeomPass() { return timeSpentInGeomPass; }
+	double getTimeSpentInMainSSAOPass() { return timeSpentInMainSSAOPass; }
+	double getTimeSpentInBlurSSAOPass() { return timeSpentInBlurSSAOPass; }
+	double getTimeSpentInLightingPass() { return timeSpentInLightingPass; }
+	double getTimeSpentInSSSPass() { return timeSpentInSSSPass; }
+	double getTimeSpentInMergePass() { return timeSpentInMergePass; }
 
 private:
 	ShadowPass* shadowPass;
@@ -67,8 +67,6 @@ private:
 	VkSemaphore sssBlurPassOneCompleteSemaphore;
 	VkSemaphore sssBlurPassTwoCompleteSemaphore;
 	VkSemaphore mergePassCompleteSemaphore;
-
-	VkQueryPool queryPool;
 
 	double timeSpentInShadowPass = 0;
 	double timeSpentInGeomPass = 0;

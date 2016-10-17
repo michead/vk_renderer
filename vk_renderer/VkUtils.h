@@ -200,6 +200,11 @@ inline QueueFamilyIndices findQueueFamilyIndices(VkPhysicalDevice device, VkSurf
 		if (queueFamilyCount > 0 && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			indices.graphicsFamily = i;
+
+#ifndef NDEBUG
+			// uint32_t tsValidBits = queueFamily.timestampValidBits;
+			// std::cout << "Number of valid bits in device timestamps: " + std::to_string(tsValidBits) << std::endl;
+#endif
 		}
 
 		VkBool32 isSupportPresent = VK_FALSE;
@@ -354,6 +359,17 @@ inline VkPhysicalDevice choosePhysicalDevice(VkInstance instance, VkSurfaceKHR s
 	{
 		throw std::runtime_error("Failed to find a suitable GPU!");
 	}
+
+	VkPhysicalDeviceProperties properties;
+	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+#ifndef NDEBUG
+	if (properties.limits.timestampComputeAndGraphics == VK_TRUE)
+	{
+		std::cout << "Timestamps supported by both compute and graphics queue families." << std::endl;
+		std::cout << "Device timestamp period: " + std::to_string(properties.limits.timestampPeriod) << std::endl;
+	}
+#endif
 
 	return physicalDevice;
 }

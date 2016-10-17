@@ -143,6 +143,11 @@ void SSAOPass::initCommandBuffers()
 
 		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
+#ifdef PERF_GPU_TIME
+		vkCmdResetQueryPool(commandBuffers[i], VkEngine::getEngine().getQueryPool(), 10 + 2 * i, 1);
+		vkCmdResetQueryPool(commandBuffers[i], VkEngine::getEngine().getQueryPool(), 10 + 2 * i + 1, 1);
+#endif
+
 		VkExtent2D extent = VkEngine::getEngine().getSwapchainExtent();
 
 		VkRect2D renderArea = {};
@@ -190,6 +195,11 @@ void SSAOPass::initCommandBuffers()
 		vkCmdDrawIndexed(commandBuffers[i], quad->indices.size(), 1, 0, 0, 1);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
+
+#ifdef PERF_GPU_TIME
+		vkCmdWriteTimestamp(commandBuffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 10 + 2 * i);
+		vkCmdWriteTimestamp(commandBuffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 10 + 2 * i + 1);
+#endif
 
 		VK_CHECK(vkEndCommandBuffer(commandBuffers[i]));
 	}

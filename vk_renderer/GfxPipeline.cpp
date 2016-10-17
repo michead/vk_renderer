@@ -43,8 +43,6 @@ void GfxPipeline::init()
 	sssBlurPassOneCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	sssBlurPassTwoCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
 	lightingPassCompleteSemaphore = VkEngine::getEngine().getPool()->createSemaphore();
-
-	// queryPool = VkEngine::getEngine().getPool()->createQueryPool(VK_QUERY_TYPE_TIMESTAMP, 2 * 7);
 }
 
 void GfxPipeline::run()
@@ -71,12 +69,6 @@ void GfxPipeline::run()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.signalSemaphoreCount = 1;
 
-#ifdef PERF_NUM_FRAMES
-	static VkFence fence = VkEngine::getEngine().getPool()->createFence();
-	std::chrono::steady_clock::time_point shadowStart = std::chrono::steady_clock::now();
-#else
-	static VkFence fence = VK_NULL_HANDLE;
-#endif
 	for (size_t i = 0; i < shadowPass->getNumLights(); i++)
 	{
 		VkCommandBuffer cmdBuffer = shadowPass->getCmdBufferAt(i);
@@ -92,121 +84,170 @@ void GfxPipeline::run()
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 		submitInfo.pCommandBuffers = &cmdBuffer;
 
-		VK_CHECK(
-			vkQueueSubmit(
-				VkEngine::getEngine().getGraphicsQueue(), 
-				1, 
-				&submitInfo, i == (shadowPass->getNumLights() - 1) ? fence : VK_NULL_HANDLE
-			)
-		);
-	}
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point shadowEnd = std::chrono::steady_clock::now();
-	timeSpentInShadowPass += std::chrono::duration_cast<std::chrono::microseconds>(shadowEnd - shadowStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
-#endif
+		VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
 
-#ifdef PERF_NUM_FRAMES
-	std::chrono::steady_clock::time_point geomStart = std::chrono::steady_clock::now();
+#ifdef PERF_GPU_TIME
+		uint64_t shadowStart = 0;
+		VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+			2 * i, 1, sizeof(uint64_t),
+			&shadowStart, sizeof(uint64_t),
+			VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+		uint64_t shadowEnd = 0;
+		VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+			2 * i + 1, 1, sizeof(uint64_t),
+			&shadowEnd, sizeof(uint64_t),
+			VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+		timeSpentInShadowPass += (shadowEnd - shadowStart) / 1000.0;
 #endif
+	}
+
 	submitInfo.pWaitSemaphores = &shadowPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &geomPassCmdBuffer;
 	submitInfo.pSignalSemaphores = &geomPassCompleteSemaphore;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point geomEnd = std::chrono::steady_clock::now();
-	timeSpentInGeomPass += std::chrono::duration_cast<std::chrono::microseconds>(geomEnd - geomStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t geomStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		8, 1, sizeof(uint64_t),
+		&geomStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t geomEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		9, 1, sizeof(uint64_t),
+		&geomEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInGeomPass += (geomEnd - geomStart) / 1000.0;
 #endif
 
-#ifdef PERF_NUM_FRAMES
-	std::chrono::steady_clock::time_point mainSSAOStart = std::chrono::steady_clock::now();
-#endif
 	submitInfo.pWaitSemaphores = &geomPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &mainSSAOPassCmdBuffer;
 	submitInfo.pSignalSemaphores = &mainSSAOPassCompleteSemaphore;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point mainSSAOEnd = std::chrono::steady_clock::now();
-	timeSpentInMainSSAOPass += std::chrono::duration_cast<std::chrono::microseconds>(mainSSAOEnd - mainSSAOStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t mainSSAOStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		10, 1, sizeof(uint64_t),
+		&mainSSAOStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t mainSSAOEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		11, 1, sizeof(uint64_t),
+		&mainSSAOEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInMainSSAOPass += (mainSSAOEnd - mainSSAOStart) / 1000.0;
 #endif
 
-#ifdef PERF_NUM_FRAMES
-	std::chrono::steady_clock::time_point blurSSAOStart = std::chrono::steady_clock::now();
-#else
-	static VkFence fence4 = VK_NULL_HANDLE;
-#endif
 	submitInfo.pWaitSemaphores = &mainSSAOPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &blurSSAOPassCmdBuffer;
 	submitInfo.pSignalSemaphores = &blurSSAOPassCompleteSemaphore;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point blurSSAOEnd = std::chrono::steady_clock::now();
-	timeSpentInBlurSSAOPass += std::chrono::duration_cast<std::chrono::microseconds>(blurSSAOEnd - blurSSAOStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t blurSSAOStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		12, 1, sizeof(uint64_t),
+		&blurSSAOStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t blurSSAOEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		13, 1, sizeof(uint64_t),
+		&blurSSAOEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInBlurSSAOPass += (blurSSAOEnd - blurSSAOStart) / 1000.0;
 #endif
 
-#ifdef PERF_NUM_FRAMES
-	std::chrono::steady_clock::time_point lightingStart = std::chrono::steady_clock::now();
-#else
-	static VkFence fence5 = VK_NULL_HANDLE;
-#endif
 	submitInfo.pWaitSemaphores = &blurSSAOPassCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &lightingPassCompleteSemaphore;
 	submitInfo.pCommandBuffers = &lightingPassCmdBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point lightingEnd = std::chrono::steady_clock::now();
-	timeSpentInLightingPass += std::chrono::duration_cast<std::chrono::microseconds>(lightingEnd - lightingStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t lightingStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		14, 1, sizeof(uint64_t),
+		&lightingStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t lightingEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		15, 1, sizeof(uint64_t),
+		&lightingEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInLightingPass += (lightingEnd - lightingStart) / 1000.0;
 #endif
 
-#ifdef PERF_NUM_FRAMES
-	std::chrono::steady_clock::time_point sssStart = std::chrono::steady_clock::now();
-#else
-	static VkFence fence6 = VK_NULL_HANDLE;
-#endif
 	submitInfo.pWaitSemaphores = &lightingPassCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &sssBlurPassOneCompleteSemaphore;
 	submitInfo.pCommandBuffers = &sssBlurPassOneCmdBuffer;
 
 	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t sssBlurOneStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		16, 1, sizeof(uint64_t),
+		&sssBlurOneStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t sssBlurOneEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		17, 1, sizeof(uint64_t),
+		&sssBlurOneEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInSSSPass += (sssBlurOneEnd - sssBlurOneStart) / 1000.0;
+#endif
 
 	submitInfo.pWaitSemaphores = &sssBlurPassOneCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &sssBlurPassTwoCompleteSemaphore;
 	submitInfo.pCommandBuffers = &sssBlurPassTwoCmdBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point sssEnd = std::chrono::steady_clock::now();
-	timeSpentInSSSPass += std::chrono::duration_cast<std::chrono::microseconds>(sssEnd - sssStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t sssBlurTwoStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		18, 1, sizeof(uint64_t),
+		&sssBlurTwoStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t sssBlurTwoEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		19, 1, sizeof(uint64_t),
+		&sssBlurTwoEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInSSSPass += (sssBlurTwoEnd - sssBlurTwoStart) / 1000.0;
 #endif
 
-#ifdef PERF_NUM_FRAMES
-	std::chrono::steady_clock::time_point mergeStart = std::chrono::steady_clock::now();
-#endif
 	submitInfo.pWaitSemaphores = &sssBlurPassTwoCompleteSemaphore;
 	submitInfo.pSignalSemaphores = &renderingCompleteSemaphore;
 	submitInfo.pCommandBuffers = &mergePassCmdBuffer;
 
-	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, fence));
-#ifdef PERF_NUM_FRAMES
-	VK_CHECK(vkWaitForFences(VkEngine::getEngine().getDevice(), 1, &fence, VK_TRUE, UINT64_MAX));
-	std::chrono::steady_clock::time_point mergeEnd = std::chrono::steady_clock::now();
-	timeSpentInMergePass += std::chrono::duration_cast<std::chrono::microseconds>(mergeEnd - mergeStart).count();
-	vkResetFences(VkEngine::getEngine().getDevice(), 1, &fence);
+	VK_CHECK(vkQueueSubmit(VkEngine::getEngine().getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+#ifdef PERF_GPU_TIME
+	uint64_t mergeStart = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		20, 1, sizeof(uint64_t),
+		&mergeStart, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	uint64_t mergeEnd = 0;
+	VK_CHECK(vkGetQueryPoolResults(VkEngine::getEngine().getDevice(), VkEngine::getEngine().getQueryPool(),
+		21, 1, sizeof(uint64_t),
+		&mergeEnd, sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT));
+
+	timeSpentInMergePass += (mergeEnd - mergeStart) / 1000.0;
 #endif
 }
 

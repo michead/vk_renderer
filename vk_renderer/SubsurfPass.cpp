@@ -100,6 +100,20 @@ void SubsurfPass::initCommandBuffers()
 
 	vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
+#ifdef PERF_GPU_TIME
+	std::vector<uint32_t> queryIndices;
+	if (blurDirection == glm::vec2(1, 0))
+	{
+		queryIndices = { 16, 17 };
+	}
+	else
+	{
+		queryIndices = { 18, 19 };
+	}
+	vkCmdResetQueryPool(commandBuffer, VkEngine::getEngine().getQueryPool(), queryIndices[0], 1);
+	vkCmdResetQueryPool(commandBuffer, VkEngine::getEngine().getQueryPool(), queryIndices[1], 1);
+#endif
+
 	renderPassInfo.framebuffer = framebuffer;
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -122,6 +136,11 @@ void SubsurfPass::initCommandBuffers()
 	vkCmdDrawIndexed(commandBuffer, quad->indices.size(), 1, 0, 0, 1);
 
 	vkCmdEndRenderPass(commandBuffer);
+
+#ifdef PERF_GPU_TIME
+	vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), queryIndices[0]);
+	vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), queryIndices[1]);
+#endif
 
 	VK_CHECK(vkEndCommandBuffer(commandBuffer));
 }

@@ -87,6 +87,11 @@ void MergePass::initCommandBuffers()
 	{
 		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
+#ifdef PERF_GPU_TIME
+		vkCmdResetQueryPool(commandBuffers[i], VkEngine::getEngine().getQueryPool(), 20, 1);
+		vkCmdResetQueryPool(commandBuffers[i], VkEngine::getEngine().getQueryPool(), 21, 1);
+#endif
+
 		renderPassInfo.framebuffer = framebuffers[i];
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -109,6 +114,11 @@ void MergePass::initCommandBuffers()
 		vkCmdDrawIndexed(commandBuffers[i], quad->indices.size(), 1, 0, 0, 1);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
+
+#ifdef PERF_GPU_TIME
+		vkCmdWriteTimestamp(commandBuffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 20);
+		vkCmdWriteTimestamp(commandBuffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 21);
+#endif
 
 		VK_CHECK(vkEndCommandBuffer(commandBuffers[i]));
 	}

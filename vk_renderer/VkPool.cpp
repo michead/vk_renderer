@@ -720,7 +720,7 @@ GBufferAttachment VkPool::createGBufferAttachment(GBufferAttachmentType type, bo
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.anisotropyEnable = VK_TRUE;
-	samplerInfo.maxAnisotropy = type == DEPTH ? 0 : 16;
+	samplerInfo.maxAnisotropy = type == DEPTH ? 0.f : 16.f;
 	samplerInfo.borderColor = type == DEPTH ? VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE : VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;

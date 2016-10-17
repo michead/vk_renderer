@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <chrono>
 #include <vector>
 
 #include "VkUtils.h"
@@ -22,10 +23,14 @@
 #define HUD_FONT_SCALE 1.1f
 #define HUD_AREA_SCALE .18f
 
+#ifdef PERF_GPU_TIME
+#define PERF_NUM_FRAMES 1000
+#endif
+
 #ifdef NDEBUG
-#define SHOW_HUD 0
+	#define SHOW_HUD 0
 #else
-#define SHOW_HUD 1
+	#define SHOW_HUD 1
 #endif
 
 
@@ -67,6 +72,7 @@ public:
 	Config* getConfig() const { return config; }
 	Scene* getScene() const { return scene; }
 	VkPool* getPool() const { return pool; }
+	VkQueryPool getQueryPool() const { return queryPool; }
 
 	glm::ivec2 getOldMousePos() { return{ oldX, oldY }; }
 	void setOldMousePos(glm::ivec2 mousePos) { oldX = mousePos.x; oldY = mousePos.y; }
@@ -120,6 +126,12 @@ private:
 	int oldY;
 
 	Scene* scene;
+
+	VkQueryPool queryPool;
+
+	long numFrames;
+	std::chrono::time_point<std::chrono::steady_clock> startTime;
+	std::chrono::time_point<std::chrono::steady_clock> endTime;
 
 	void initWindow();
 	void initVulkan();

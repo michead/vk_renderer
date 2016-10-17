@@ -84,7 +84,7 @@
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>inc\;inc\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4244</DisableSpecificWarnings>
-      <AdditionalOptions>/D PERF_NUM_FRAMES=500 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D PERF_GPU_TIME %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>lib\x86\</AdditionalLibraryDirectories>
@@ -120,7 +120,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>inc\;inc\imgui\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS  /D NDEBUG /D PERF_NUM_FRAMES=500 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/D _CRT_SECURE_NO_WARNINGS  /D NDEBUG /D PERF_GPU_TIME %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>

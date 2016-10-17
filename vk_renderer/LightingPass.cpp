@@ -103,7 +103,8 @@ void LightingPass::initAttachments()
 
 void LightingPass::initCommandBuffers()
 {
-	commandBuffers.resize(VkEngine::getEngine().getSwapchainImageViews().size());
+	// commandBuffers.resize(VkEngine::getEngine().getSwapchainImageViews().size());
+	commandBuffers.resize(1);
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -136,6 +137,11 @@ void LightingPass::initCommandBuffers()
 	{
 		vkBeginCommandBuffer(commandBuffers[i], &beginInfo);
 
+#ifdef PERF_GPU_TIME
+		vkCmdResetQueryPool(commandBuffers[i], VkEngine::getEngine().getQueryPool(), 14, 1);
+		vkCmdResetQueryPool(commandBuffers[i], VkEngine::getEngine().getQueryPool(), 15, 1);
+#endif
+
 		renderPassInfo.framebuffer = framebuffer;
 
 		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -158,6 +164,11 @@ void LightingPass::initCommandBuffers()
 		vkCmdDrawIndexed(commandBuffers[i], quad->indices.size(), 1, 0, 0, 1);
 
 		vkCmdEndRenderPass(commandBuffers[i]);
+
+#ifdef PERF_GPU_TIME
+		vkCmdWriteTimestamp(commandBuffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 14);
+		vkCmdWriteTimestamp(commandBuffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VkEngine::getEngine().getQueryPool(), 15);
+#endif
 
 		VK_CHECK(vkEndCommandBuffer(commandBuffers[i]));
 	}
@@ -520,6 +531,7 @@ void LightingPass::initBufferData()
 	Camera* camera = VkEngine::getEngine().getScene()->getCamera();
 	std::vector<Light*> lights = VkEngine::getEngine().getScene()->getLights();
 	sceneUBO.numLights = lights.size();
+	sceneUBO.addSpeculars = !VkEngine::getEngine().isSSSEnabled();
 	
 	for (int i = 0; i < sceneUBO.numLights; i++)
 	{
