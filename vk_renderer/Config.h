@@ -4,8 +4,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "glm\glm.hpp"
 
-#define DEFAULT_WINDOW_WIDTH	1920
-#define DEFAULT_WINDOW_HEIGHT	1080
+#define DEFAULT_WINDOW_WIDTH	2560
+#define DEFAULT_WINDOW_HEIGHT	1440
 #define DEFAULT_SCENE_PATH		"data/head_2/scene.json"
 
 struct Config {
@@ -21,16 +21,25 @@ public:
 	{
 		std::vector<std::string> args = std::vector<std::string>(argv + 1, argv + argc);
 
+		fullscreen = parseFlag(args, "-f");
+
 		if (!args.empty())
 		{
 			resolution = parseResolution(args);
-			fullscreen = parseFlag(args, "-f");
+			if (resolution == glm::ivec2())
+			{
+				resolution = { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT };
+			}
+
 			scenePath = parseOption(args, "-s");
+			if (scenePath.empty())
+			{
+				scenePath = DEFAULT_SCENE_PATH;
+			}
 		}
 		else
 		{
 			resolution = { DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT };
-			fullscreen = false;
 			scenePath = DEFAULT_SCENE_PATH;
 		}
 	}

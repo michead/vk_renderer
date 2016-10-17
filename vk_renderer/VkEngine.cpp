@@ -59,9 +59,11 @@ void VkEngine::initWindow()
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	// TODO: Change to GLFW_TRUE once swapchain recreation logic has been implemented
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-	window = glfwCreateWindow(config->resolution.x, config->resolution.y, APPLICATION_NAME, nullptr, nullptr);
+	GLFWmonitor* monitor = config->fullscreen ? glfwGetPrimaryMonitor() : nullptr;
+	window = glfwCreateWindow(config->resolution.x, config->resolution.y, APPLICATION_NAME, monitor, nullptr);
 
 	glfwSetWindowUserPointer(window, this);
 	glfwSetWindowSizeCallback(window, onWindowResized);
@@ -124,7 +126,42 @@ void VkEngine::setupInputCallbacks()
 
 void VkEngine::keyboardFunc(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	Camera* camera = getEngine().getScene()->getCamera();
 
+	switch (key)
+	{
+	case GLFW_KEY_LEFT:
+		camera->rotateAroundTarget(CAMERA_ROT_SCALE * glm::vec2(100, 0));
+		break;
+	case GLFW_KEY_RIGHT:
+		camera->rotateAroundTarget(CAMERA_ROT_SCALE * glm::vec2(-100, 0));
+		break;
+	case GLFW_KEY_UP:
+		camera->rotateAroundTarget(CAMERA_ROT_SCALE * glm::vec2(0, 100));
+		break;
+	case GLFW_KEY_DOWN:
+		camera->rotateAroundTarget(CAMERA_ROT_SCALE * glm::vec2(0, -100));
+		break;
+	case GLFW_KEY_Z:
+		camera->zoom(-CAMERA_DOLLY_SCALE * 100);
+		break;
+	case GLFW_KEY_X:
+		camera->zoom(CAMERA_DOLLY_SCALE * 100);
+		break;
+	case GLFW_KEY_A:
+		if (action == GLFW_PRESS)
+			VkEngine::getEngine().ssaoEnabled = !VkEngine::getEngine().ssaoEnabled;
+		break;
+	case GLFW_KEY_S:
+		if (action == GLFW_PRESS)
+			VkEngine::getEngine().sssEnabled = !VkEngine::getEngine().sssEnabled;
+		break;
+	case GLFW_KEY_ESCAPE:
+		exit(VK_SUCCESS);
+		break;
+	default:
+		break;
+	}
 }
 
 void VkEngine::mouseKeyFunc(GLFWwindow* window, int button, int action, int mods)
@@ -590,13 +627,10 @@ void VkEngine::recreateSwapchain()
 {
 	VK_CHECK(vkDeviceWaitIdle(device));
 
-	delete pool;
-	initPool();
+	delete gfxPipeline;
+	pool->recreateSwapchainResources();
 	initImageViews();
 	initRenderPass(); // Graphics pipeline recreation may be avoided via viewport and scissor rectangle sizes dynamic states
-	initCommandPool();
-	initDescriptorPool();
-	initSemaphores();
 	initFramebuffers();
 	initOffscreenRenderPasses();
 }

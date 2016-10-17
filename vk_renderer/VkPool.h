@@ -91,6 +91,8 @@ public:
 	void createDevice();
 	void createInstance();
 
+	void recreateSwapchainResources();
+
 private:
 	std::vector<VkSemaphore> semaphores;
 	std::vector<VkDescriptorPool> descriptorPools;

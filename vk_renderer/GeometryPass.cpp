@@ -12,8 +12,7 @@ void GeometryPass::initAttachments()
 
 void GeometryPass::initCommandBuffers()
 {
-	static bool firstTime = true;
-	if (!firstTime)
+	if (areCmdBuffersInit)
 	{
 		vkFreeCommandBuffers(
 			VkEngine::getEngine().getDevice(),
@@ -23,7 +22,7 @@ void GeometryPass::initCommandBuffers()
 	}
 	else
 	{
-		firstTime = false;
+		areCmdBuffersInit = true;
 	}
 
 	VkCommandBufferAllocateInfo allocInfo = {};

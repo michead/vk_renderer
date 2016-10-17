@@ -917,6 +917,11 @@ void VkPool::createInstance()
 	VK_CHECK(vkCreateInstance(&createInfo, nullptr, &instance));
 }
 
+void VkPool::recreateSwapchainResources()
+{
+	// TODO: Recreate swapchain resources on window resized
+}
+
 void VkPool::freeResources()
 {
 	for (VkShaderModule shader : shaderModules) { vkDestroyShaderModule(device, shader, nullptr); }

@@ -6,7 +6,7 @@
 
 #define MAX_NUM_LIGHTS	4
 
-#define TRANSMIT_INV_SCALE	180.f
+#define TRANSMIT_INV_SCALE	250.f
 #define SHRINKING_SCALE		.005f
 
 struct Light {

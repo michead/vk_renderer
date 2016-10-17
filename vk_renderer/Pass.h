@@ -53,6 +53,8 @@ protected:
 	virtual void initDescriptorSetLayout() = 0;
 	virtual void initGraphicsPipeline() = 0;
 
+	bool areCmdBuffersInit = false;
+
 private:
 	VkRenderPass renderPass;
 	std::vector<VkFramebuffer> framebuffers;
