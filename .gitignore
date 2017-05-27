@@ -260,5 +260,6 @@ glslangValidator.exe
 # Validation layers
 layers/
 
-# External libs
+# External dependencies
+inc/
 lib/
